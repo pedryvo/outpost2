@@ -18,11 +18,23 @@ In *Outpost 2: Divided Destiny*, the survival of both Eden and Plymouth relies o
 | **Standard Research Lab**| $2 \times 2$ | 500 t | 200 t | -90 kW | Advanced physics, laser weaponry, spacecraft engineering. |
 | **Colonial Residence** | $2 \times 2$ | 150 t | 0 t | -20 kW | Housing units providing life support for 100 colonists. |
 | **Bio-Dome Hydroponics**| $2 \times 2$ | 200 t | 50 t | -30 kW | Agricultural sustenance keeping food rations above starvation thresholds. |
-| **Vehicle Factory** | $3 \times 3$ | 500 t | 150 t | -120 kW | Chassis fabrication for scouts, cargo transports, and combat tanks. |
+| **Vehicle Factory** | $3 \times 3$ | 500 t | 150 t | -120 kW | Chassis fabrication for scouts, cargo transports, combat tanks, and ConVecs. |
+| **Vehicle Repair Depot** | $2 \times 2$ | 250 t | 50 t | -60 kW | Automated diagnostic field restoring vehicle structural integrity via nano-beams. |
+| **Guard Post Turret** | $2 \times 2$ | 250 t | 50 t | -50 kW | Fortified perimeter defense bunker with automated dual laser cannons and targeting diode. |
+| **Starship Launch Gantry**| $3 \times 3$ | 800 t | 350 t | -160 kW | Orbital launch complex staging starship assembly and evacuation blastoff. |
+| **Reinforced Ceramic Wall**| $1 \times 1$ | 15 t | 0 t | 0 kW | High-density defensive wall deployed by Earthworkers blocking hostile vehicular incursions. |
 
 ---
 
-## 3. Pressurized Transport Tube Network
+## 3. Demolition & Ore Recycling
+Colonies can decommission redundant, obsolete, or compromised facilities using the **Recycle Structure** directive:
+- **Refund Ratio:** Reclaims **50% of original ore investment** (both common and rare metal) immediately deposited into colony stockpiles.
+- **Power Grid Balancing:** Power demand or production is dynamically decoupled from the grid, preventing electrical blackouts.
+- **Foundation Clearance:** Map impassability masks are cleared, freeing terrain for modernized expansion.
+
+---
+
+## 4. Pressurized Transport Tube Network
 1. **Connectivity Rule:**
    - Any building erected outside of direct contact with the Command Center is piped via automatic arterial conduits.
    - The pathfinder computes an orthogonal corridor $(x_1, y_1) \to (x_2, y_2)$ connecting the structural airlocks.
