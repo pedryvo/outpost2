@@ -48,7 +48,8 @@ Diferente de máquinas virtuais pesadas ou emuladores x86, este porte roda nativ
 | **Névoa de Guerra & Radar Tático** | ✅ | Grid sensorial em 3 níveis com telemetria ao vivo no radar (minas, traçadores laser/railgun, ondas de choque) · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
 | **Núcleo de Simulação da Colônia** | ✅ | Logística Eden e Plymouth: fluxo de energia, suporte à vida, minério, moral e desastres · [`docs/formats/disasters.md`](docs/formats/disasters.md) |
 | **Estruturas & Rede de Tubos** | ✅ | Kits modulares de construção e rede arterial de tubos pressurizados · [`docs/formats/structures_and_tubes.md`](docs/formats/structures_and_tubes.md) |
-| **Pátio de Construção Interativo** | ✅ | Gaveta retrátil de blueprints (12 estruturas), posicionamento holográfico fantasma e projeção de tubos |
+| **Pátio de Construção Interativo** | ✅ | Gaveta retrátil de blueprints (13 estruturas), posicionamento holográfico fantasma e projeção de tubos |
+| **Usinas de Energia Geotérmica**   | ✅ | Geração hidrotérmica contínua (+450 kW) com torres duplas de resfriamento e plumas de vapor |
 | **Torres Defensivas Guard Post**   | ✅ | Postos de guarda perimetrais com canhões defensivos duplos automatizados e mira laser |
 | **Fundição & Plumas de Exaustão**  | ✅ | Ciclos incandescentes de cadinho fundido, núcleo metálico fervente e fumaça de chaminé |
 | **Reciclagem & Demolição de Bases**| ✅ | Desmonte de estruturas com reembolso de 50% de minério e balanceamento automático da rede elétrica |
@@ -57,7 +58,7 @@ Diferente de máquinas virtuais pesadas ou emuladores x86, este porte roda nativ
 | **Tanques Pesados Tiger & Railgun**| ✅ | Blindados pesados de esteira dupla equipados com canhões eletromagnéticos supersônicos de alta velocidade |
 | **Construção de Minas com Robo-Miner**| ✅ | Escavação de cabeças de poço subterrâneas sobre beacons de minério, liberando extração para caminhões · [`docs/formats/mining_and_logistics.md`](docs/formats/mining_and_logistics.md) |
 | **Reparo de Veículos & Triagem** | ✅ | Veículos de Reparo móveis e Depósitos de Manutenção com feixes de nanosolda esmeralda |
-| **Engenharia com Earthworker** | ✅ | Construção de muros cerâmicos defensivos, tubos de campo e purificação de bioameaças |
+| **Engenharia com Earthworker & Bulldozer**| ✅ | Muros cerâmicos defensivos, tubos de campo, purificação de bioameaças e demolição/limpeza de entulho |
 | **Implantação de Kits via ConVec** | ✅ | Veículos de Construção transportando kits pré-fabricados, montagem em campo e fundação |
 | **Posturas de Guarda & Patrulha** | ✅ | Âncoras de guarda de setor automatizadas, rotas bidirecionais de patrulha e combate reativo |
 | **Perigos Planetários & Desastres** | ✅ | Blight microbiano rastejante, fissuras vulcânicas, vórtices de poeira e chuvas de meteoros cinéticos |

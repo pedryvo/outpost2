@@ -20,6 +20,7 @@ pub enum StructureType {
     VehicleFactory,
     RepairFacility,
     GuardPost,
+    GeothermalPlant,
     Spaceport,
 }
 
@@ -29,6 +30,7 @@ impl StructureType {
             Self::CommandCenter => "Command Center",
             Self::SolarArray => "Solar Power Array",
             Self::TokamakReactor => "Tokamak Fusion Reactor",
+            Self::GeothermalPlant => "Geothermal Power Plant",
             Self::CommonOreSmelter => "Common Ore Smelter",
             Self::RareOreSmelter => "Rare Ore Smelter",
             Self::DirtLab => "D.I.R.T. Laboratory",
@@ -47,6 +49,7 @@ impl StructureType {
             Self::CommandCenter => (3, 3),
             Self::SolarArray => (2, 2),
             Self::TokamakReactor => (3, 3),
+            Self::GeothermalPlant => (2, 2),
             Self::VehicleFactory => (3, 3),
             Self::RepairFacility => (2, 2),
             Self::GuardPost => (2, 2),
@@ -60,6 +63,7 @@ impl StructureType {
             Self::CommandCenter => 40,
             Self::SolarArray => -250,      // Produces solar power
             Self::TokamakReactor => -800,   // Produces massive fusion power
+            Self::GeothermalPlant => -450,  // Continuous geothermal energy
             Self::CommonOreSmelter => 50,
             Self::RareOreSmelter => 75,
             Self::DirtLab => 60,
@@ -79,6 +83,7 @@ impl StructureType {
             Self::CommandCenter => (500, 100),
             Self::SolarArray => (200, 0),
             Self::TokamakReactor => (600, 250),
+            Self::GeothermalPlant => (350, 75),
             Self::CommonOreSmelter => (350, 50),
             Self::RareOreSmelter => (400, 150),
             Self::DirtLab => (300, 100),
@@ -97,6 +102,7 @@ impl StructureType {
             "Command Center" => Some(Self::CommandCenter),
             "Solar Power Array" => Some(Self::SolarArray),
             "Tokamak Fusion Reactor" => Some(Self::TokamakReactor),
+            "Geothermal Power Plant" => Some(Self::GeothermalPlant),
             "Common Ore Smelter" => Some(Self::CommonOreSmelter),
             "Rare Ore Smelter" => Some(Self::RareOreSmelter),
             "D.I.R.T. Laboratory" => Some(Self::DirtLab),

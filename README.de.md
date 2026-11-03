@@ -53,7 +53,8 @@ Ziel ist es, den Strategieklassiker in modernen Webbrowsern mit nativer Leistung
 | **Nebel des Krieges & Taktik-Radar**| ✅ | 3-stufiges Sichtbarkeitssystem mit Live-Radar (Minen, Laser-/Railgun-Leuchtspuren, Detonationswellen) · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
 | **Kolonie-Simulationskern** | ✅ | Eden- & Plymouth-Logistik: Strom, Lebenserhaltung, Erz, Moral und Katastrophen · [`docs/formats/disasters.md`](docs/formats/disasters.md) |
 | **Gebäude & Röhrennetzwerk** | ✅ | Modulare Baukits & druckbelüftete Transportröhren · [`docs/formats/structures_and_tubes.md`](docs/formats/structures_and_tubes.md) |
-| **Interaktiver Bauhof** | ✅ | Ausziehbare Bauplan-Schublade (12 Gebäude), holografische Geister-Platzierung & Röhrenprojektion |
+| **Interaktiver Bauhof** | ✅ | Ausziehbare Bauplan-Schublade (13 Gebäude), holografische Geister-Platzierung & Röhrenprojektion |
+| **Geothermie-Kraftwerke**        | ✅ | Kontinuierliche Grundlast-Hydrothermalenergie (+450 kW) mit Doppel-Kühltürmen und Dampfschwaden |
 | **Wachposten-Verteidigungstürme** | ✅ | Automatische Verteidigungstürme mit dualen Schnellfeuer-Kanonen und Laserzielerfassung |
 | **Erzschmelze & Rauchschwaden** | ✅ | Animierte Glühzyklen flüssigen Metalls in Schmelztiegeln und aufsteigende Rauchfahnen |
 | **Gebäude-Recycling & Rückbau** | ✅ | Abbruch von Strukturen für 50% Erz-Rückerstattung und automatische Stromgitter-Neubalancierung |
@@ -62,7 +63,7 @@ Ziel ist es, den Strategieklassiker in modernen Webbrowsern mit nativer Leistung
 | **Schwere Tiger-Panzer & Railgun**| ✅ | Schwere Doppelkettenpanzer mit Überschall-Railguns und magnetischen Beschleunigungsspulen |
 | **Minenkopf-Bau mit Robo-Miner**  | ✅ | Unterirdischer Förderturm-Bau über Mineralien-Baken, der Frachttransport für Trucks aktiviert · [`docs/formats/mining_and_logistics.md`](docs/formats/mining_and_logistics.md) |
 | **Fahrzeug-Reparatur & Felddepots** | ✅ | Mobile Reparaturfahrzeuge und Depots mit smaragdgrünen Nanoschweiß-Strahlen |
-| **Earthworker-Pioniertechnik** | ✅ | Verstärkte Keramik-Schutzmauern, Verlegung von Feldleitungen und Biogefahren-Bereinigung |
+| **Earthworker-Pioniertechnik & Planieren**| ✅ | Keramik-Schutzmauern, Feldleitungen, Biogefahren-Bereinigung und Planieren von Hindernissen |
 | **ConVec-Bausatz-Entfaltung** | ✅ | Baufahrzeuge mit vorgefertigten Gebäudekits, Vor-Ort-Entfaltung und Fundamentintegration |
 | **Wach- & Patrouillen-Taktik** | ✅ | Automatische Sektoren-Wachanker, bidirektionale Patrouillenrouten und reaktive Zielerfassung |
 | **Planetare Gefahren & Katastrophen**| ✅ | Kriechende mikrobielle Pest, Vulkanspalten, Staubwirbel-Tornados und kinetische Meteorschauer |

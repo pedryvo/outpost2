@@ -53,7 +53,8 @@ El objetivo es preservar y modernizar este clásico juego de estrategia en tiemp
 | **Niebla de Guerra y Radar Táctico**| ✅ | Rejilla sensorial de 3 niveles con telemetría en radar (minas, trazadores láser/railgun y ondas de choque) · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
 | **Núcleo de Simulación Colonial** | ✅ | Logística Eden y Plymouth: energía, soporte vital, minerales, moral y desastres · [`docs/formats/disasters.md`](docs/formats/disasters.md) |
 | **Estructuras y Red de Tubos** | ✅ | Kits modulares de construcción y red de tubos presurizados · [`docs/formats/structures_and_tubes.md`](docs/formats/structures_and_tubes.md) |
-| **Astillero de Construcción Interactivo**| ✅ | Cajón deslizable de planos (12 edificios), colocación fantasma holográfica y tubos proyectados |
+| **Astillero de Construcción Interactivo**| ✅ | Cajón deslizable de planos (13 edificios), colocación fantasma holográfica y tubos proyectados |
+| **Plantas de Energía Geotérmica**| ✅ | Energía hidrotermal continua (+450 kW) con torres dobles de refrigeración y penachos de vapor |
 | **Torretas Defensivas Guard Post**| ✅ | Puestos de guardia perimetrales con cañones dobles automáticos y puntero láser |
 | **Fundición y Penachos de Humo**   | ✅ | Ciclos incandescentes de metal fundido en crisoles y columnas de humo de chimenea |
 | **Reciclaje y Demolición Colonial**| ✅ | Desmantelamiento de edificios para recuperar 50% de minerales y equilibrar la red energética |
@@ -62,7 +63,7 @@ El objetivo es preservar y modernizar este clásico juego de estrategia en tiemp
 | **Tanques Pesados Tiger & Cañón Rail**| ✅ | Blindados pesados de doble oruga con cañones cinéticos de hipervelocidad y bobinas magnéticas |
 | **Construcción de Minas con Robo-Miner**| ✅ | Excavación de cabezas de pozo sobre balizas de minerales, activando logística con camiones · [`docs/formats/mining_and_logistics.md`](docs/formats/mining_and_logistics.md) |
 | **Reparación de Vehículos & Triage**| ✅ | Vehículos de Reparación móviles y Talleres con rayos de nanosoldadura esmeralda |
-| **Ingeniería con Earthworker** | ✅ | Muros defensivos de cerámica reforzada, tendido de tubos y purga de biopeligros |
+| **Ingeniería Earthworker & Bulldozer**| ✅ | Muros defensivos de cerámica, tubos de campo, purga de biopeligros y demolición con bulldozer |
 | **Despliegue de Kits con ConVec** | ✅ | Vehículos de Construcción transportando kits modulares, montaje en terreno y anclaje |
 | **Tácticas de Guardia y Patrulla** | ✅ | Puntos de anclaje de defensa, rutas bidireccionales de patrulla y combate reactivo |
 | **Peligros Planetarios y Desastres**| ✅ | Plaga microbiana reptante, fisuras volcánicas, vórtices de polvo y lluvias de meteoritos cinéticos |

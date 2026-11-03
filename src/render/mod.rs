@@ -495,6 +495,38 @@ impl Viewport {
                     ctx.fill();
                 }
             }
+
+            // Geothermal Power Plant Thermal Generation Visuals
+            if b.name.contains("Geothermal") && b.is_active && fog == FogState::Visible {
+                let steam_cycle = (colony.sol * 5.0).sin().abs();
+
+                // Volcanic core heat vent
+                ctx.set_fill_style_str(&format!("rgba(249, 115, 22, {:.2})", 0.5 + 0.4 * steam_cycle));
+                ctx.begin_path();
+                let _ = ctx.arc(sx, sy, 7.0 * self.zoom, 0.0, std::f64::consts::TAU);
+                ctx.fill();
+
+                // Dual geothermal steam stacks
+                let stack_offset = 6.0 * self.zoom;
+                for side in [-1.0, 1.0] {
+                    let stack_x = sx + side * stack_offset;
+                    let stack_y = sy - b_h * 0.4;
+
+                    // Steam plume
+                    for p in 0..3 {
+                        let puff = (colony.sol * 4.5 + p as f64 * 1.5 + side * 0.7) % 5.0;
+                        let puff_y = stack_y - (6.0 + puff * 6.0) * self.zoom;
+                        let puff_x = stack_x + (puff * 0.8 - 1.0) * self.zoom;
+                        let alpha = (1.0 - puff / 5.0).max(0.0) * 0.4;
+                        let rad = (2.5 + puff * 1.2) * self.zoom;
+
+                        ctx.set_fill_style_str(&format!("rgba(241, 245, 249, {:.2})", alpha));
+                        ctx.begin_path();
+                        let _ = ctx.arc(puff_x, puff_y, rad, 0.0, std::f64::consts::TAU);
+                        ctx.fill();
+                    }
+                }
+            }
         }
 
         // Render Units (Only visible when active in sensor range)

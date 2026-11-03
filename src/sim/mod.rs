@@ -911,6 +911,27 @@ impl ColonyState {
                     });
                     unit_notice = Some("FABRICATION COMPLETE: ConVec pre-loaded with Hydroponics Kit.");
                 }
+                "ConVec (Geothermal)" => {
+                    self.units.push(Unit {
+                        id: next_id,
+                        name: format!("ConVec #{}", next_id),
+                        faction: self.faction,
+                        tile_x: spawn_x,
+                        tile_y: spawn_y,
+                        hp: 180,
+                        max_hp: 180,
+                        is_selected: false,
+                        current_order: UnitOrder::Idle,
+                        path: Vec::new(),
+                        move_cooldown: 0.0,
+                        weapon: None,
+                        attack_cooldown: 0.0,
+                        cargo: None,
+                        hauler_state: None,
+                        cargo_kit: Some("Geothermal Power Plant".to_string()),
+                    });
+                    unit_notice = Some("FABRICATION COMPLETE: ConVec pre-loaded with Geothermal Plant Kit.");
+                }
                 "Tiger Heavy Tank" => {
                     let hp = 420 + self.tech_tree.armor_bonus();
                     self.units.push(Unit {
@@ -1128,8 +1149,33 @@ impl ColonyState {
                                     color: "#a855f7".into(),
                                     lifetime: 0.25,
                                     max_lifetime: 0.25,
-                                });
+                                  });
                             }
+                            u.current_order = UnitOrder::Idle;
+                        } else if u.path.is_empty() {
+                            if let Some(path) = PathFinder::find_path(&self.game_map, (u.tile_x, u.tile_y), (target_x, target_y)) {
+                                u.path = path;
+                            }
+                        }
+                    }
+                    UnitOrder::Bulldoze { target_x, target_y } => {
+                        let dist = (u.tile_x - target_x).abs() + (u.tile_y - target_y).abs();
+                        if dist <= 1 {
+                            let idx = (target_y.clamp(0, self.game_map.height as i32 - 1) as u32 * self.game_map.width
+                                + target_x.clamp(0, self.game_map.width as i32 - 1) as u32) as usize;
+                            if idx < self.game_map.tiles.len() {
+                                self.game_map.tiles[idx].is_wall_or_building = false;
+                            }
+                            self.tubes.remove(&(target_x, target_y));
+                            self.active_beams.push(CombatBeam {
+                                from_x: u.tile_x as f64,
+                                from_y: u.tile_y as f64,
+                                to_x: target_x as f64,
+                                to_y: target_y as f64,
+                                color: "#ef4444".into(),
+                                lifetime: 0.25,
+                                max_lifetime: 0.25,
+                            });
                             u.current_order = UnitOrder::Idle;
                         } else if u.path.is_empty() {
                             if let Some(path) = PathFinder::find_path(&self.game_map, (u.tile_x, u.tile_y), (target_x, target_y)) {
@@ -1547,6 +1593,7 @@ impl ColonyState {
             "ConVec (Solar)" => (320, 0),
             "ConVec (Guard)" => (350, 50),
             "ConVec (Agridome)" => (320, 50),
+            "ConVec (Geothermal)" => (450, 75),
             "Starship Component" => (500, 200),
             _ => (100, 0),
         };

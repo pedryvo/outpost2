@@ -48,7 +48,8 @@ Unlike heavyweight virtual machines or x86 emulators, this port runs natively in
 | **Fog of War & Tactical Radar** | ✅ | 3-tier sensor grid with live radar telemetry (mines, laser/railgun tracers, impact shockwaves) · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
 | **Colony Simulation Core** | ✅ | Eden & Plymouth logistics: power flux, life support, ore, morale, disasters · [`docs/formats/disasters.md`](docs/formats/disasters.md) |
 | **Structures & Tube Network** | ✅ | Modular base kits & pressurized transport tube grid · [`docs/formats/structures_and_tubes.md`](docs/formats/structures_and_tubes.md) |
-| **Interactive Construction Yard**| ✅ | Slide-out blueprint drawer (12 buildings), holographic ghost placement & tube projections |
+| **Interactive Construction Yard**| ✅ | Slide-out blueprint drawer (13 buildings), holographic ghost placement & tube projections |
+| **Geothermal Power Plants**      | ✅ | Continuous baseload hydrothermal energy (+450 kW) with twin cooling towers and animated steam plumes |
 | **Guard Post Defense Turrets**   | ✅ | Automated perimeter defense turrets with twin rapid-fire defensive cannons and laser targeting |
 | **Ore Smelting & Exhaust Plumes**| ✅ | Animated crucible molten heat cycles, glowing vat cores, and rising atmospheric exhaust smoke |
 | **Structure Recycling & Demolition**| ✅ | Salvage obsolete or damaged buildings to reclaim 50% ore investment & rebalance power grids |
@@ -57,7 +58,7 @@ Unlike heavyweight virtual machines or x86 emulators, this port runs natively in
 | **Tiger Heavy Tanks & Railguns**  | ✅ | Heavy dual-tread assault tanks with supersonic hyper-velocity railguns and magnetic coil visuals |
 | **Robo-Miner Mine Head Construction**| ✅ | Subterranean mine head excavation over mineral beacons, activating automated cargo extraction · [`docs/formats/mining_and_logistics.md`](docs/formats/mining_and_logistics.md) |
 | **Vehicle Repair & Field Triage**| ✅ | Mobile Repair Vehicles and stationary Depots projecting emerald nano-welding beams |
-| **Earthworker Engineering** | ✅ | Fortified ceramic defense walls, field conduit laying, and bio-cleansing hazard purging |
+| **Earthworker Engineering & Bulldoze**| ✅ | Fortified ceramic defense walls, field conduit laying, hazard purging, and obstruction bulldozing |
 | **ConVec Modular Kit Deployment** | ✅ | Construction Vehicles hauling pre-fabricated kits, unfolding installations, and foundation lockdown |
 | **Tactical Guard & Patrol Stances** | ✅ | Automated sector guard anchors, bidirectional patrol lanes, and reactive target acquisition |
 | **Planetary Hazards & Disasters** | ✅ | Creeping microbial Blight, volcanic fissures, atmospheric dust vortices, and kinetic meteor showers |

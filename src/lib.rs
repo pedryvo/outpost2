@@ -19,6 +19,7 @@ enum EngineeringMode {
     Wall,
     Tube,
     Clear,
+    Bulldoze,
 }
 
 struct GameApp {
@@ -127,6 +128,7 @@ pub fn start() -> Result<(), JsValue> {
                                 EngineeringMode::Wall => sim::pathfinding::UnitOrder::BuildWall { target_x: tx, target_y: ty },
                                 EngineeringMode::Tube => sim::pathfinding::UnitOrder::BuildTube { target_x: tx, target_y: ty },
                                 EngineeringMode::Clear => sim::pathfinding::UnitOrder::ClearHazard { target_x: tx, target_y: ty },
+                                EngineeringMode::Bulldoze => sim::pathfinding::UnitOrder::Bulldoze { target_x: tx, target_y: ty },
                             };
                             ordered = true;
                         }
@@ -532,6 +534,7 @@ pub fn start() -> Result<(), JsValue> {
                         "VehicleFactory" => sim::structures::StructureType::VehicleFactory,
                         "RepairFacility" => sim::structures::StructureType::RepairFacility,
                         "GuardPost" => sim::structures::StructureType::GuardPost,
+                        "GeothermalPlant" => sim::structures::StructureType::GeothermalPlant,
                         "Spaceport" => sim::structures::StructureType::Spaceport,
                         _ => sim::structures::StructureType::SolarArray,
                     };
@@ -909,6 +912,7 @@ pub fn start() -> Result<(), JsValue> {
     setup_queue_btn("btn-queue-convec-smelter", "ConVec (Smelter)", app.clone(), document.clone());
     setup_queue_btn("btn-queue-convec-solar", "ConVec (Solar)", app.clone(), document.clone());
     setup_queue_btn("btn-queue-convec-guard", "ConVec (Guard)", app.clone(), document.clone());
+    setup_queue_btn("btn-queue-convec-geothermal", "ConVec (Geothermal)", app.clone(), document.clone());
     setup_queue_btn("btn-queue-starship", "Starship Component", app.clone(), document.clone());
 
     if let Some(btn) = document.get_element_by_id("btn-toggle-power") {
@@ -1093,6 +1097,23 @@ pub fn start() -> Result<(), JsValue> {
             if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
                 toast.set_text_content(Some("Engineering Hazard Purge: Click target terrain to neutralize Blight spores."));
                 let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #a855f7; display: block;");
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    if let Some(btn) = document.get_element_by_id("btn-order-bulldoze") {
+        let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            g.pending_engineering = Some(EngineeringMode::Bulldoze);
+            g.audio.play_build_confirm();
+            if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                toast.set_text_content(Some("Engineering Bulldoze: Click wall or conduit to demolish obstruction."));
+                let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #ef4444; display: block;");
             }
         }) as Box<dyn FnMut(_)>);
         btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
@@ -1606,6 +1627,7 @@ pub fn start() -> Result<(), JsValue> {
                         sim::pathfinding::UnitOrder::BuildWall { target_x, target_y } => format!("Status: Building Wall at ({}, {})", target_x, target_y),
                         sim::pathfinding::UnitOrder::BuildTube { target_x, target_y } => format!("Status: Laying Conduit at ({}, {})", target_x, target_y),
                         sim::pathfinding::UnitOrder::ClearHazard { target_x, target_y } => format!("Status: Purging Hazard at ({}, {})", target_x, target_y),
+                        sim::pathfinding::UnitOrder::Bulldoze { target_x, target_y } => format!("Status: Bulldozing Obstruction at ({}, {})", target_x, target_y),
                         sim::pathfinding::UnitOrder::Guard { anchor_x, anchor_y } => format!("Status: Guarding Sector ({}, {})", anchor_x, anchor_y),
                         sim::pathfinding::UnitOrder::Patrol { start_x, start_y, end_x, end_y, .. } => format!("Status: Patrol ({},{}) ↔ ({},{})", start_x, start_y, end_x, end_y),
                     };

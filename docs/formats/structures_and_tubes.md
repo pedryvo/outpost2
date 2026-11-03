@@ -12,6 +12,7 @@ In *Outpost 2: Divided Destiny*, the survival of both Eden and Plymouth relies o
 | **Command Center** | $3 \times 3$ | 500 t | 100 t | -40 kW | Colony primary nexus, life support core, radar transmitter. |
 | **Solar Power Array** | $2 \times 2$ | 200 t | 0 t | +250 kW* | Clean diurnal power generation (*modulated by solar phase). |
 | **Tokamak Fusion Reactor**| $3 \times 3$ | 600 t | 250 t | +800 kW | Baseload thermonuclear energy unaffected by night cycles. |
+| **Geothermal Power Plant**| $2 \times 2$ | 350 t | 75 t | +450 kW | Continuous hydrothermal power with twin steam cooling stacks. |
 | **Common Ore Smelter** | $2 \times 2$ | 350 t | 50 t | -50 kW | Refines raw basalt/hematite into common building metal. |
 | **Rare Ore Smelter** | $2 \times 2$ | 400 t | 150 t | -75 kW | Purifies titanium, platinum, and radioactive isotopes. |
 | **D.I.R.T. Laboratory** | $2 \times 2$ | 300 t | 100 t | -60 kW | Planetary biology, vulcanology, and disaster mitigation research. |
@@ -31,6 +32,10 @@ Colonies can decommission redundant, obsolete, or compromised facilities using t
 - **Refund Ratio:** Reclaims **50% of original ore investment** (both common and rare metal) immediately deposited into colony stockpiles.
 - **Power Grid Balancing:** Power demand or production is dynamically decoupled from the grid, preventing electrical blackouts.
 - **Foundation Clearance:** Map impassability masks are cleared, freeing terrain for modernized expansion.
+
+### 3.1 Earthworker Bulldozing & Obstruction Clearing
+Earthworker heavy engineering vehicles can be assigned direct demolition tasks:
+- **`Bulldoze` Directive:** Clears defensive ceramic walls or rips up obsolete pressurized conduit segments without resource penalties, resetting cell impassability and opening vehicular thoroughfares.
 
 ---
 
