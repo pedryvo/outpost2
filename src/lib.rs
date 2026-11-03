@@ -94,6 +94,29 @@ pub fn start() -> Result<(), JsValue> {
         playtime_seconds: 0,
     }));
 
+    // Calibrate initial Canvas & Minimap Dimensions immediately on Boot
+    {
+        let dpr = window.device_pixel_ratio().max(1.0);
+        let win_w = window.inner_width().ok().and_then(|v| v.as_f64()).unwrap_or(800.0);
+        let win_h = window.inner_height().ok().and_then(|v| v.as_f64()).unwrap_or(600.0);
+        let client_w = if canvas.client_width() > 0 { canvas.client_width() as f64 } else { win_w };
+        let client_h = if canvas.client_height() > 0 { canvas.client_height() as f64 } else { win_h };
+        let dims = render::touch::compute_high_dpi_canvas_dimensions(client_w, client_h, dpr);
+        canvas.set_width(dims.physical_width);
+        canvas.set_height(dims.physical_height);
+
+        let mini_w = if minimap_canvas.client_width() > 0 { minimap_canvas.client_width() as f64 } else { 180.0 };
+        let mini_h = if minimap_canvas.client_height() > 0 { minimap_canvas.client_height() as f64 } else { 180.0 };
+        let mini_dims = render::touch::compute_high_dpi_canvas_dimensions(mini_w, mini_h, dpr);
+        minimap_canvas.set_width(mini_dims.physical_width);
+        minimap_canvas.set_height(mini_dims.physical_height);
+        {
+            let mut g = app.borrow_mut();
+            g.hud.state.radar.radar_width = mini_w;
+            g.hud.state.radar.radar_height = mini_h;
+        }
+    }
+
     // Responsive Window Resize & High-DPI Viewport Recalibration Handler
     {
         let app_clone = app.clone();
@@ -103,9 +126,11 @@ pub fn start() -> Result<(), JsValue> {
         let on_resize = Closure::wrap(Box::new(move |_: web_sys::UiEvent| {
             let mut g = app_clone.borrow_mut();
             let dpr = window_clone.device_pixel_ratio().max(1.0);
+            let win_w = window_clone.inner_width().ok().and_then(|v| v.as_f64()).unwrap_or(800.0);
+            let win_h = window_clone.inner_height().ok().and_then(|v| v.as_f64()).unwrap_or(600.0);
 
-            let client_w = canvas_clone.client_width() as f64;
-            let client_h = canvas_clone.client_height() as f64;
+            let client_w = if canvas_clone.client_width() > 0 { canvas_clone.client_width() as f64 } else { win_w };
+            let client_h = if canvas_clone.client_height() > 0 { canvas_clone.client_height() as f64 } else { win_h };
             if client_w > 0.0 && client_h > 0.0 {
                 let dims = render::touch::compute_high_dpi_canvas_dimensions(client_w, client_h, dpr);
                 if canvas_clone.width() != dims.physical_width || canvas_clone.height() != dims.physical_height {
@@ -114,8 +139,8 @@ pub fn start() -> Result<(), JsValue> {
                 }
             }
 
-            let mini_w = minimap_canvas_clone.client_width() as f64;
-            let mini_h = minimap_canvas_clone.client_height() as f64;
+            let mini_w = if minimap_canvas_clone.client_width() > 0 { minimap_canvas_clone.client_width() as f64 } else { 180.0 };
+            let mini_h = if minimap_canvas_clone.client_height() > 0 { minimap_canvas_clone.client_height() as f64 } else { 180.0 };
             if mini_w > 0.0 && mini_h > 0.0 {
                 let mini_dims = render::touch::compute_high_dpi_canvas_dimensions(mini_w, mini_h, dpr);
                 if minimap_canvas_clone.width() != mini_dims.physical_width || minimap_canvas_clone.height() != mini_dims.physical_height {
@@ -2199,8 +2224,10 @@ pub fn start() -> Result<(), JsValue> {
 
         // Resize canvas to match display window and high-DPI scaling
         let dpr = window_clone.device_pixel_ratio().max(1.0);
-        let client_w = canvas.client_width() as f64;
-        let client_h = canvas.client_height() as f64;
+        let win_w = window_clone.inner_width().ok().and_then(|v| v.as_f64()).unwrap_or(800.0);
+        let win_h = window_clone.inner_height().ok().and_then(|v| v.as_f64()).unwrap_or(600.0);
+        let client_w = if canvas.client_width() > 0 { canvas.client_width() as f64 } else { win_w };
+        let client_h = if canvas.client_height() > 0 { canvas.client_height() as f64 } else { win_h };
         if client_w > 0.0 && client_h > 0.0 {
             let dims = render::touch::compute_high_dpi_canvas_dimensions(client_w, client_h, dpr);
             if canvas.width() != dims.physical_width || canvas.height() != dims.physical_height {
@@ -2209,8 +2236,8 @@ pub fn start() -> Result<(), JsValue> {
             }
         }
 
-        let mini_w = minimap_canvas.client_width() as f64;
-        let mini_h = minimap_canvas.client_height() as f64;
+        let mini_w = if minimap_canvas.client_width() > 0 { minimap_canvas.client_width() as f64 } else { 180.0 };
+        let mini_h = if minimap_canvas.client_height() > 0 { minimap_canvas.client_height() as f64 } else { 180.0 };
         if mini_w > 0.0 && mini_h > 0.0 {
             let mini_dims = render::touch::compute_high_dpi_canvas_dimensions(mini_w, mini_h, dpr);
             if minimap_canvas.width() != mini_dims.physical_width || minimap_canvas.height() != mini_dims.physical_height {
@@ -2701,10 +2728,12 @@ pub fn start() -> Result<(), JsValue> {
         };
 
         let dpr = window_clone.device_pixel_ratio().max(1.0);
-        let canvas_w = canvas.client_width() as f64;
-        let canvas_h = canvas.client_height() as f64;
-        let mini_w = minimap_canvas.client_width() as f64;
-        let mini_h = minimap_canvas.client_height() as f64;
+        let win_w = window_clone.inner_width().ok().and_then(|v| v.as_f64()).unwrap_or(800.0);
+        let win_h = window_clone.inner_height().ok().and_then(|v| v.as_f64()).unwrap_or(600.0);
+        let canvas_w = if canvas.client_width() > 0 { canvas.client_width() as f64 } else { win_w };
+        let canvas_h = if canvas.client_height() > 0 { canvas.client_height() as f64 } else { win_h };
+        let mini_w = if minimap_canvas.client_width() > 0 { minimap_canvas.client_width() as f64 } else { 180.0 };
+        let mini_h = if minimap_canvas.client_height() > 0 { minimap_canvas.client_height() as f64 } else { 180.0 };
 
         let _ = ctx.save();
         let _ = ctx.scale(dpr, dpr);

@@ -1,6 +1,6 @@
 # Rust and Trunk build outputs
 /target/
-/dist/
+dist/.trunk-lock
 .vercel/
 
 # Dependencies

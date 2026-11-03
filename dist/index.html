@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Outpost 2: Divided Destiny — WebAssembly Port</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0c0e12">
+  <meta name="description" content="Outpost 2: Divided Destiny — High-Performance WebAssembly Real-Time Strategy & Colony Simulation Port">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Outpost 2">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+  
+  
+  
+  
+  
+<script type="module">
+import init, * as bindings from '/outpost2-2f9402b4c46c011.js';
+const wasm = await init({ module_or_path: '/outpost2-4f10e60ccd4de131_bg.wasm' });
+
+
+window.wasmBindings = bindings;
+
+
+dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
+
+</script>
+  <style>
+    :root {
+      --op2-bg: #0c0e12;
+      --op2-panel: #161a22;
+      --op2-border: #2a3342;
+      --op2-accent-eden: #00d4ff;
+      --op2-accent-plymouth: #ff8c00;
+      --op2-text: #e2e8f0;
+      --op2-muted: #8b9bb4;
+      --op2-danger: #ef4444;
+      --op2-success: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--op2-bg);
+      color: var(--op2-text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Command Header */
+    #top-bar {
+      height: 48px;
+      background: linear-gradient(180deg, #1f2633 0%, #12161f 100%);
+      border-bottom: 2px solid var(--op2-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 10;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+
+    .telemetry-group {
+      display: flex;
+      gap: 18px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .telemetry-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .telemetry-label {
+      color: var(--op2-muted);
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 0.5px;
+    }
+
+    .telemetry-val {
+      font-family: "Courier New", Courier, monospace;
+      font-weight: bold;
+    }
+
+    .val-eden { color: var(--op2-accent-eden); }
+    .val-plymouth { color: var(--op2-accent-plymouth); }
+    .val-power { color: #facc15; }
+    .val-metal { color: #cbd5e1; }
+    .val-food { color: #4ade80; }
+
+    /* Canvas Viewport */
+    #viewport-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: #000;
+      cursor: crosshair;
+    }
+
+    #op2-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+      touch-action: none;
+    }
+
+    /* Bottom Tactical Console */
+    #bottom-bar {
+      height: 64px;
+      background: linear-gradient(0deg, #1a202c 0%, #11151c 100%);
+      border-top: 2px solid var(--op2-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 10;
+    }
+
+    .action-btn {
+      background: #242c3d;
+      border: 1px solid #3b475e;
+      color: var(--op2-text);
+      padding: 8px 14px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .action-btn:hover {
+      background: #323d54;
+      border-color: var(--op2-accent-eden);
+      color: #fff;
+    }
+
+    /* Radar Minimap Floating Card */
+    #minimap-card {
+      position: absolute;
+      bottom: 76px;
+      right: 16px;
+      width: 160px;
+      height: 160px;
+      background: rgba(12, 14, 18, 0.85);
+      border: 2px solid var(--op2-border);
+      border-radius: 6px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      z-index: 15;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #minimap-header {
+      height: 24px;
+      background: #1e2636;
+      font-size: 10px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 8px;
+      color: var(--op2-accent-eden);
+    }
+
+    #minimap-canvas {
+      flex: 1;
+      width: 100%;
+      height: calc(100% - 24px);
+    }
+  </style>
+<link rel="modulepreload" href="/outpost2-2f9402b4c46c011.js" crossorigin="anonymous" integrity="sha384-qVOrAV6BfzrE95cQgAukaTRQLQ+nmr5oE29EcQdmrcU3vjpshVDjpyP5/KeSc+KT"><link rel="modulepreload" href="/snippets/outpost2-ed27d32cf8b362b1/inline0.js" crossorigin="anonymous" integrity="sha384-REoRXzdWTZdjiD+EeQmTA5biuNWe8zvLocvTbLrRPZYrSP5yzmCEanHD2HUVWCBl"><link rel="preload" href="/outpost2-4f10e60ccd4de131_bg.wasm" crossorigin="anonymous" integrity="sha384-7SHHyHtPazQCGd5je/sknyaGJCA6wLyA3U1u7oDWCwDUTnIrIUVzRyCb7w2sZxAE" as="fetch" type="application/wasm"></head>
+<body>
+  <div id="game-container">
+    <!-- Top Command Telemetry -->
+    <header id="top-bar">
+      <div class="telemetry-group">
+        <div class="telemetry-item">
+          <span class="telemetry-label" id="lbl-faction">Faction:</span>
+          <span class="telemetry-val val-eden" id="colony-faction">EDEN</span>
+        </div>
+        <div class="telemetry-item">
+          <span class="telemetry-label" id="lbl-sol">Sol:</span>
+          <span class="telemetry-val" id="colony-sol">1.04</span>
+        </div>
+        <div class="telemetry-item">
+          <span class="telemetry-label" id="lbl-sun">Sun:</span>
+          <span class="telemetry-val" style="color: #facc15;" id="colony-sun">100%</span>
+        </div>
+        <div class="telemetry-item">
+          <span class="telemetry-label" id="lbl-pop">Pop:</span>
+          <span class="telemetry-val" id="colony-pop">124 (98% Morale)</span>
+        </div>
+      </div>
+
+      <div class="telemetry-group">
+        <div class="telemetry-item">
+          <span class="telemetry-label" id="lbl-power">Power:</span>
+          <span class="telemetry-val val-power" id="colony-power">450 / 380 kW</span>
+        </div>
+        <div class="telemetry-item">
+          <span class="telemetry-label" id="lbl-ore">Common Ore:</span>
+          <span class="telemetry-val val-metal" id="colony-ore">2,450 t</span>
+        </div>
+        <div class="telemetry-item">
+          <span class="telemetry-label" id="lbl-rare">Rare Ore:</span>
+          <span class="telemetry-val val-metal" id="colony-rare">680 t</span>
+        </div>
+        <div class="telemetry-item">
+          <span class="telemetry-label" id="lbl-food">Food:</span>
+          <span class="telemetry-val val-food" id="colony-food">1,200</span>
+        </div>
+        <div class="telemetry-item">
+          <span class="telemetry-label" id="lbl-starship">Starship:</span>
+          <span class="telemetry-val" style="color: #c084fc; font-weight: bold;" id="colony-starship">0%</span>
+        </div>
+        <div class="telemetry-item">
+          <select id="campaign-select" style="background: #1e2636; color: #facc15; border: 1px solid #3b475e; border-radius: 4px; padding: 2px 6px; font-size: 11px; font-weight: bold; cursor: pointer;">
+            <option value="0">🚀 Eden 1: New Dawn</option>
+            <option value="1">🔥 Plymouth 1: Vanguard</option>
+            <option value="2">🎓 Academy Simulator</option>
+            <option value="3">🌋 Eden 2: Fissure Containment</option>
+            <option value="4">⚔️ Plymouth 2: Smelter Sabotage</option>
+          </select>
+        </div>
+        <div class="telemetry-item">
+          <select id="lang-select" style="background: #1e2636; color: #38bdf8; border: 1px solid #3b475e; border-radius: 4px; padding: 2px 6px; font-size: 11px; font-weight: bold; cursor: pointer;">
+            <option value="en">🌐 EN</option>
+            <option value="pt-BR">🌐 PT-BR</option>
+            <option value="es">🌐 ES</option>
+            <option value="de">🌐 DE</option>
+            <option value="zh-CN">🌐 中文</option>
+            <option value="ru">🌐 RU</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Viewport Canvas -->
+    <main id="viewport-container">
+      <canvas id="op2-canvas"></canvas>
+
+      <!-- Structure & Production Inspector -->
+      <aside id="inspector-card" style="position: absolute; bottom: 76px; left: 16px; width: 230px; background: rgba(12, 14, 18, 0.92); border: 2px solid var(--op2-border); border-radius: 6px; backdrop-filter: blur(8px); box-shadow: 0 8px 24px rgba(0,0,0,0.6); z-index: 15; display: none; flex-direction: column; overflow: hidden; padding: 12px; font-size: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--op2-border); padding-bottom: 6px; margin-bottom: 8px;">
+          <span id="inspect-name" style="font-weight: bold; color: var(--op2-accent-eden);">Command Center</span>
+          <span id="inspect-status" style="color: #4ade80; font-size: 10px; font-weight: bold;">ONLINE</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; color: var(--op2-muted); font-size: 11px;">
+          <span>Power Load:</span>
+          <span id="inspect-power" style="color: #facc15; font-weight: bold;">-40 kW</span>
+        </div>
+        <div id="inspect-queue-box" style="margin-bottom: 6px; font-size: 11px; color: #38bdf8; display: none;">
+          <span style="color: var(--op2-muted);">Queue:</span>
+          <span id="inspect-queue" style="font-weight: bold;">Idle</span>
+        </div>
+        <div id="factory-actions" style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
+          <button class="action-btn" id="btn-queue-tank" style="justify-content: center;">⚔️ Build Panther Tank</button>
+          <button class="action-btn" id="btn-queue-tiger" style="justify-content: center; background: #082f49; border-color: #38bdf8;">🐅 Build Tiger Railgun Tank (350 C, 100 R)</button>
+          <button class="action-btn" id="btn-queue-scout" style="justify-content: center;">🛰️ Build Lynx Scout</button>
+          <button class="action-btn" id="btn-queue-truck" style="justify-content: center;">🚚 Build Cargo Truck</button>
+          <button class="action-btn" id="btn-queue-miner" style="justify-content: center; background: #1e293b; border-color: #64748b;">⛏️ Build Robo-Miner (200 C, 40 R)</button>
+          <button class="action-btn" id="btn-queue-repair" style="justify-content: center;">🔧 Build Repair Vehicle</button>
+          <button class="action-btn" id="btn-queue-earthworker" style="justify-content: center;">🏗️ Build Earthworker</button>
+          <button class="action-btn" id="btn-queue-convec" style="justify-content: center; background: #713f12; border-color: #eab308;">🚛 Build ConVec (150 C)</button>
+          <button class="action-btn" id="btn-queue-convec-smelter" style="justify-content: center; background: #713f12; border-color: #eab308;">🔥 ConVec + Smelter Kit</button>
+          <button class="action-btn" id="btn-queue-convec-solar" style="justify-content: center; background: #713f12; border-color: #eab308;">☀️ ConVec + Solar Kit</button>
+          <button class="action-btn" id="btn-queue-convec-guard" style="justify-content: center; background: #713f12; border-color: #eab308;">🛡️ ConVec + Guard Kit</button>
+          <button class="action-btn" id="btn-queue-convec-geothermal" style="justify-content: center; background: #713f12; border-color: #eab308;">🌋 ConVec + Geothermal Kit</button>
+          <button class="action-btn" id="btn-queue-starship" style="justify-content: center; background: #3b0764; border-color: #a855f7;">🚀 Assemble Starship Module</button>
+        </div>
+        <button class="action-btn" id="btn-launch-starship" style="margin-top: 8px; justify-content: center; background: #581c87; border-color: #c084fc; font-weight: bold; color: #fff; display: none;">🚀 Launch Evacuation Starship!</button>
+        <button class="action-btn" id="btn-toggle-power" style="margin-top: 8px; justify-content: center; background: #334155;">⚡ Toggle Power Grid</button>
+        <button class="action-btn" id="btn-recycle-building" style="margin-top: 6px; justify-content: center; background: #7f1d1d; border-color: #ef4444;">♻️ Recycle Structure (+50% Ore)</button>
+      </aside>
+
+      <!-- Unit Command & Engineering Inspector -->
+      <aside id="unit-card" style="position: absolute; bottom: 76px; left: 16px; width: 240px; background: rgba(12, 14, 18, 0.94); border: 2px solid #f59e0b; border-radius: 6px; backdrop-filter: blur(8px); box-shadow: 0 8px 24px rgba(0,0,0,0.6); z-index: 15; display: none; flex-direction: column; overflow: hidden; padding: 12px; font-size: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--op2-border); padding-bottom: 6px; margin-bottom: 8px;">
+          <span id="unit-inspect-name" style="font-weight: bold; color: #facc15;">Unit Inspector</span>
+          <span id="unit-inspect-hp" style="color: #4ade80; font-size: 10px; font-weight: bold;">100/100 HP</span>
+        </div>
+        <div id="unit-inspect-cargo" style="font-size: 11px; color: #38bdf8; margin-bottom: 4px; display: none;"></div>
+        <div id="unit-inspect-order" style="font-size: 10px; color: var(--op2-muted); margin-bottom: 6px;"></div>
+
+        <!-- Earthworker Engineering -->
+        <div id="earthworker-actions" style="display: none; flex-direction: column; gap: 6px; margin-top: 4px;">
+          <span style="font-size: 10px; color: var(--op2-muted); text-transform: uppercase;">Engineering Orders:</span>
+          <button class="action-btn" id="btn-order-wall" style="justify-content: center; background: #78350f; border-color: #f59e0b;">🧱 Fortified Wall (15 C)</button>
+          <button class="action-btn" id="btn-order-tube" style="justify-content: center; background: #1e3a8a; border-color: #3b82f6;">🚇 Lay Conduit Tube (5 C)</button>
+          <button class="action-btn" id="btn-order-clear" style="justify-content: center; background: #581c87; border-color: #a855f7;">🧹 Purge Blight Hazard</button>
+          <button class="action-btn" id="btn-order-bulldoze" style="justify-content: center; background: #7f1d1d; border-color: #ef4444;">🚜 Bulldoze / Clear Obstruction</button>
+        </div>
+
+        <!-- ConVec Kit Deployment -->
+        <div id="convec-actions" style="display: none; flex-direction: column; gap: 6px; margin-top: 4px;">
+          <span style="font-size: 10px; color: var(--op2-muted); text-transform: uppercase;">ConVec Operations:</span>
+          <button class="action-btn" id="btn-convec-deploy" style="justify-content: center; background: #854d0e; border-color: #facc15;">🏗️ Deploy Loaded Kit</button>
+          <button class="action-btn" id="btn-convec-load-smelter" style="justify-content: center; background: #1e293b;">🔥 Load Smelter Kit (350 C)</button>
+          <button class="action-btn" id="btn-convec-load-solar" style="justify-content: center; background: #1e293b;">☀️ Load Solar Kit (200 C)</button>
+        </div>
+
+        <!-- Combat Stance & Tactical Patrol -->
+        <div id="combat-actions" style="display: none; flex-direction: column; gap: 6px; margin-top: 4px;">
+          <span style="font-size: 10px; color: var(--op2-muted); text-transform: uppercase;">Tactical Stance:</span>
+          <button class="action-btn" id="btn-order-guard" style="justify-content: center; background: #1e3a8a; border-color: #60a5fa;">🛡️ Set Guard Anchor</button>
+          <button class="action-btn" id="btn-order-patrol" style="justify-content: center; background: #1e293b; border-color: #94a3b8;">🔄 Assign Patrol Route</button>
+          <button class="action-btn" id="btn-order-halt" style="justify-content: center; background: #7f1d1d; border-color: #ef4444;">🛑 Halt / Hold Position</button>
+        </div>
+
+        <!-- Robo-Miner Subterranean Mine Operations -->
+        <div id="miner-actions" style="display: none; flex-direction: column; gap: 6px; margin-top: 4px;">
+          <button class="action-btn" id="btn-deploy-mine" style="justify-content: center; background: #334155; border-color: #64748b;">⛏️ Construct Mine Head on Beacon</button>
+        </div>
+      </aside>
+
+      <!-- Colonial Construction Yard Drawer -->
+      <aside id="build-drawer" style="position: absolute; bottom: 76px; left: 16px; width: 330px; max-height: calc(100vh - 160px); background: rgba(12, 14, 18, 0.95); border: 2px solid var(--op2-accent-eden); border-radius: 8px; backdrop-filter: blur(12px); box-shadow: 0 12px 32px rgba(0,0,0,0.8); z-index: 20; display: none; flex-direction: column; overflow: hidden;">
+        <div style="height: 32px; background: #161f30; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; border-bottom: 1px solid var(--op2-border);">
+          <span style="font-size: 11px; font-weight: bold; color: var(--op2-accent-eden); text-transform: uppercase; letter-spacing: 0.5px;">Colony Construction Yard</span>
+          <button id="btn-close-build" style="background: none; border: none; color: var(--op2-muted); font-size: 14px; cursor: pointer;">✕</button>
+        </div>
+        <div id="build-items-list" style="display: flex; flex-direction: column; gap: 6px; padding: 10px; overflow-y: auto;">
+          <button class="action-btn btn-structure-choice" data-type="SolarArray" style="justify-content: space-between;">
+            <span>☀️ Solar Power Array</span>
+            <span style="font-size: 10px; color: #facc15;">200 C | +250 kW</span>
+          </button>
+          <button class="action-btn btn-structure-choice" data-type="TokamakReactor" style="justify-content: space-between;">
+            <span>⚛️ Tokamak Reactor</span>
+            <span style="font-size: 10px; color: #facc15;">600 C, 250 R | +800 kW</span>
+          </button>
+          <button class="action-btn btn-structure-choice" data-type="GeothermalPlant" style="justify-content: space-between; border-color: #f97316;">
+            <span>🌋 Geothermal Power</span>
+            <span style="font-size: 10px; color: #fb923c;">350 C, 75 R | +450 kW</span>
+          </button>
+          <button class="action-btn btn-structure-choice" data-type="CommonOreSmelter" style="justify-content: space-between;">
+            <span>🔥 Common Smelter</span>
+            <span style="font-size: 10px; color: #94a3b8;">350 C, 50 R | -50 kW</span>
+          </button>
+          <button class="action-btn btn-structure-choice" data-type="RareOreSmelter" style="justify-content: space-between;">
+            <span>💎 Rare Smelter</span>
+            <span style="font-size: 10px; color: #94a3b8;">400 C, 150 R | -75 kW</span>
+          </button>
+          <button class="action-btn btn-structure-choice" data-type="DirtLab" style="justify-content: space-between;">
+            <span>🔬 D.I.R.T. Lab</span>
+            <span style="font-size: 10px; color: #38bdf8;">300 C, 100 R | -60 kW</span>
+          </button>
+          <button class="action-btn btn-structure-choice" data-type="StandardLab" style="justify-content: space-between;">
+            <span>🧪 Standard Lab</span>
+            <span style="font-size: 10px; color: #38bdf8;">500 C, 200 R | -90 kW</span>
+          </button>
+          <button class="action-btn btn-structure-choice" data-type="Agrodome" style="justify-content: space-between;">
+            <span>🌱 Bio-Dome Hydroponics</span>
+            <span style="font-size: 10px; color: #4ade80;">200 C, 50 R | -30 kW</span>
+          </button>
+          <button class="action-btn btn-structure-choice" data-type="Residence" style="justify-content: space-between;">
+            <span>🏠 Colonial Residence</span>
+            <span style="font-size: 10px; color: #4ade80;">150 C | -20 kW</span>
+          </button>
+          <button class="action-btn btn-structure-choice" data-type="VehicleFactory" style="justify-content: space-between;">
+            <span>🚜 Vehicle Factory</span>
+            <span style="font-size: 10px; color: #f97316;">500 C, 150 R | -120 kW</span>
+          </button>
+          <button class="action-btn btn-structure-choice" data-type="RepairFacility" style="justify-content: space-between; border-color: #10b981;">
+            <span>🔧 Vehicle Repair Depot</span>
+            <span style="font-size: 10px; color: #34d399;">250 C, 50 R | -60 kW</span>
+          </button>
+          <button class="action-btn btn-structure-choice" data-type="GuardPost" style="justify-content: space-between; border-color: #ef4444;">
+            <span>🛡️ Guard Post Turret</span>
+            <span style="font-size: 10px; color: #f87171;">250 C, 50 R | -50 kW</span>
+          </button>
+          <button class="action-btn btn-structure-choice" data-type="Spaceport" style="justify-content: space-between; border-color: #a855f7;">
+            <span>🚀 Starship Gantry</span>
+            <span style="font-size: 10px; color: #c084fc;">800 C, 350 R | -160 kW</span>
+          </button>
+        </div>
+      </aside>
+
+      <!-- Tactical Radar Minimap -->
+      <aside id="minimap-card">
+        <div id="minimap-header">
+          <span id="minimap-title">Tactical Radar</span>
+          <span id="radar-sweep" style="color: #4ade80;">ACTIVE</span>
+        </div>
+        <canvas id="minimap-canvas"></canvas>
+      </aside>
+    </main>
+
+    <!-- Bottom Command Controls -->
+    <footer id="bottom-bar">
+      <div style="display: flex; gap: 8px;">
+        <button class="action-btn" id="btn-build">🏗️ Build Base</button>
+        <button class="action-btn" id="btn-units">🚜 Units</button>
+        <button class="action-btn" id="btn-research">🔬 Research</button>
+        <button class="action-btn" id="btn-multiplayer" style="border-color: #818cf8; color: #c7d2fe;">📡 Multiplayer</button>
+        <button class="action-btn" id="btn-save">💾 Save</button>
+        <button class="action-btn" id="btn-load">📂 Load</button>
+      </div>
+
+      <!-- Live Research Status Toast -->
+      <div id="research-toast" style="font-size: 11px; font-weight: 500; color: #38bdf8; display: none;"></div>
+
+      <div style="display: flex; gap: 8px;">
+        <button class="action-btn" id="btn-zoom-in">🔍 +</button>
+        <button class="action-btn" id="btn-zoom-out">🔍 -</button>
+        <button class="action-btn" id="btn-briefing">📋 Briefing</button>
+        <button class="action-btn" id="btn-music">🎵 Music</button>
+        <button class="action-btn" id="btn-sfx">🔊 SFX: ON</button>
+        <button class="action-btn" id="btn-pause">⏸️ Pause</button>
+        <button class="action-btn" id="btn-fullscreen">⛶ Fullscreen</button>
+      </div>
+    </footer>
+
+    <!-- Campaign Mission Briefing Modal -->
+    <div id="briefing-modal" style="position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 50;">
+      <div style="background: #11151c; border: 2px solid var(--op2-accent-eden); border-radius: 8px; width: 520px; max-width: 90vw; padding: 24px; box-shadow: 0 12px 36px rgba(0,0,0,0.8); display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--op2-border); padding-bottom: 10px;">
+          <h2 id="briefing-title" style="font-size: 15px; color: var(--op2-accent-eden); font-weight: bold;">Operation New Dawn — Sector Eden Prime</h2>
+          <button id="btn-close-briefing" style="background: none; border: none; color: var(--op2-muted); font-size: 18px; cursor: pointer;">✕</button>
+        </div>
+        <p id="briefing-text" style="font-size: 12px; line-height: 1.6; color: var(--op2-text); white-space: pre-line;">Colonists of the Eden Foundation: After the catastrophic failure of the Starship Conestoga, our landing site on New Terra must be secured immediately. Volcanic tremors indicate rising magma fissures nearby, and rogue Plymouth raiders have established aggressive perimeter posts.
+
+Secure colonial life support, automate freight ore hauling, commission defensive railgun armor, and advance planetary research to ensure the survival of our species.</p>
+        <div style="background: #1a202c; border: 1px solid var(--op2-border); border-radius: 6px; padding: 12px;">
+          <h3 style="font-size: 12px; color: #facc15; font-weight: bold; margin-bottom: 8px;">Primary Directives:</h3>
+          <ul id="briefing-objectives" style="font-size: 11px; line-height: 1.6; list-style-position: inside; color: #cbd5e1;">
+            <li>Stockpile 3,000t Common Ore and 600t Rare Ore</li>
+            <li>Deploy and commission at least 2 armed combat tanks</li>
+            <li>Complete scientific research in any primary discipline</li>
+            <li>Protect the colony Command Center from hostile destruction</li>
+          </ul>
+        </div>
+        <button class="action-btn" id="btn-ack-briefing" style="align-self: flex-end; padding: 8px 18px; background: var(--op2-accent-eden); color: #000; font-weight: bold;">Acknowledge Directive</button>
+      </div>
+    </div>
+
+    <!-- Scientific Research & Technology Matrix Modal -->
+    <div id="tech-modal" style="position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 50;">
+      <div style="background: #11151c; border: 2px solid #38bdf8; border-radius: 8px; width: 620px; max-width: 92vw; max-height: 85vh; padding: 20px; box-shadow: 0 12px 36px rgba(0,0,0,0.8); display: flex; flex-direction: column; gap: 12px; overflow: hidden;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--op2-border); padding-bottom: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 18px;">🔬</span>
+            <h2 style="font-size: 15px; color: #38bdf8; font-weight: bold; margin: 0;">Colonial Scientific Research Matrix</h2>
+          </div>
+          <button id="btn-close-tech" style="background: none; border: none; color: var(--op2-muted); font-size: 18px; cursor: pointer;">✕</button>
+        </div>
+        <div id="tech-list" style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding-right: 4px; max-height: 60vh;">
+          <!-- Populated dynamically via Rust -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Peer-to-Peer WebRTC Tactical Multiplayer Lobby Modal -->
+    <div id="multiplayer-modal" style="position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; z-index: 55;">
+      <div style="background: #0f172a; border: 2px solid #818cf8; border-radius: 8px; width: 620px; max-width: 92vw; max-height: 88vh; padding: 22px; box-shadow: 0 16px 48px rgba(0,0,0,0.9); display: flex; flex-direction: column; gap: 14px; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--op2-border); padding-bottom: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 20px;">📡</span>
+            <h2 style="font-size: 15px; color: #818cf8; font-weight: bold; margin: 0;">Tactical WebRTC Peer-to-Peer Network (Serverless)</h2>
+          </div>
+          <button id="btn-close-multiplayer" style="background: none; border: none; color: var(--op2-muted); font-size: 18px; cursor: pointer;">✕</button>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 10px 14px;">
+          <span style="font-size: 12px; color: #94a3b8;">Link Status:</span>
+          <span id="net-status-badge" style="font-size: 11px; font-weight: bold; color: #f87171; background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; border-radius: 4px; padding: 3px 8px;">DISCONNECTED</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <!-- Host Room Section -->
+          <div style="background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
+            <h3 style="font-size: 12px; color: #a5b4fc; font-weight: bold; margin: 0;">1. Host Command Room</h3>
+            <p style="font-size: 11px; color: #94a3b8; margin: 0;">Initialize a serverless session description as Commander.</p>
+            <button class="action-btn" id="btn-net-host" style="background: #3730a3; border-color: #6366f1; color: #e0e7ff; padding: 6px 12px;">Create Host Room (Generate Offer)</button>
+            <textarea id="net-offer-out" readonly placeholder="Base64 Host Offer will appear here..." style="width: 100%; height: 60px; background: #0f172a; border: 1px solid #334155; border-radius: 4px; color: #38bdf8; font-family: monospace; font-size: 9px; padding: 6px; resize: none;"></textarea>
+            <button class="action-btn" id="btn-copy-offer" style="background: #1e293b; border-color: #475569; padding: 4px 8px; font-size: 10px;">📋 Copy Offer to Clipboard</button>
+            
+            <span style="font-size: 10px; color: #94a3b8; margin-top: 4px;">Paste Guest Answer below:</span>
+            <textarea id="net-answer-in" placeholder="Paste Base64 Guest Answer here..." style="width: 100%; height: 50px; background: #0f172a; border: 1px solid #334155; border-radius: 4px; color: #facc15; font-family: monospace; font-size: 9px; padding: 6px; resize: none;"></textarea>
+            <button class="action-btn" id="btn-accept-answer" style="background: #065f46; border-color: #10b981; color: #6ee7b7; padding: 6px 12px;">Lock Connection</button>
+          </div>
+
+          <!-- Join Room Section -->
+          <div style="background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
+            <h3 style="font-size: 12px; color: #67e8f9; font-weight: bold; margin: 0;">2. Join Rival Outpost</h3>
+            <p style="font-size: 11px; color: #94a3b8; margin: 0;">Paste the Host Offer to join the operational theater.</p>
+            <textarea id="net-offer-in" placeholder="Paste Base64 Host Offer here..." style="width: 100%; height: 60px; background: #0f172a; border: 1px solid #334155; border-radius: 4px; color: #38bdf8; font-family: monospace; font-size: 9px; padding: 6px; resize: none;"></textarea>
+            <button class="action-btn" id="btn-net-join" style="background: #0e7490; border-color: #06b6d4; color: #cffafe; padding: 6px 12px;">Accept Offer & Generate Answer</button>
+            <textarea id="net-answer-out" readonly placeholder="Base64 Guest Answer will appear here..." style="width: 100%; height: 60px; background: #0f172a; border: 1px solid #334155; border-radius: 4px; color: #facc15; font-family: monospace; font-size: 9px; padding: 6px; resize: none;"></textarea>
+            <button class="action-btn" id="btn-copy-answer" style="background: #1e293b; border-color: #475569; padding: 4px 8px; font-size: 10px;">📋 Copy Answer (Send to Host)</button>
+          </div>
+        </div>
+
+        <!-- Tactical Multiplayer Chat -->
+        <div style="background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; font-weight: bold; color: #cbd5e1;">Tactical Subspace Comms:</span>
+          <div id="net-chat-log" style="height: 70px; background: #0f172a; border: 1px solid #334155; border-radius: 4px; padding: 6px; overflow-y: auto; font-family: monospace; font-size: 11px; color: #94a3b8;">
+            <div style="color: #64748b;">[System] WebRTC signaling ready. Awaiting remote commander handshake.</div>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <input type="text" id="net-chat-input" placeholder="Transmit tactical order to remote commander..." style="flex: 1; background: #0f172a; border: 1px solid #334155; border-radius: 4px; color: #f8fafc; font-size: 11px; padding: 4px 8px;">
+            <button class="action-btn" id="btn-net-send-chat" style="padding: 4px 12px; background: #3b82f6;">Transmit</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mission Debriefing & Operational Evaluation Modal -->
+    <div id="debriefing-modal" style="position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; z-index: 60;">
+      <div style="background: #0f172a; border: 2px solid #22c55e; border-radius: 8px; width: 560px; max-width: 92vw; padding: 24px; box-shadow: 0 16px 48px rgba(0,0,0,0.9); display: flex; flex-direction: column; gap: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--op2-border); padding-bottom: 10px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span id="debriefing-icon" style="font-size: 20px;">🏆</span>
+            <h2 id="debriefing-title" style="font-size: 16px; color: #4ade80; font-weight: bold; margin: 0;">MISSION ACCOMPLISHED: VICTORY</h2>
+          </div>
+          <button id="btn-close-debriefing" style="background: none; border: none; color: var(--op2-muted); font-size: 18px; cursor: pointer;">✕</button>
+        </div>
+        <p id="debriefing-subtitle" style="font-size: 12px; color: #94a3b8; line-height: 1.5; margin: 0;"></p>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #1e293b; border: 1px solid var(--op2-border); border-radius: 6px; padding: 12px;">
+          <div>
+            <span style="font-size: 10px; color: var(--op2-muted); text-transform: uppercase;">Colony Duration:</span>
+            <div id="debriefing-sol" style="font-size: 14px; font-weight: bold; color: #facc15;">0.00 Sols</div>
+          </div>
+          <div>
+            <span style="font-size: 10px; color: var(--op2-muted); text-transform: uppercase;">Evacuation Readiness:</span>
+            <div id="debriefing-starship" style="font-size: 14px; font-weight: bold; color: #a855f7;">0% Assembled</div>
+          </div>
+          <div>
+            <span style="font-size: 10px; color: var(--op2-muted); text-transform: uppercase;">Survivors / Morale:</span>
+            <div id="debriefing-pop" style="font-size: 14px; font-weight: bold; color: #4ade80;">120 Pop | 100%</div>
+          </div>
+          <div>
+            <span style="font-size: 10px; color: var(--op2-muted); text-transform: uppercase;">Refined Reserves:</span>
+            <div id="debriefing-ore" style="font-size: 14px; font-weight: bold; color: #38bdf8;">0 C | 0 R</div>
+          </div>
+        </div>
+
+        <div style="background: #1e293b; border: 1px solid var(--op2-border); border-radius: 6px; padding: 10px;">
+          <span style="font-size: 10px; color: var(--op2-muted); text-transform: uppercase; margin-bottom: 6px; display: block;">Directive Performance Checklist:</span>
+          <ul id="debriefing-checklist" style="font-size: 11px; line-height: 1.7; list-style: none; padding: 0; margin: 0;">
+            <!-- Populated dynamically via Rust -->
+          </ul>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px;">
+          <button class="action-btn" id="btn-debriefing-continue" style="background: #334155; padding: 8px 14px;">▶️ Continue Sandbox</button>
+          <button class="action-btn" id="btn-debriefing-restart" style="background: #7f1d1d; border-color: #ef4444; padding: 8px 14px;">🔄 Restart Mission</button>
+          <button class="action-btn" id="btn-debriefing-next" style="background: #166534; border-color: #22c55e; padding: 8px 16px; font-weight: bold; color: #fff;">🌐 Next Mission</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // PWA Offline Service Worker Registration with Graceful Degradation
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((registration) => {
+            console.log('[PWA] Service Worker registered successfully with scope:', registration.scope);
+            registration.onupdatefound = () => {
+              const installingWorker = registration.installing;
+              if (installingWorker) {
+                installingWorker.onstatechange = () => {
+                  if (installingWorker.state === 'installed') {
+                    if (navigator.serviceWorker.controller) {
+                      console.log('[PWA] New Outpost 2 version available. Content cached for offline gameplay.');
+                    } else {
+                      console.log('[PWA] Outpost 2 assets pre-cached! Ready for complete offline play.');
+                    }
+                  }
+                };
+              }
+            };
+          })
+          .catch((error) => {
+            console.warn('[PWA] Service Worker registration failed; continuing in standard web mode:', error);
+          });
+      });
+    } else {
+      console.log('[PWA] Service Worker not supported on this browser platform; running in standard online/fallback mode.');
+    }
+  </script>
+</body>
+</html>
