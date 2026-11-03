@@ -19,6 +19,7 @@ pub enum StructureType {
     Agrodome,
     VehicleFactory,
     RepairFacility,
+    GuardPost,
     Spaceport,
 }
 
@@ -36,6 +37,7 @@ impl StructureType {
             Self::Agrodome => "Bio-Dome Hydroponics",
             Self::VehicleFactory => "Vehicle Factory",
             Self::RepairFacility => "Vehicle Repair Depot",
+            Self::GuardPost => "Guard Post Turret",
             Self::Spaceport => "Starship Launch Gantry",
         }
     }
@@ -47,6 +49,7 @@ impl StructureType {
             Self::TokamakReactor => (3, 3),
             Self::VehicleFactory => (3, 3),
             Self::RepairFacility => (2, 2),
+            Self::GuardPost => (2, 2),
             Self::Spaceport => (3, 3),
             _ => (2, 2),
         }
@@ -65,6 +68,7 @@ impl StructureType {
             Self::Agrodome => 30,
             Self::VehicleFactory => 120,
             Self::RepairFacility => 60,
+            Self::GuardPost => 50,
             Self::Spaceport => 160,
         }
     }
@@ -83,6 +87,7 @@ impl StructureType {
             Self::Agrodome => (200, 50),
             Self::VehicleFactory => (500, 150),
             Self::RepairFacility => (250, 50),
+            Self::GuardPost => (250, 50),
             Self::Spaceport => (800, 350),
         }
     }
@@ -100,6 +105,7 @@ impl StructureType {
             "Bio-Dome Hydroponics" => Some(Self::Agrodome),
             "Vehicle Factory" => Some(Self::VehicleFactory),
             "Vehicle Repair Depot" => Some(Self::RepairFacility),
+            "Guard Post Turret" | "Guard Post" => Some(Self::GuardPost),
             "Starship Launch Gantry" => Some(Self::Spaceport),
             _ => None,
         }

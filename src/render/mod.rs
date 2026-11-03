@@ -355,6 +355,98 @@ impl Viewport {
                 ctx.set_font(&format!("bold {}px sans-serif", (10.0 * self.zoom).max(9.0)));
                 let _ = ctx.fill_text("➕", sx - 5.0 * self.zoom, sy - b_h - 22.0 * self.zoom);
             }
+
+            // Common & Rare Ore Smelter Industrial Processing Visuals
+            if b.name.contains("Smelter") && b.is_active && fog == FogState::Visible {
+                let is_rare = b.name.contains("Rare");
+                let heat_cycle = (colony.sol * 6.0).sin().abs();
+
+                // Molten crucible vat in center
+                let vat_color = if is_rare {
+                    format!("rgba(192, 132, 252, {:.2})", 0.6 + 0.35 * heat_cycle)
+                } else {
+                    format!("rgba(249, 115, 22, {:.2})", 0.6 + 0.35 * heat_cycle)
+                };
+                ctx.set_fill_style_str(&vat_color);
+                ctx.begin_path();
+                let _ = ctx.arc(sx, sy, 8.0 * self.zoom, 0.0, std::f64::consts::TAU);
+                ctx.fill();
+
+                // Molten heat glow ring
+                let ring_color = if is_rare {
+                    format!("rgba(168, 85, 247, {:.2})", 0.3 + 0.3 * heat_cycle)
+                } else {
+                    format!("rgba(239, 68, 68, {:.2})", 0.3 + 0.3 * heat_cycle)
+                };
+                ctx.set_stroke_style_str(&ring_color);
+                ctx.set_line_width(2.0 * self.zoom);
+                ctx.begin_path();
+                let _ = ctx.arc(sx, sy, (12.0 + 3.0 * heat_cycle) * self.zoom, 0.0, std::f64::consts::TAU);
+                ctx.stroke();
+
+                // Smokestack exhaust plumes drifting upwards
+                for i in 0..3 {
+                    let puff_offset = (colony.sol * 4.0 + i as f64 * 1.8) % 6.0;
+                    let puff_y = sy - b_h - (12.0 + puff_offset * 7.0) * self.zoom;
+                    let puff_x = sx + (puff_offset * 1.5 - 2.0 + (i as f64 * 4.0 - 4.0)) * self.zoom;
+                    let puff_alpha = (1.0 - (puff_offset / 6.0)).max(0.0) * 0.45;
+                    let puff_rad = (3.0 + puff_offset * 1.2) * self.zoom;
+
+                    ctx.set_fill_style_str(&if is_rare {
+                        format!("rgba(147, 197, 253, {:.2})", puff_alpha)
+                    } else {
+                        format!("rgba(254, 215, 170, {:.2})", puff_alpha)
+                    });
+                    ctx.begin_path();
+                    let _ = ctx.arc(puff_x, puff_y, puff_rad, 0.0, std::f64::consts::TAU);
+                    ctx.fill();
+                }
+            }
+
+            // Guard Post Automated Perimeter Defense Turret
+            if b.name.contains("Guard") && fog == FogState::Visible {
+                // Fortified hexagonal bunker core
+                ctx.set_fill_style_str(if b.is_active { "#1e293b" } else { "#0f172a" });
+                ctx.set_stroke_style_str(if b.is_active { "#ef4444" } else { "#475569" });
+                ctx.set_line_width(2.0 * self.zoom);
+                ctx.begin_path();
+                let _ = ctx.arc(sx, sy, 10.0 * self.zoom, 0.0, std::f64::consts::TAU);
+                ctx.fill();
+                ctx.stroke();
+
+                if b.is_active {
+                    // Rotating Turret Head aiming either toward scan angle or animated rotation
+                    let turret_angle = colony.sol * 2.5;
+                    let barrel_len = 14.0 * self.zoom;
+                    let barrel_end_x = sx + turret_angle.cos() * barrel_len;
+                    let barrel_end_y = sy + turret_angle.sin() * barrel_len;
+
+                    // Dual twin laser/plasma barrels
+                    let norm_x = -turret_angle.sin() * 3.0 * self.zoom;
+                    let norm_y = turret_angle.cos() * 3.0 * self.zoom;
+
+                    ctx.set_stroke_style_str("#ef4444");
+                    ctx.set_line_width(2.5 * self.zoom);
+                    ctx.begin_path();
+                    ctx.move_to(sx + norm_x, sy + norm_y);
+                    ctx.line_to(barrel_end_x + norm_x, barrel_end_y + norm_y);
+                    ctx.move_to(sx - norm_x, sy - norm_y);
+                    ctx.line_to(barrel_end_x - norm_x, barrel_end_y - norm_y);
+                    ctx.stroke();
+
+                    // Turret cupola dome
+                    ctx.set_fill_style_str("#dc2626");
+                    ctx.begin_path();
+                    let _ = ctx.arc(sx, sy, 5.0 * self.zoom, 0.0, std::f64::consts::TAU);
+                    ctx.fill();
+
+                    // Laser diode targeting reticle indicator
+                    ctx.set_fill_style_str("#f87171");
+                    ctx.begin_path();
+                    let _ = ctx.arc(barrel_end_x, barrel_end_y, 2.0 * self.zoom, 0.0, std::f64::consts::TAU);
+                    ctx.fill();
+                }
+            }
         }
 
         // Render Units (Only visible when active in sensor range)

@@ -49,6 +49,10 @@ impl AudioManager {
         self.muted
     }
 
+    pub fn is_muted(&self) -> bool {
+        self.muted
+    }
+
     /// Play futuristic sci-fi UI confirmation beep
     pub fn play_ui_beep(&self) {
         if self.muted {

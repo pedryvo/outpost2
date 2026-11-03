@@ -53,7 +53,9 @@ Ziel ist es, den Strategieklassiker in modernen Webbrowsern mit nativer Leistung
 | **Nebel des Krieges & Radar** | ✅ | 3-stufiges Sichtbarkeitssystem (Unerforscht, Erforscht, Sichtbar) · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
 | **Kolonie-Simulationskern** | ✅ | Eden- & Plymouth-Logistik: Strom, Lebenserhaltung, Erz, Moral und Katastrophen · [`docs/formats/disasters.md`](docs/formats/disasters.md) |
 | **Gebäude & Röhrennetzwerk** | ✅ | Modulare Baukits & druckbelüftete Transportröhren · [`docs/formats/structures_and_tubes.md`](docs/formats/structures_and_tubes.md) |
-| **Interaktiver Bauhof** | ✅ | Ausziehbare Bauplan-Schublade (11 Gebäude), holografische Geister-Platzierung & Röhrenprojektion |
+| **Interaktiver Bauhof** | ✅ | Ausziehbare Bauplan-Schublade (12 Gebäude), holografische Geister-Platzierung & Röhrenprojektion |
+| **Wachposten-Verteidigungstürme** | ✅ | Automatische Verteidigungstürme mit dualen Schnellfeuer-Kanonen und Laserzielerfassung |
+| **Erzschmelze & Rauchschwaden** | ✅ | Animierte Glühzyklen flüssigen Metalls in Schmelztiegeln und aufsteigende Rauchfahnen |
 | **Gebäude-Recycling & Rückbau** | ✅ | Abbruch von Strukturen für 50% Erz-Rückerstattung und automatische Stromgitter-Neubalancierung |
 | **Einheitensteuerung & 8-Wege-A\*** | ✅ | A*-Pfadfindung auf isometrischem Gitter mit Rechtsklick-Befehlen · [`docs/ENGINE_ARCHITECTURE.md`](docs/ENGINE_ARCHITECTURE.md) |
 | **Taktische Rahmen-Mehrfachauswahl**| ✅ | Auswahlrahmen mit Sci-Fi-Winkelretikeln und Shift-Gruppierung |

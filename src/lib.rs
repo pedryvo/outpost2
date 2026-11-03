@@ -531,6 +531,7 @@ pub fn start() -> Result<(), JsValue> {
                         "Residence" => sim::structures::StructureType::Residence,
                         "VehicleFactory" => sim::structures::StructureType::VehicleFactory,
                         "RepairFacility" => sim::structures::StructureType::RepairFacility,
+                        "GuardPost" => sim::structures::StructureType::GuardPost,
                         "Spaceport" => sim::structures::StructureType::Spaceport,
                         _ => sim::structures::StructureType::SolarArray,
                     };
@@ -854,7 +855,9 @@ pub fn start() -> Result<(), JsValue> {
                         }
                     }
 
-                    audio::radio::RadioDispatcher::announce(&format!("Tactical computer initialized: {}", g.colony.mission.codename));
+                    if !g.audio.is_muted() {
+                        audio::radio::RadioDispatcher::announce(&format!("Tactical computer initialized: {}", g.colony.mission.codename));
+                    }
                 }
             }
         }) as Box<dyn FnMut(_)>);
@@ -903,6 +906,7 @@ pub fn start() -> Result<(), JsValue> {
     setup_queue_btn("btn-queue-convec", "ConVec", app.clone(), document.clone());
     setup_queue_btn("btn-queue-convec-smelter", "ConVec (Smelter)", app.clone(), document.clone());
     setup_queue_btn("btn-queue-convec-solar", "ConVec (Solar)", app.clone(), document.clone());
+    setup_queue_btn("btn-queue-convec-guard", "ConVec (Guard)", app.clone(), document.clone());
     setup_queue_btn("btn-queue-starship", "Starship Component", app.clone(), document.clone());
 
     if let Some(btn) = document.get_element_by_id("btn-toggle-power") {
@@ -1300,6 +1304,9 @@ pub fn start() -> Result<(), JsValue> {
             let mut g = app_clone.borrow_mut();
             let _ = g.audio.init();
             let muted = g.audio.toggle_mute();
+            if muted {
+                audio::radio::RadioDispatcher::silence();
+            }
             if let Some(target) = e.target() {
                 if let Ok(btn_el) = target.dyn_into::<web_sys::HtmlElement>() {
                     let label = if muted { "🔇 SFX: OFF" } else { "🔊 SFX: ON" };
@@ -1345,7 +1352,9 @@ pub fn start() -> Result<(), JsValue> {
         let sim_result = app_borrow.colony.update(dt.min(0.1));
 
         if let Some(warning) = sim_result.notice {
-            audio::radio::RadioDispatcher::announce(warning);
+            if !app_borrow.audio.is_muted() {
+                audio::radio::RadioDispatcher::announce(warning);
+            }
             if let Some(toast) = document.get_element_by_id("research-toast") {
                 toast.set_text_content(Some(warning));
                 let _ = toast.set_attribute("style", "font-size: 11px; font-weight: bold; color: #f97316; display: block;");

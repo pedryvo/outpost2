@@ -68,6 +68,8 @@ pub struct Building {
     pub is_selected: bool,
     pub production_queue: Vec<String>,
     pub production_progress: f64,
+    #[serde(default)]
+    pub attack_cooldown: f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -166,6 +168,7 @@ impl ColonyState {
             is_selected: false,
             production_queue: Vec::new(),
             production_progress: 0.0,
+            attack_cooldown: 0.0,
         });
 
         // Solar Array
@@ -181,6 +184,7 @@ impl ColonyState {
             is_selected: false,
             production_queue: Vec::new(),
             production_progress: 0.0,
+            attack_cooldown: 0.0,
         });
 
         // Common Ore Smelter
@@ -196,6 +200,7 @@ impl ColonyState {
             is_selected: false,
             production_queue: Vec::new(),
             production_progress: 0.0,
+            attack_cooldown: 0.0,
         });
 
         if scenario_id == 1 {
@@ -212,6 +217,7 @@ impl ColonyState {
                 is_selected: false,
                 production_queue: Vec::new(),
                 production_progress: 0.0,
+                attack_cooldown: 0.0,
             });
         }
 
@@ -513,7 +519,7 @@ impl ColonyState {
         }
 
         // Apply weapon damage and spawn beams/explosions
-        let laser_fired = !combat_events.is_empty();
+        let mut laser_fired = !combat_events.is_empty();
         let mut destroyed_units = Vec::new();
         for (target_id, from_pos, to_pos, weapon, dmg) in combat_events {
             self.active_beams.push(CombatBeam {
@@ -530,6 +536,54 @@ impl ColonyState {
                 target.hp = target.hp.saturating_sub(dmg);
                 if target.hp == 0 {
                     destroyed_units.push((target.tile_x as f64, target.tile_y as f64));
+                }
+            }
+        }
+
+        // Automated Guard Post Perimeter Turret Defense
+        let player_faction = self.faction;
+        let laser_bonus = self.tech_tree.laser_damage_bonus();
+        for b in &mut self.buildings {
+            if b.name.contains("Guard") && b.is_active {
+                b.attack_cooldown -= dt_secs;
+                if b.attack_cooldown <= 0.0 {
+                    let bx = b.tile_x as f64 + (b.width as f64 * 0.5);
+                    let by = b.tile_y as f64 + (b.height as f64 * 0.5);
+                    let max_range = 6.5;
+                    let mut closest_target = None;
+                    let mut min_d = max_range;
+
+                    for &(other_id, other_faction, ox, oy, other_hp) in &unit_positions {
+                        if other_faction != player_faction && other_hp > 0 {
+                            let dist = ((ox - bx).powi(2) + (oy - by).powi(2)).sqrt();
+                            if dist <= min_d {
+                                min_d = dist;
+                                closest_target = Some((other_id, ox, oy));
+                            }
+                        }
+                    }
+
+                    if let Some((target_id, tx, ty)) = closest_target {
+                        b.attack_cooldown = 1.1; // Rapid automated defensive cannon
+                        laser_fired = true;
+                        self.active_beams.push(CombatBeam {
+                            from_x: bx,
+                            from_y: by,
+                            to_x: tx,
+                            to_y: ty,
+                            color: "#ef4444",
+                            lifetime: 0.22,
+                            max_lifetime: 0.22,
+                        });
+
+                        let dmg = 25 + laser_bonus;
+                        if let Some(target) = self.units.iter_mut().find(|u| u.id == target_id) {
+                            target.hp = target.hp.saturating_sub(dmg);
+                            if target.hp == 0 {
+                                destroyed_units.push((target.tile_x as f64, target.tile_y as f64));
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -805,6 +859,27 @@ impl ColonyState {
                         cargo_kit: Some("Solar Power Array".to_string()),
                     });
                     unit_notice = Some("FABRICATION COMPLETE: ConVec pre-loaded with Solar Array Kit.");
+                }
+                "ConVec (Guard)" => {
+                    self.units.push(Unit {
+                        id: next_id,
+                        name: format!("ConVec #{}", next_id),
+                        faction: self.faction,
+                        tile_x: spawn_x,
+                        tile_y: spawn_y,
+                        hp: 180,
+                        max_hp: 180,
+                        is_selected: false,
+                        current_order: UnitOrder::Idle,
+                        path: Vec::new(),
+                        move_cooldown: 0.0,
+                        weapon: None,
+                        attack_cooldown: 0.0,
+                        cargo: None,
+                        hauler_state: None,
+                        cargo_kit: Some("Guard Post Turret".to_string()),
+                    });
+                    unit_notice = Some("FABRICATION COMPLETE: ConVec pre-loaded with Guard Post Turret Kit.");
                 }
                 "ConVec (Agridome)" => {
                     self.units.push(Unit {
@@ -1251,6 +1326,7 @@ impl ColonyState {
             is_selected: false,
             production_queue: Vec::new(),
             production_progress: 0.0,
+            attack_cooldown: 0.0,
         };
 
         // Connect new structure to the nearest existing building via pressurized transport tube
@@ -1324,6 +1400,7 @@ impl ColonyState {
             is_selected: false,
             production_queue: Vec::new(),
             production_progress: 0.0,
+            attack_cooldown: 0.0,
         };
 
         // Mark map tiles as wall or building
@@ -1412,6 +1489,7 @@ impl ColonyState {
             "ConVec" => (150, 0),
             "ConVec (Smelter)" => (450, 50),
             "ConVec (Solar)" => (320, 0),
+            "ConVec (Guard)" => (350, 50),
             "ConVec (Agridome)" => (320, 50),
             "Starship Component" => (500, 200),
             _ => (100, 0),

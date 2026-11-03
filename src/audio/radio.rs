@@ -20,9 +20,18 @@ export function speakTacticalAlert(text) {
         // Graceful fallback if audio permissions are restricted
     }
 }
+
+export function cancelSpeechAlerts() {
+    try {
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+        }
+    } catch (e) {}
+}
 "#)]
 extern "C" {
     pub fn speakTacticalAlert(text: &str);
+    pub fn cancelSpeechAlerts();
 }
 
 pub struct RadioDispatcher;
@@ -30,5 +39,9 @@ pub struct RadioDispatcher;
 impl RadioDispatcher {
     pub fn announce(msg: &str) {
         speakTacticalAlert(msg);
+    }
+
+    pub fn silence() {
+        cancelSpeechAlerts();
     }
 }

@@ -53,7 +53,9 @@ _Sierra 和 Dynamix 经典硬科幻即时战略游戏，<br>专为现代浏览�
 | **战争迷雾与战术雷达** | ✅ | 三层视野状态（未探索、已探索、完全可见） · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
 | **殖民地模拟核心** | ✅ | 伊甸与普利茅斯物流：电力平衡、生命维持、采矿与地质灾害 · [`docs/formats/disasters.md`](docs/formats/disasters.md) |
 | **建筑与承压运输管道** | ✅ | 模块化建筑组装与正交加压运输管道网络 · [`docs/formats/structures_and_tubes.md`](docs/formats/structures_and_tubes.md) |
-| **交互式建造厂抽屉** | ✅ | 11 大建筑滑动蓝图抽屉、全息虚影预览与连接管道自动投射 |
+| **交互式建造厂抽屉** | ✅ | 12 大建筑滑动蓝图抽屉、全息虚影预览与连接管道自动投射 |
+| **岗哨防御炮塔 Guard Post** | ✅ | 自动化基地外围防御炮塔，配备双联防空反装甲速射炮与激光瞄准 |
+| **矿石冶炼厂与排气烟羽** | ✅ | 熔炉金属熔池呼吸光效、发热循环动画与烟囱升腾排气烟羽 |
 | **建筑拆解与资源回收** | ✅ | 拆除受损或废弃建筑，返还 50% 矿石成本并重平衡电网负荷 |
 | **单位控制与八方向 A\*** | ✅ | 等轴测八方向 A* 路径规划、右键指令 · [`docs/ENGINE_ARCHITECTURE.md`](docs/ENGINE_ARCHITECTURE.md) |
 | **框选多选与战术标线** | ✅ | 经典多单位拖拽框选、高科技直角瞄准标线与 Shift 增选 |
