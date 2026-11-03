@@ -1,6 +1,11 @@
 //! Outpost 2 Colony Simulation and Game State
 
+pub mod map;
+
 use serde::{Deserialize, Serialize};
+use map::GameMap;
+
+const DEFAULT_MAP_DATA: &[u8] = include_bytes!("../../assets/eden01.map");
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Faction {
@@ -31,7 +36,7 @@ pub struct Building {
     pub is_active: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct ColonyState {
     pub faction: Faction,
     pub sol: f64,
@@ -44,6 +49,7 @@ pub struct ColonyState {
     pub food_units: u32,
     pub units: Vec<Unit>,
     pub buildings: Vec<Building>,
+    pub game_map: GameMap,
 }
 
 impl ColonyState {
@@ -106,6 +112,13 @@ impl ColonyState {
             is_selected: false,
         });
 
+        let game_map = GameMap::parse(DEFAULT_MAP_DATA)
+            .unwrap_or_else(|_| GameMap {
+                width: 64,
+                height: 64,
+                tiles: Vec::new(),
+            });
+
         Self {
             faction,
             sol: 1.0,
@@ -118,6 +131,7 @@ impl ColonyState {
             food_units: 1400,
             units,
             buildings,
+            game_map,
         }
     }
 

@@ -60,15 +60,27 @@ impl Viewport {
                     continue;
                 }
 
-                // Authentic New Terra terrain coloration mapped through the 256 master palette
-                let pal_idx = match (c + r * 3) % 7 {
-                    0 | 1 => 45, // Iron-oxide red
-                    2 | 3 => 52, // Highland clay
-                    4 => 18,     // Basalt crater
-                    _ => 78,     // Ore-rich soil
+                let tile = colony.game_map.get_tile(c as u32, r as u32);
+                let terrain_color = if let Some(t) = tile {
+                    if t.is_lava {
+                        "rgb(239,68,68)".to_string() // Molten lava flow
+                    } else if t.is_blight {
+                        "rgb(168,85,247)".to_string() // Microbial blight track
+                    } else {
+                        let pal_idx = match t.cell_type {
+                            0 => 18, // Basalt rock
+                            1 => 45, // Iron-oxide dust
+                            2 => 52, // Highland clay
+                            3 => 78, // Ore-rich soil
+                            _ => 40 + ((t.tile_mapping % 16) as usize),
+                        };
+                        let [pr, pg, pb] = MASTER_PALETTE[pal_idx.min(255)];
+                        format!("rgb({},{},{})", pr, pg, pb)
+                    }
+                } else {
+                    let [pr, pg, pb] = MASTER_PALETTE[45];
+                    format!("rgb({},{},{})", pr, pg, pb)
                 };
-                let [pr, pg, pb] = MASTER_PALETTE[pal_idx];
-                let terrain_color = format!("rgb({},{},{})", pr, pg, pb);
 
                 ctx.set_fill_style_str(&terrain_color);
                 ctx.set_stroke_style_str("#1c1917");

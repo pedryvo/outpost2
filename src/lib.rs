@@ -173,6 +173,26 @@ pub fn start() -> Result<(), JsValue> {
         // Update simulation
         app_borrow.colony.update(dt.min(0.1));
 
+        // Update HUD DOM telemetry values
+        if let Some(el) = document.get_element_by_id("colony-sol") {
+            el.set_text_content(Some(&format!("{:.2}", app_borrow.colony.sol)));
+        }
+        if let Some(el) = document.get_element_by_id("colony-pop") {
+            el.set_text_content(Some(&format!("{} ({}% Morale)", app_borrow.colony.population, app_borrow.colony.morale_pct)));
+        }
+        if let Some(el) = document.get_element_by_id("colony-power") {
+            el.set_text_content(Some(&format!("{} / {} kW", app_borrow.colony.power_produced, app_borrow.colony.power_consumed)));
+        }
+        if let Some(el) = document.get_element_by_id("colony-ore") {
+            el.set_text_content(Some(&format!("{} t", app_borrow.colony.common_ore)));
+        }
+        if let Some(el) = document.get_element_by_id("colony-rare") {
+            el.set_text_content(Some(&format!("{} t", app_borrow.colony.rare_ore)));
+        }
+        if let Some(el) = document.get_element_by_id("colony-food") {
+            el.set_text_content(Some(&format!("{}", app_borrow.colony.food_units)));
+        }
+
         // Render game viewport
         app_borrow.viewport.render(
             &ctx,
