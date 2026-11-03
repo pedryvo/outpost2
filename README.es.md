@@ -6,9 +6,12 @@
 
 [![Rust](https://img.shields.io/badge/rust-1.80+-orange?logo=rust&logoColor=white)](https://www.rust-lang.org/)
 [![WebAssembly](https://img.shields.io/badge/wasm-webassembly-654ff0?logo=webassembly&logoColor=white)](https://webassembly.org/)
+[![CI](https://github.com/pedryvo/outpost2/actions/workflows/ci.yml/badge.svg)](https://github.com/pedryvo/outpost2/actions/workflows/ci.yml)
+[![Versión](https://img.shields.io/badge/versi%C3%B3n-v1.0.0-blue)](docs/RELEASE_V1.0.md)
 [![Estado](https://img.shields.io/badge/estado-completado-brightgreen)](#-progreso)
-[![Fase](https://img.shields.io/badge/fase-7_%E2%80%94_campañas_y_nave-blue)](docs/PLAN.md)
-[![Plataformas](https://img.shields.io/badge/plataformas-Web_%7C_Vercel_%7C_Mobile-lightgrey)](#-ejecutar-el-juego)
+[![Pruebas](https://img.shields.io/badge/pruebas-112%20pasadas-brightgreen)](docs/formats/integration_testing_and_qa.md)
+[![Fase](https://img.shields.io/badge/fase-v1.0.0_%E2%80%94_listo_para_producci%C3%B3n-brightgreen)](docs/PLAN.md)
+[![Plataformas](https://img.shields.io/badge/plataformas-Web_%7C_PWA_%7C_Vercel_%7C_Mobile-lightgrey)](#-ejecutar-el-juego)
 [![Licencia: GPL-3.0](https://img.shields.io/badge/licencia-GPL--3.0--or--later-blue)](LICENSE)
 
 _La obra maestra de estrategia en tiempo real y ciencia ficción de Sierra y Dynamix,<br>reconstruida para ejecutarse de forma nativa en navegadores web modernos, ordenadores y móviles._
@@ -78,7 +81,12 @@ El objetivo es preservar y modernizar este clásico juego de estrategia en tiemp
 | **WebHUD Moderno y Radar Minimapa** | ✅ | Minimapa con niebla de guerra, alertas de desastres (lava, vórtices, meteoros), paneles de fábrica/tecnología y atajos de teclado · [`docs/formats/ui_and_hud.md`](docs/formats/ui_and_hud.md) |
 | **Persistencia y Archivos .op2save** | ✅ | Ranuras en `LocalStorage` (1-5, F5 QuickSave, F9 QuickLoad, AutoSave a 100 Sols) y exportación/importación de `.op2save` · [`docs/formats/save_games_and_lobby.md`](docs/formats/save_games_and_lobby.md) |
 | **Empaquetado WASM y Táctil Móvil** | ✅ | Escalado Retina High-DPI, desbloqueo de audio por interacción, gestos táctiles (zoom por pellizco y arrastre) y paquete optimizado · [`docs/formats/wasm_packaging_and_web_runtime.md`](docs/formats/wasm_packaging_and_web_runtime.md) |
-| **Localización (i18n)** | ✅ | Soporte multilíngue para EN, PT-BR, ES, DE, ZH-CN, RU |
+| **Menú Principal Retro Interactivo y Sistema de Briefing** | ✅ | Menú principal clásico en Canvas, selector de escenarios, cinemáticas narrativas con voz de Kathy Cullis y filtro scanline CRT · [`docs/formats/main_menu_and_briefing.md`](docs/formats/main_menu_and_briefing.md) |
+| **Generador Procedimental de Mapas de Escaramuza (4 Biomas, Simetrías, Conectividad A\*)** | ✅ | Generador equilibrado para escaramuza: 4 biomas (Cuenca Volcánica, Cañones y Riscos, Yermos Corrompidos, Cresta de Obsidiana), simetrías 2 vías/4 vías/espejo y conectividad vehicular A* · [`docs/formats/procedural_map_generator.md`](docs/formats/procedural_map_generator.md) |
+| **PWA Offline con Service Worker y Matriz de Ganancia de Audio** | ✅ | Service Worker Cache-First (`sw.js`), manifiesto e iconos PWA, nodos de ganancia Web Audio (Maestro/SFX/Música) y multiplicadores de velocidad 0.5x–4.0x · [`docs/formats/pwa_and_offline_deployment.md`](docs/formats/pwa_and_offline_deployment.md) |
+| **Telemetría Multijugador WebRTC y Chat Táctico en Partida** | ✅ | Monitor de latencia RTT en tiempo real, estado de sincronización lockstep y chat táctico entre facciones con colores de bando (`[Eden]` / `[Plymouth]`) · [`docs/formats/multiplayer_matchmaking_and_telemetry.md`](docs/formats/multiplayer_matchmaking_and_telemetry.md) |
+| **Motor de Localización en 6 Idiomas en el Juego** | ✅ | Motor de traducción nativo integral para EN, PT-BR, ES, DE, ZH-CN y RU en todos los menús, telemetría del HUD, briefings de campaña y evaluaciones de debriefing · [`docs/formats/i18n_and_localization.md`](docs/formats/i18n_and_localization.md) |
+| **Exhaustiva Suite de QA con 112 Tests Unitarios y de Integración** | ✅ | 108 pruebas unitarias + 4 pruebas de integración extremo a extremo verificando campañas completas, bots de escaramuza, sincronización lockstep WebRTC y persistencia de partidas · [`docs/formats/integration_testing_and_qa.md`](docs/formats/integration_testing_and_qa.md) |
 | **Despliegue Vercel & WASM** | ✅ | Pipeline de Trunk con optimización LTO release (`vercel.json`) |
 
 ---

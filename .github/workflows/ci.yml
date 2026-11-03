@@ -1,13 +1,18 @@
-name: CI & Build Pipeline
+name: CI & Cloud Deployment Pipeline
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build-and-test:
+  test-and-build:
     name: Build & Verify WebAssembly Package
     runs-on: ubuntu-latest
 
@@ -20,21 +25,50 @@ jobs:
         with:
           targets: wasm32-unknown-unknown
 
-      - name: Cache Cargo Dependencies
+      - name: Cache Cargo Dependencies & Target
         uses: Swatinem/rust-cache@v2
+        with:
+          cache-targets: true
 
-      - name: Install Trunk
+      - name: Cache Trunk Executable
+        id: cache-trunk
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/trunk
+          key: trunk-v0.22.1-${{ runner.os }}
+
+      - name: Install Trunk CLI
+        if: steps.cache-trunk.outputs.cache-hit != 'true'
         run: |
-          wget -qO- https://github.com/trunk-rs/trunk/releases/download/v0.22.1/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
-          sudo mv trunk /usr/local/bin/
+          mkdir -p ~/.cargo/bin
+          wget -qO- https://github.com/trunk-rs/trunk/releases/download/v0.22.1/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf- -C ~/.cargo/bin
+          chmod +x ~/.cargo/bin/trunk
 
-      - name: Rust Check
-        run: cargo check --target wasm32-unknown-unknown
+      - name: Run All Tests (112 Unit & Integration Tests)
+        run: cargo test --all --verbose
 
-      - name: Build Trunk Release
+      - name: Verify WebAssembly Target Compilation
+        run: cargo check --target wasm32-unknown-unknown --verbose
+
+      - name: Build Release Web Bundle with Trunk
         run: trunk build --release
 
-      - name: Verify Web Distribution Artifacts
+      - name: Verify Distribution Artifacts
         run: |
-          test -f dist/index.html
+          echo "=== Verifying Production Artifacts ==="
+          test -f dist/index.html || { echo "Missing dist/index.html"; exit 1; }
+          test -f dist/manifest.json || { echo "Missing dist/manifest.json"; exit 1; }
+          test -f dist/sw.js || { echo "Missing dist/sw.js"; exit 1; }
+          test -d dist/icons || { echo "Missing dist/icons directory"; exit 1; }
+          test -d dist/assets/audio || { echo "Missing dist/assets/audio directory"; exit 1; }
+          ls -la dist/*.wasm || { echo "Missing .wasm binary"; exit 1; }
+          ls -la dist/*.js || { echo "Missing js glue bundle"; exit 1; }
+          echo "All production distribution artifacts verified successfully!"
           ls -lh dist/
+
+      - name: Upload Production Release Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: outpost2-production-web-bundle
+          path: dist/
+          retention-days: 7

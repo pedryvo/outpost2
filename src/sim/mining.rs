@@ -11,7 +11,7 @@ pub enum OreType {
     Rare,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct OreDeposit {
     pub id: u32,
     pub ore_type: OreType,

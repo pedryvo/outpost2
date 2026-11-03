@@ -4,6 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Outpost 2: Divided Destiny — WebAssembly Port</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0c0e12">
+  <meta name="description" content="Outpost 2: Divided Destiny — High-Performance WebAssembly Real-Time Strategy & Colony Simulation Port">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Outpost 2">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+  <link data-trunk rel="copy-file" href="manifest.json" />
+  <link data-trunk rel="copy-file" href="sw.js" />
+  <link data-trunk rel="copy-dir" href="icons" />
+  <link data-trunk rel="copy-dir" href="assets" />
   <link data-trunk rel="rust" data-wasm-opt="s" />
   <style>
     :root {
@@ -559,5 +572,36 @@ Secure colonial life support, automate freight ore hauling, commission defensive
       </div>
     </div>
   </div>
+
+  <script>
+    // PWA Offline Service Worker Registration with Graceful Degradation
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((registration) => {
+            console.log('[PWA] Service Worker registered successfully with scope:', registration.scope);
+            registration.onupdatefound = () => {
+              const installingWorker = registration.installing;
+              if (installingWorker) {
+                installingWorker.onstatechange = () => {
+                  if (installingWorker.state === 'installed') {
+                    if (navigator.serviceWorker.controller) {
+                      console.log('[PWA] New Outpost 2 version available. Content cached for offline gameplay.');
+                    } else {
+                      console.log('[PWA] Outpost 2 assets pre-cached! Ready for complete offline play.');
+                    }
+                  }
+                };
+              }
+            };
+          })
+          .catch((error) => {
+            console.warn('[PWA] Service Worker registration failed; continuing in standard web mode:', error);
+          });
+      });
+    } else {
+      console.log('[PWA] Service Worker not supported on this browser platform; running in standard online/fallback mode.');
+    }
+  </script>
 </body>
 </html>

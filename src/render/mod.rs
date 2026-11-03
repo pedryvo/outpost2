@@ -1,12 +1,18 @@
 //! Isometric Viewport and HTML5 Canvas Renderer
 
 pub mod hud;
+pub mod menu;
 pub mod palette;
 pub mod sprites;
 pub mod touch;
 
 #[allow(unused_imports)]
 pub use hud::{HudRenderer, HudState};
+#[allow(unused_imports)]
+pub use menu::{
+    BriefingScenario, ColonySummary, DisasterFrequency, MenuAction, MenuButton, MenuManager,
+    MenuScreen, OptionsState, ResourceAbundance, SkirmishBotSlot, SkirmishConfig,
+};
 #[allow(unused_imports)]
 pub use touch::{
     compute_high_dpi_canvas_dimensions, snap_to_pixel_boundary, HighDpiDimensions,

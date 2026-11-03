@@ -53,6 +53,16 @@ impl Difficulty {
         }
     }
 
+    /// Localized presentation name for skirmish lobby and telemetry
+    pub fn name_localized(&self, lang: crate::i18n::Language) -> &'static str {
+        let dict = crate::i18n::get_dictionary(lang);
+        match self {
+            Self::Easy => dict.skirmish.difficulty_easy,
+            Self::Medium => dict.skirmish.difficulty_medium,
+            Self::Hard => dict.skirmish.difficulty_hard,
+        }
+    }
+
     /// Ore production and mining throughput multiplier
     pub fn resource_multiplier(&self) -> f64 {
         match self {
@@ -133,6 +143,17 @@ impl AiPersonality {
             Self::AggressiveRusher => "Aggressive Rusher (Plymouth Doctrine)",
             Self::DefensiveFortifier => "Defensive Fortifier (Eden Doctrine)",
             Self::EconomicTechRusher => "Economic Tech Rusher",
+            Self::Custom(_) => "Custom AI Doctrine",
+        }
+    }
+
+    /// Localized personality name
+    pub fn name_localized(&self, lang: crate::i18n::Language) -> &'static str {
+        let dict = crate::i18n::get_dictionary(lang);
+        match self {
+            Self::AggressiveRusher => dict.skirmish.personality_aggressive_rusher,
+            Self::DefensiveFortifier => dict.skirmish.personality_defensive_fortifier,
+            Self::EconomicTechRusher => dict.skirmish.personality_economic_tech_rusher,
             Self::Custom(_) => "Custom AI Doctrine",
         }
     }

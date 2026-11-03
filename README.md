@@ -7,9 +7,11 @@
 [![Rust](https://img.shields.io/badge/rust-1.80+-orange?logo=rust&logoColor=white)](https://www.rust-lang.org/)
 [![WebAssembly](https://img.shields.io/badge/wasm-webassembly-654ff0?logo=webassembly&logoColor=white)](https://webassembly.org/)
 [![CI](https://github.com/pedryvo/outpost2/actions/workflows/ci.yml/badge.svg)](https://github.com/pedryvo/outpost2/actions/workflows/ci.yml)
-[![Status](https://img.shields.io/badge/status-active-brightgreen)](#-progress)
-[![Phase](https://img.shields.io/badge/phase-1_%26_2_%E2%80%94_re_%26_rust_engine-blue)](docs/PLAN.md)
-[![Platforms](https://img.shields.io/badge/platforms-Web_%7C_Vercel_%7C_Mobile-lightgrey)](#-running-the-game)
+[![Version](https://img.shields.io/badge/version-v1.0.0-blue)](docs/RELEASE_V1.0.md)
+[![Status](https://img.shields.io/badge/status-completed-brightgreen)](#-progress)
+[![Tests](https://img.shields.io/badge/tests-112%20passed-brightgreen)](docs/formats/integration_testing_and_qa.md)
+[![Phase](https://img.shields.io/badge/phase-v1.0.0_%E2%80%94_production_ready-brightgreen)](docs/PLAN.md)
+[![Platforms](https://img.shields.io/badge/platforms-Web_%7C_PWA_%7C_Vercel_%7C_Mobile-lightgrey)](#-running-the-game)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSE)
 
 _The 1997 hard sci-fi real-time strategy masterpiece by Sierra & Dynamix,<br>re-engineered to run natively in modern web browsers, desktop, and mobile._
@@ -73,7 +75,12 @@ Unlike heavyweight virtual machines or x86 emulators, this port runs natively in
 | **Modern WebHUD & Radar Minimap**| ✅ | Fog-of-war-aware radar display with disaster blips (lava, vortices, meteors), factory/kit panels, research matrix browser, and responsive keyboard shortcuts · [`docs/formats/ui_and_hud.md`](docs/formats/ui_and_hud.md) |
 | **State Persistence & .op2save** | ✅ | Browser `LocalStorage` slots (1-5, F5 QuickSave, F9 QuickLoad, 100-Sol AutoSave), and downloadable/uploadable standalone `.op2save` file archives · [`docs/formats/save_games_and_lobby.md`](docs/formats/save_games_and_lobby.md) |
 | **WASM Packaging & Mobile Touch**| ✅ | High-DPI Retina scaling, audio context gesture unlock, pinch-to-zoom & two-finger pan touch ergonomics, and optimized release bundling · [`docs/formats/wasm_packaging_and_web_runtime.md`](docs/formats/wasm_packaging_and_web_runtime.md) |
-| **Localization (i18n)** | ✅ | Multi-language schema: EN, PT-BR, ES, DE, ZH-CN, RU |
+| **Interactive Retro Main Menu & Scenario Briefing System** | ✅ | Authentically styled canvas main menu, scenario selector, narrative briefing cinematic with Kathy Cullis audio, CRT scanline filter · [`docs/formats/main_menu_and_briefing.md`](docs/formats/main_menu_and_briefing.md) |
+| **Procedural Skirmish Map Generator (4 Biomes, Symmetries, A\* Connectivity)** | ✅ | Balanced procedural skirmish generator: 4 biomes (Volcanic Basin, Canyons & Crags, Blighted Badlands, Obsidian Ridge), 2-way/4-way/mirrored symmetries, A* vehicle connectivity · [`docs/formats/procedural_map_generator.md`](docs/formats/procedural_map_generator.md) |
+| **PWA Offline Service Worker & Audio Mixer Gains** | ✅ | Cache-first Service Worker (`sw.js`), standalone PWA manifest & retina icons, Web Audio master/SFX/music gain nodes, 0.5x–4.0x game speed multipliers · [`docs/formats/pwa_and_offline_deployment.md`](docs/formats/pwa_and_offline_deployment.md) |
+| **Multiplayer WebRTC In-Game Telemetry & Tactical Chat** | ✅ | Real-time RTT latency pills, turn-buffered lockstep sync status, and color-coded faction tactical chat (`[Eden]` / `[Plymouth]`) · [`docs/formats/multiplayer_matchmaking_and_telemetry.md`](docs/formats/multiplayer_matchmaking_and_telemetry.md) |
+| **In-Game 6-Language Localization Engine** | ✅ | Complete native translation engine covering EN, PT-BR, ES, DE, ZH-CN, and RU across all menus, HUD telemetry, campaign briefings, and debriefing evaluations · [`docs/formats/i18n_and_localization.md`](docs/formats/i18n_and_localization.md) |
+| **Exhaustive 112-Test Unit & Integration QA Suite** | ✅ | 108 unit tests + 4 end-to-end integration tests validating campaign progression, multi-bot skirmish autonomy, WebRTC lockstep sync, and state persistence · [`docs/formats/integration_testing_and_qa.md`](docs/formats/integration_testing_and_qa.md) |
 | **Vercel & WASM Ready** | ✅ | Trunk pipeline with release LTO optimization (`vercel.json`) |
 
 ---
@@ -144,17 +151,23 @@ Or connect the repository `pedryvo/outpost2` to your [Vercel Dashboard](https://
 ```
 docs/
   PLAN.md              Development roadmap and task milestones
-  formats/
-    vol_archive.md     Outpost 2 .vol container specification
+  RELEASE_V1.0.md      v1.0.0 Production Release Announcement & Architecture
+  ENGINE_ARCHITECTURE.md High-level engine architectural specification
+  formats/             30+ reverse-engineering & technical subsystem specifications
 re/
   engine_symbols.json  509 exported C++ symbols extracted from Outpost2.exe
 src/
   lib.rs               WebAssembly entry point and game lifecycle
-  archive/             Pure Rust .vol binary parser
-  render/              Isometric tile grid and Canvas2D viewport
-  sim/                 Colony logistics, power, life support, and units
-  ui/                  Modernized sci-fi HUD and tactical minimap
-  audio/               Web Audio manager
+  archive/             Pure Rust .vol binary parser & container extractor
+  render/              Isometric tile grid, Canvas2D viewport & retro menu system
+  sim/                 Colony logistics, procedural map generator, units, AI & mission scripts
+  audio/               Web Audio manager, sound bank & multi-channel gain routing
+  net/                 WebRTC P2P networking, lockstep protocol & lobby state machine
+  i18n.rs              6-language localization dictionary and locale resolver
+tests/
+  integration_test.rs  Exhaustive end-to-end integration test suite
+sw.js                  PWA offline Cache-First service worker
+manifest.json          Progressive Web App installation manifest
 index.html             Web application shell and canvas viewport
 Trunk.toml             Trunk bundler configuration
 vercel.json            High-performance edge headers and WASM mime-types

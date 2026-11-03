@@ -317,6 +317,8 @@ impl SoundBank {
         self.register_embedded("comblit.wav", include_bytes!("../../assets/audio/comblit.wav"));
         self.register_embedded("combhev.wav", include_bytes!("../../assets/audio/combhev.wav"));
         self.register_embedded("scout.wav", include_bytes!("../../assets/audio/scout.wav"));
+        self.register_embedded("repvhc.wav", include_bytes!("../../assets/audio/repvhc.wav"));
+        self.register_embedded("robmine.wav", include_bytes!("../../assets/audio/robmine.wav"));
         self.register_embedded("ag_sel.wav", include_bytes!("../../assets/audio/ag_sel.wav"));
 
         // Tactical Combat Warnings
@@ -326,6 +328,7 @@ impl SoundBank {
         self.register_embedded("savant17.wav", include_bytes!("../../assets/audio/savant17.wav")); // "Warning: Missile launch detected"
         self.register_embedded("savant67.wav", include_bytes!("../../assets/audio/savant67.wav")); // "Lava alert / Volcanic eruption warning"
         self.register_embedded("savant68.wav", include_bytes!("../../assets/audio/savant68.wav")); // "Danger: Volcanic eruption detected"
+        self.register_embedded("savant71.wav", include_bytes!("../../assets/audio/savant71.wav")); // "Vortex detected"
         self.register_embedded("savnt101.wav", include_bytes!("../../assets/audio/savnt101.wav")); // "Evacuate the colony: Volcanic eruption imminent"
 
         // Building & Research Completion Chimes
@@ -726,15 +729,24 @@ mod tests {
     #[test]
     fn test_sound_bank_embedded_preloads() {
         let bank = SoundBank::new();
-        assert!(bank.sample_count() >= 20);
+        assert!(bank.sample_count() >= 23);
         assert!(bank.is_sample_loaded("beep2.wav"));
         assert!(bank.is_sample_loaded("truk_sel.wav"));
+        assert!(bank.is_sample_loaded("dozr_sel.wav"));
+        assert!(bank.is_sample_loaded("combmed.wav"));
+        assert!(bank.is_sample_loaded("comblit.wav"));
+        assert!(bank.is_sample_loaded("combhev.wav"));
+        assert!(bank.is_sample_loaded("scout.wav"));
+        assert!(bank.is_sample_loaded("repvhc.wav"));
+        assert!(bank.is_sample_loaded("robmine.wav"));
         assert!(bank.is_sample_loaded("bld_make.wav"));
         assert!(bank.is_sample_loaded("uni_grad.wav"));
         assert!(bank.is_sample_loaded("savant2.wav"));
         assert!(bank.is_sample_loaded("savant3.wav"));
         assert!(bank.is_sample_loaded("savant4.wav"));
         assert!(bank.is_sample_loaded("savant67.wav"));
+        assert!(bank.is_sample_loaded("savant68.wav"));
+        assert!(bank.is_sample_loaded("savant71.wav"));
         assert!(bank.is_sample_loaded("savnt206.wav"));
     }
 

@@ -6,9 +6,12 @@
 
 [![Rust](https://img.shields.io/badge/rust-1.80+-orange?logo=rust&logoColor=white)](https://www.rust-lang.org/)
 [![WebAssembly](https://img.shields.io/badge/wasm-webassembly-654ff0?logo=webassembly&logoColor=white)](https://webassembly.org/)
+[![CI](https://github.com/pedryvo/outpost2/actions/workflows/ci.yml/badge.svg)](https://github.com/pedryvo/outpost2/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/badge/version-v1.0.0-blue)](docs/RELEASE_V1.0.md)
 [![Status](https://img.shields.io/badge/status-abgeschlossen-brightgreen)](#-fortschritt)
-[![Phase](https://img.shields.io/badge/phase-7_%E2%80%94_kampagnen_und_raumschiff-blue)](docs/PLAN.md)
-[![Plattformen](https://img.shields.io/badge/plattformen-Web_%7C_Vercel_%7C_Mobile-lightgrey)](#-spiel-starten)
+[![Tests](https://img.shields.io/badge/tests-112%20bestanden-brightgreen)](docs/formats/integration_testing_and_qa.md)
+[![Phase](https://img.shields.io/badge/phase-v1.0.0_%E2%80%94_produktionsbereit-brightgreen)](docs/PLAN.md)
+[![Plattformen](https://img.shields.io/badge/plattformen-Web_%7C_PWA_%7C_Vercel_%7C_Mobile-lightgrey)](#-spiel-starten)
 [![Lizenz: GPL-3.0](https://img.shields.io/badge/lizenz-GPL--3.0--or--later-blue)](LICENSE)
 
 _Das Hard-Sci-Fi-Echtzeit-Strategiespiel-Meisterwerk von Sierra und Dynamix,<br>nativ für moderne Webbrowser, Desktops und mobile Geräte neu entwickelt._
@@ -78,7 +81,12 @@ Ziel ist es, den Strategieklassiker in modernen Webbrowsern mit nativer Leistung
 | **Modernes WebHUD & Radar-Minimap** | ✅ | Radar mit Kriegsnebel, Katastrophen-Warnpunkten (Lava, Tornados, Meteore), Fabrik-/Technik-Panels und Tastatur-Shortcuts · [`docs/formats/ui_and_hud.md`](docs/formats/ui_and_hud.md) |
 | **Spielstand-Persistenz & .op2save**| ✅ | `LocalStorage`-Slots (1-5, F5 Quicksave, F9 Quickload, 100-Sol Autosave) sowie Export/Import von `.op2save`-Dateien · [`docs/formats/save_games_and_lobby.md`](docs/formats/save_games_and_lobby.md) |
 | **WASM-Paket & Mobile Touch-Gesten**| ✅ | High-DPI-Retina-Skalierung, Audio-Freischaltung per Touch, 2-Finger-Pinch/Pan und optimiertes Release-Paket · [`docs/formats/wasm_packaging_and_web_runtime.md`](docs/formats/wasm_packaging_and_web_runtime.md) |
-| **Lokalisierung (i18n)** | ✅ | Mehrsprachig: EN, PT-BR, ES, DE, ZH-CN, RU |
+| **Interaktives Retro-Hauptmenü & Einsatz-Briefing-System** | ✅ | Authentisches Canvas-Hauptmenü, Szenario-Wähler, narrative Briefing-Videosequenz mit Kathy-Cullis-Sprachausgabe und CRT-Scanline-Filter · [`docs/formats/main_menu_and_briefing.md`](docs/formats/main_menu_and_briefing.md) |
+| **Prozeduraler Gefechts-Kartengenerator (4 Biome, Symmetrien, A\*-Konnektivität)** | ✅ | Ausgewogener prozeduraler Generator: 4 Biome (Vulkanbecken, Schluchten & Klippen, Verseuchte Ödlande, Obsidian-Kamm), 2-Wege-/4-Wege-/Spiegelsymmetrien und A*-Fahrzeugdurchgängigkeit · [`docs/formats/procedural_map_generator.md`](docs/formats/procedural_map_generator.md) |
+| **Offline-PWA mit Service Worker & Audiomischer-Verstärkung** | ✅ | Cache-First Service Worker (`sw.js`), PWA-Manifest und App-Icons, Web-Audio-Verstärkerknoten (Master/SFX/Musik) sowie Simulationsmultiplikatoren 0.5x–4.0x · [`docs/formats/pwa_and_offline_deployment.md`](docs/formats/pwa_and_offline_deployment.md) |
+| **WebRTC-Mehrspieler-Telemetrie & Taktischer Chat im Spiel** | ✅ | RTT-Echtzeit-Latenzanzeige, Turn-gepufferter Lockstep-Synchronisationsstatus und farbcodierter Fraktionschat (`[Eden]` / `[Plymouth]`) · [`docs/formats/multiplayer_matchmaking_and_telemetry.md`](docs/formats/multiplayer_matchmaking_and_telemetry.md) |
+| **Integriertes 6-Sprachen-Lokalisierungssystem** | ✅ | Vollständige native Übersetzung für EN, PT-BR, ES, DE, ZH-CN und RU über alle Menüs, HUD-Telemetrie, Kampagnen-Briefings und Einsatzbewertungen hinweg · [`docs/formats/i18n_and_localization.md`](docs/formats/i18n_and_localization.md) |
+| **Umfassende QA-Suite mit 112 Unit- & Integrationstests** | ✅ | 108 Unit-Tests + 4 End-to-End-Integrationstests zur Validierung von Kampagnenverläufen, Multi-Bot-Autonomie, WebRTC-Lockstep und Speicherstands-Integrität · [`docs/formats/integration_testing_and_qa.md`](docs/formats/integration_testing_and_qa.md) |
 | **Vercel & WASM-Deployment** | ✅ | Trunk-Build-Pipeline mit Release-LTO-Optimierung (`vercel.json`) |
 
 ---

@@ -27,23 +27,11 @@ pub enum StructureType {
 
 impl StructureType {
     pub fn name(&self) -> &'static str {
-        match self {
-            Self::CommandCenter => "Command Center",
-            Self::SolarArray => "Solar Power Array",
-            Self::TokamakReactor => "Tokamak Fusion Reactor",
-            Self::GeothermalPlant => "Geothermal Power Plant",
-            Self::CommonOreSmelter => "Common Ore Smelter",
-            Self::RareOreSmelter => "Rare Ore Smelter",
-            Self::DirtLab => "D.I.R.T. Laboratory",
-            Self::StandardLab => "Standard Research Lab",
-            Self::Residence => "Colonial Residence",
-            Self::Agrodome => "Bio-Dome Hydroponics",
-            Self::VehicleFactory => "Vehicle Factory",
-            Self::RepairFacility => "Vehicle Repair Depot",
-            Self::GuardPost => "Guard Post Turret",
-            Self::Spaceport => "Starship Launch Gantry",
-            Self::Terraformer => "Atmospheric Terraformer",
-        }
+        self.name_localized(crate::i18n::Language::English)
+    }
+
+    pub fn name_localized(&self, lang: crate::i18n::Language) -> &'static str {
+        crate::i18n::get_dictionary(lang).structure_name(self)
     }
 
     pub fn dimensions(&self) -> (i32, i32) {

@@ -38,6 +38,35 @@ impl MusicEngine {
         }
     }
 
+    /// Initialize procedural music synthesizer connecting to a designated output node (e.g. music_gain)
+    pub fn init_with_output(&mut self, ctx: &AudioContext, output: &GainNode) -> Result<(), JsValue> {
+        if self.ctx.is_none() {
+            let gain = ctx.create_gain()?;
+            gain.gain().set_value(0.12); // Soft ambient volume
+            gain.connect_with_audio_node(output)?;
+
+            // Deep planetary drone oscillator
+            let drone = ctx.create_oscillator()?;
+            drone.set_type(OscillatorType::Sine);
+            drone.frequency().set_value(65.41); // C2
+
+            // Low-pass filter for deep space atmosphere
+            let filter = ctx.create_biquad_filter()?;
+            filter.set_type(web_sys::BiquadFilterType::Lowpass);
+            filter.frequency().set_value(220.0);
+
+            drone.connect_with_audio_node(&filter)?;
+            filter.connect_with_audio_node(&gain)?;
+            drone.start()?;
+
+            self.ctx = Some(ctx.clone());
+            self.master_gain = Some(gain);
+            self.drone_osc = Some(drone);
+            self.is_playing = true;
+        }
+        Ok(())
+    }
+
     /// Initialize procedural music synthesizer
     pub fn init(&mut self, ctx: &AudioContext) -> Result<(), JsValue> {
         if self.ctx.is_none() {
@@ -143,5 +172,15 @@ impl MusicEngine {
             gain.gain().set_value(val);
         }
         self.is_playing
+    }
+
+    /// Update synthesizer volume attenuation
+    pub fn set_volume(&mut self, vol: f32) {
+        if let Some(gain) = &self.master_gain {
+            if self.is_playing {
+                let val = (vol.clamp(0.0, 1.0) * 0.15).max(0.0);
+                gain.gain().set_value(val);
+            }
+        }
     }
 }

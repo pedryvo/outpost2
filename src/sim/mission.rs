@@ -376,6 +376,40 @@ impl Mission {
         }
     }
 
+    /// Free-form procedural multiplayer or skirmish scenario vs AI commanders
+    pub fn new_skirmish(faction: Faction) -> Self {
+        Self {
+            scenario_id: 100,
+            codename: "Planetary Skirmish: Divided Destiny".into(),
+            faction,
+            briefing: "Colony command alert: Tactical skirmish zone established on New Terra. Scout the canyon passes, secure central mineral caches, harness geothermal energy, and neutralize hostile rival command centers.".into(),
+            objectives: vec![
+                Objective {
+                    id: 1,
+                    description: "Maintain Command Center integrity".into(),
+                    is_completed: false,
+                    is_primary: true,
+                    status: ObjectiveStatus::Active,
+                },
+                Objective {
+                    id: 2,
+                    description: "Neutralize all hostile rival Command Centers".into(),
+                    is_completed: false,
+                    is_primary: true,
+                    status: ObjectiveStatus::Active,
+                },
+                Objective {
+                    id: 3,
+                    description: "Secondary: Establish geothermal baseload energy (>= 450 kW)".into(),
+                    is_completed: false,
+                    is_primary: false,
+                    status: ObjectiveStatus::Active,
+                },
+            ],
+            status: MissionStatus::InProgress,
+        }
+    }
+
     /// Modify objective status programmatically from script triggers
     pub fn modify_objective(&mut self, objective_id: u32, status: ObjectiveStatus) -> bool {
         if let Some(obj) = self.objectives.iter_mut().find(|o| o.id == objective_id) {
@@ -610,6 +644,24 @@ impl Mission {
 
                 // Secondary 6: Sustain continuous geothermal energy generation >= 450 kW
                 if let Some(obj) = self.objectives.iter_mut().find(|o| o.id == 6) {
+                    obj.is_completed = power_produced >= 450;
+                }
+            }
+            100 => {
+                // Procedural Skirmish Map
+                // Obj 1: Command Center preserved
+                if let Some(obj) = self.objectives.iter_mut().find(|o| o.id == 1) {
+                    obj.is_completed = true;
+                }
+                // Obj 2: All enemy command centers destroyed
+                let enemy_ccs = buildings.iter()
+                    .filter(|b| b.faction.is_some() && b.faction != Some(self.faction) && b.name.contains("Command Center"))
+                    .count();
+                if let Some(obj) = self.objectives.iter_mut().find(|o| o.id == 2) {
+                    obj.is_completed = enemy_ccs == 0;
+                }
+                // Obj 3: Geothermal power generation
+                if let Some(obj) = self.objectives.iter_mut().find(|o| o.id == 3) {
                     obj.is_completed = power_produced >= 450;
                 }
             }

@@ -492,6 +492,62 @@ pub fn slot_meta_key(slot: u32) -> String {
     format!("{}_meta", slot_storage_key(slot))
 }
 
+#[cfg(target_arch = "wasm32")]
+fn raw_set_item(key: &str, val: &str) -> Result<(), String> {
+    let window = web_sys::window().ok_or_else(|| "Window object unavailable".to_string())?;
+    let storage = window
+        .local_storage()
+        .map_err(|e| format!("Failed to access local_storage: {:?}", e))?
+        .ok_or_else(|| "LocalStorage not supported or disabled".to_string())?;
+    storage.set_item(key, val).map_err(|e| format!("Failed to set {}: {:?}", key, e))
+}
+
+#[cfg(target_arch = "wasm32")]
+fn raw_get_item(key: &str) -> Result<Option<String>, String> {
+    let window = web_sys::window().ok_or_else(|| "Window object unavailable".to_string())?;
+    let storage = window
+        .local_storage()
+        .map_err(|e| format!("Failed to access local_storage: {:?}", e))?
+        .ok_or_else(|| "LocalStorage not supported or disabled".to_string())?;
+    storage.get_item(key).map_err(|e| format!("Failed to read {}: {:?}", key, e))
+}
+
+#[cfg(target_arch = "wasm32")]
+fn raw_remove_item(key: &str) -> Result<(), String> {
+    let window = web_sys::window().ok_or_else(|| "Window object unavailable".to_string())?;
+    let storage = window
+        .local_storage()
+        .map_err(|e| format!("Failed to access local_storage: {:?}", e))?
+        .ok_or_else(|| "LocalStorage not supported or disabled".to_string())?;
+    storage.remove_item(key).map_err(|e| format!("Failed to remove {}: {:?}", key, e))
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+static NATIVE_MOCK_STORAGE: std::sync::Mutex<Option<std::collections::HashMap<String, String>>> = std::sync::Mutex::new(None);
+
+#[cfg(not(target_arch = "wasm32"))]
+fn raw_set_item(key: &str, val: &str) -> Result<(), String> {
+    let mut lock = NATIVE_MOCK_STORAGE.lock().unwrap();
+    let map = lock.get_or_insert_with(std::collections::HashMap::new);
+    map.insert(key.to_string(), val.to_string());
+    Ok(())
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn raw_get_item(key: &str) -> Result<Option<String>, String> {
+    let mut lock = NATIVE_MOCK_STORAGE.lock().unwrap();
+    let map = lock.get_or_insert_with(std::collections::HashMap::new);
+    Ok(map.get(key).cloned())
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn raw_remove_item(key: &str) -> Result<(), String> {
+    let mut lock = NATIVE_MOCK_STORAGE.lock().unwrap();
+    let map = lock.get_or_insert_with(std::collections::HashMap::new);
+    map.remove(key);
+    Ok(())
+}
+
 /// Browser LocalStorage storage backend for game persistence.
 pub struct LocalStorageBackend;
 
@@ -517,7 +573,6 @@ impl LocalStorageBackend {
     /// Accepts slots 1..=5, `SLOT_QUICKSAVE` (0), or `SLOT_AUTOSAVE` (100).
     pub fn save(slot: u32, state: &SaveGameState) -> Result<(), String> {
         validate_slot(slot)?;
-        let storage = Self::get_storage()?;
         let json = state
             .to_json()
             .map_err(|e| format!("SaveGameState serialization failed: {}", e))?;
@@ -527,12 +582,8 @@ impl LocalStorageBackend {
         let key = slot_storage_key(slot);
         let m_key = slot_meta_key(slot);
 
-        storage
-            .set_item(&key, &json)
-            .map_err(|e| format!("Failed to set {}: {:?}", key, e))?;
-        storage
-            .set_item(&m_key, &meta_json)
-            .map_err(|e| format!("Failed to set {}: {:?}", m_key, e))?;
+        raw_set_item(&key, &json)?;
+        raw_set_item(&m_key, &meta_json)?;
 
         Ok(())
     }
@@ -540,12 +591,9 @@ impl LocalStorageBackend {
     /// Load game state from the specified slot in browser LocalStorage.
     pub fn load(slot: u32) -> Result<SaveGameState, String> {
         validate_slot(slot)?;
-        let storage = Self::get_storage()?;
         let key = slot_storage_key(slot);
 
-        let json = storage
-            .get_item(&key)
-            .map_err(|e| format!("Failed to read {}: {:?}", key, e))?
+        let json = raw_get_item(&key)?
             .ok_or_else(|| format!("Slot {} is empty", slot))?;
 
         SaveGameState::from_json(&json)
@@ -555,10 +603,9 @@ impl LocalStorageBackend {
     /// Load metadata for a save slot without loading the entire state blob.
     pub fn load_metadata(slot: u32) -> Result<Option<SaveMetadata>, String> {
         validate_slot(slot)?;
-        let storage = Self::get_storage()?;
         let m_key = slot_meta_key(slot);
 
-        if let Ok(Some(meta_json)) = storage.get_item(&m_key) {
+        if let Ok(Some(meta_json)) = raw_get_item(&m_key) {
             if let Ok(meta) = serde_json::from_str::<SaveMetadata>(&meta_json) {
                 return Ok(Some(meta));
             }
@@ -566,7 +613,7 @@ impl LocalStorageBackend {
 
         // Fallback: load full state and extract metadata
         let key = slot_storage_key(slot);
-        if let Ok(Some(json)) = storage.get_item(&key) {
+        if let Ok(Some(json)) = raw_get_item(&key) {
             if let Ok(state) = SaveGameState::from_json(&json) {
                 return Ok(Some(state.metadata));
             }
@@ -608,12 +655,11 @@ impl LocalStorageBackend {
     /// Delete a save slot and its associated metadata from browser storage.
     pub fn delete_slot(slot: u32) -> Result<(), String> {
         validate_slot(slot)?;
-        let storage = Self::get_storage()?;
         let key = slot_storage_key(slot);
         let m_key = slot_meta_key(slot);
 
-        let _ = storage.remove_item(&key);
-        let _ = storage.remove_item(&m_key);
+        let _ = raw_remove_item(&key);
+        let _ = raw_remove_item(&m_key);
         Ok(())
     }
 }

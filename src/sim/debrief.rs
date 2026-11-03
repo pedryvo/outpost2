@@ -45,6 +45,18 @@ impl ColonialRank {
             Self::ColonyFailure => "Catastrophic collapse: Planetary outpost lost, civilian casualties critical, or primary directives failed.",
         }
     }
+
+    pub fn title_localized(&self, lang: crate::i18n::Language) -> &'static str {
+        crate::i18n::get_dictionary(lang).colonial_rank_title(*self)
+    }
+
+    pub fn badge_localized(&self, lang: crate::i18n::Language) -> &'static str {
+        crate::i18n::get_dictionary(lang).colonial_rank_badge(*self)
+    }
+
+    pub fn description_localized(&self, lang: crate::i18n::Language) -> &'static str {
+        crate::i18n::get_dictionary(lang).colonial_rank_description(*self)
+    }
 }
 
 /// Victory condition category achieved in the campaign scenario.

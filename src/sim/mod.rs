@@ -6,6 +6,7 @@ pub mod debrief;
 pub mod disasters;
 pub mod events;
 pub mod fog;
+pub mod generator;
 pub mod map;
 pub mod mining;
 pub mod mission;
@@ -13,6 +14,12 @@ pub mod pathfinding;
 pub mod save;
 pub mod structures;
 pub mod tech;
+
+#[allow(unused_imports)]
+pub use generator::{
+    GeneratedMap, MapGenerator, MapGeneratorConfig, MapSymmetry, OreAbundance, TerrainBiome,
+    TileMap,
+};
 
 #[allow(unused_imports)]
 pub use debrief::{ColonialRank, DefeatReason, EndGameSequence, MissionDebrief, VictoryType};
@@ -45,7 +52,7 @@ use map::GameMap;
 use mining::{HaulerState, OreDeposit, OreType};
 use mission::Mission;
 use pathfinding::{PathFinder, UnitOrder};
-use structures::{connect_with_tubes, StructureType};
+pub use structures::{connect_with_tubes, StructureType};
 use tech::TechTree;
 
 const EDEN_MAP_DATA: &[u8] = include_bytes!("../../assets/eden01.map");
@@ -172,9 +179,11 @@ pub struct ColonyState {
     pub event_engine: EventEngine,
     #[allow(dead_code)]
     pub ai_players: Vec<AiPlayer>,
+    pub last_under_attack_sol: f64,
 }
 
 #[derive(Debug, Default, Clone)]
+#[allow(dead_code)]
 pub struct SimUpdateResult {
     pub notice: Option<&'static str>,
     pub laser_fired: bool,
@@ -182,12 +191,17 @@ pub struct SimUpdateResult {
     pub microwave_fired: bool,
     pub acid_fired: bool,
     pub unit_destroyed: bool,
+    pub friendly_vehicle_destroyed: bool,
+    pub structure_destroyed: bool,
+    pub volcano_erupted: bool,
+    pub vortex_spawned: bool,
     pub building_deployed: bool,
     pub vortex_active: bool,
     pub meteor_hit: bool,
     pub disaster_siren: bool,
     pub mission_ended: Option<mission::MissionStatus>,
     pub starship_launched: bool,
+    pub under_attack: bool,
     #[allow(dead_code)]
     pub end_game_sequence: Option<EndGameSequence>,
 }
@@ -301,6 +315,21 @@ impl ColonyState {
                 width: 3,
                 height: 3,
                 power_cost: 160,
+                is_active: true,
+                is_selected: false,
+                production_queue: Vec::new(),
+                production_progress: 0.0,
+                attack_cooldown: 0.0,
+                faction: Some(faction),
+            });
+            buildings.push(Building {
+                id: 7,
+                name: "Vehicle Factory".into(),
+                tile_x: 10,
+                tile_y: 20,
+                width: 3,
+                height: 3,
+                power_cost: 120,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -1005,6 +1034,7 @@ impl ColonyState {
 
         let mut tubes = HashSet::new();
         if scenario_id == 5 {
+            connect_with_tubes(&mut tubes, (12, 21), (15, 21));
             connect_with_tubes(&mut tubes, (17, 21), (20, 21));
             connect_with_tubes(&mut tubes, (22, 21), (25, 21));
             connect_with_tubes(&mut tubes, (25, 22), (25, 24));
@@ -1089,6 +1119,7 @@ impl ColonyState {
             initial_building_ids,
             event_engine,
             ai_players: Vec::new(),
+            last_under_attack_sol: -999.0,
         }
     }
 
@@ -1278,6 +1309,458 @@ impl ColonyState {
         self.fog.update_visibility(&self.units, &self.buildings);
     }
 
+    /// Construct a complete playable skirmish session from a procedurally generated map
+    #[allow(dead_code)]
+    pub fn from_generated_map(mut gen_map: GeneratedMap, player_faction: Faction) -> Self {
+        let scenario_id = 100;
+        let map_w = gen_map.tile_map.width as usize;
+        let map_h = gen_map.tile_map.height as usize;
+
+        let mut units = Vec::new();
+        let mut buildings = Vec::new();
+        let mut tubes = HashSet::new();
+        let mut ai_players = Vec::new();
+
+        // 1. Set up Player Base at spawn_points[0]
+        let (px, py) = if let Some(&p) = gen_map.spawn_points.first() {
+            p
+        } else {
+            (10, 10)
+        };
+
+        // Command Center (3x3)
+        buildings.push(Building {
+            id: 1,
+            name: "Command Center".into(),
+            tile_x: px,
+            tile_y: py,
+            width: 3,
+            height: 3,
+            power_cost: 40,
+            is_active: true,
+            is_selected: false,
+            production_queue: Vec::new(),
+            production_progress: 0.0,
+            attack_cooldown: 0.0,
+            faction: Some(player_faction),
+        });
+
+        // Solar Power Array (2x2)
+        buildings.push(Building {
+            id: 2,
+            name: "Solar Power Array".into(),
+            tile_x: px + 4,
+            tile_y: py,
+            width: 2,
+            height: 2,
+            power_cost: -250,
+            is_active: true,
+            is_selected: false,
+            production_queue: Vec::new(),
+            production_progress: 0.0,
+            attack_cooldown: 0.0,
+            faction: Some(player_faction),
+        });
+
+        // Common Ore Smelter (2x2)
+        buildings.push(Building {
+            id: 3,
+            name: "Common Ore Smelter".into(),
+            tile_x: px,
+            tile_y: py + 4,
+            width: 2,
+            height: 2,
+            power_cost: 50,
+            is_active: true,
+            is_selected: false,
+            production_queue: Vec::new(),
+            production_progress: 0.0,
+            attack_cooldown: 0.0,
+            faction: Some(player_faction),
+        });
+
+        // Vehicle Factory (3x3)
+        buildings.push(Building {
+            id: 4,
+            name: "Vehicle Factory".into(),
+            tile_x: px + 3,
+            tile_y: py + 3,
+            width: 3,
+            height: 3,
+            power_cost: 120,
+            is_active: true,
+            is_selected: false,
+            production_queue: Vec::new(),
+            production_progress: 0.0,
+            attack_cooldown: 0.0,
+            faction: Some(player_faction),
+        });
+
+        // Connect player base with pressurized tubes
+        connect_with_tubes(&mut tubes, (px + 1, py + 1), (px + 4, py + 1));
+        connect_with_tubes(&mut tubes, (px + 1, py + 1), (px + 1, py + 4));
+        connect_with_tubes(&mut tubes, (px + 1, py + 4), (px + 3, py + 4));
+
+        // Mark player buildings as obstacles on tile map
+        for b in &buildings {
+            for dy in 0..b.height {
+                for dx in 0..b.width {
+                    let tx = (b.tile_x + dx) as u32;
+                    let ty = (b.tile_y + dy) as u32;
+                    if let Some(t) = gen_map.tile_map.get_tile_mut(tx, ty) {
+                        t.is_wall_or_building = true;
+                    }
+                }
+            }
+        }
+
+        // Starting Player Units
+        units.push(Unit {
+            id: 1,
+            name: "ConVec (Structure Kit)".into(),
+            faction: player_faction,
+            tile_x: px + 1,
+            tile_y: py + 3,
+            hp: 200,
+            max_hp: 200,
+            is_selected: false,
+            current_order: UnitOrder::Idle,
+            path: Vec::new(),
+            move_cooldown: 0.0,
+            weapon: None,
+            attack_cooldown: 0.0,
+            cargo: None,
+            hauler_state: None,
+            cargo_kit: Some("Geothermal Power Plant".to_string()),
+        });
+
+        units.push(Unit {
+            id: 2,
+            name: "Cargo Truck".into(),
+            faction: player_faction,
+            tile_x: px + 2,
+            tile_y: py + 3,
+            hp: 150,
+            max_hp: 150,
+            is_selected: false,
+            current_order: UnitOrder::Idle,
+            path: Vec::new(),
+            move_cooldown: 0.0,
+            weapon: None,
+            attack_cooldown: 0.0,
+            cargo: None,
+            hauler_state: Some(HaulerState::Idle),
+            cargo_kit: None,
+        });
+
+        units.push(Unit {
+            id: 3,
+            name: "Robo-Miner".into(),
+            faction: player_faction,
+            tile_x: px + 3,
+            tile_y: py + 3,
+            hp: 180,
+            max_hp: 180,
+            is_selected: false,
+            current_order: UnitOrder::Idle,
+            path: Vec::new(),
+            move_cooldown: 0.0,
+            weapon: None,
+            attack_cooldown: 0.0,
+            cargo: None,
+            hauler_state: None,
+            cargo_kit: None,
+        });
+
+        let scout_weapon = match player_faction {
+            Faction::Eden => WeaponType::Laser,
+            Faction::Plymouth => WeaponType::Microwave,
+        };
+        let scout_name = if player_faction == Faction::Eden { "Lynx Scout" } else { "Plymouth Raider" };
+        units.push(Unit {
+            id: 4,
+            name: format!("{} #1", scout_name),
+            faction: player_faction,
+            tile_x: px - 1,
+            tile_y: py,
+            hp: 140,
+            max_hp: 140,
+            is_selected: false,
+            current_order: UnitOrder::Idle,
+            path: Vec::new(),
+            move_cooldown: 0.0,
+            weapon: Some(scout_weapon),
+            attack_cooldown: 0.0,
+            cargo: None,
+            hauler_state: None,
+            cargo_kit: None,
+        });
+
+        // 2. Set up AI opponents at remaining spawn points
+        let mut next_b_id = 5u32;
+        let mut next_u_id = 5u32;
+        let personalities = [
+            AiPersonality::AggressiveRusher,
+            AiPersonality::DefensiveFortifier,
+            AiPersonality::EconomicTechRusher,
+        ];
+
+        let enemy_faction_default = match player_faction {
+            Faction::Eden => Faction::Plymouth,
+            Faction::Plymouth => Faction::Eden,
+        };
+
+        let mut primary_enemy_spawn = (px + 20, py + 20);
+
+        for (ai_idx, &(ax, ay)) in gen_map.spawn_points.iter().skip(1).enumerate() {
+            if ai_idx == 0 {
+                primary_enemy_spawn = (ax, ay);
+            }
+            let ai_id = (ai_idx + 1) as u32;
+            let ai_faction = if (ai_idx % 2) == 0 {
+                enemy_faction_default
+            } else {
+                player_faction
+            };
+            let personality = personalities[ai_idx % personalities.len()].clone();
+            let ai = AiPlayer::new(
+                ai_id,
+                format!("{:?} AI #{}", ai_faction, ai_id),
+                ai_faction,
+                personality,
+                Difficulty::Medium,
+                ax,
+                ay,
+            );
+
+            let cc_id = next_b_id;
+            let sol_id = cc_id + 1;
+            let sm_id = cc_id + 2;
+            let vf_id = cc_id + 3;
+            next_b_id += 4;
+
+            buildings.push(Building {
+                id: cc_id,
+                name: format!("Command Center #{}", cc_id),
+                tile_x: ax,
+                tile_y: ay,
+                width: 3,
+                height: 3,
+                power_cost: 40,
+                is_active: true,
+                is_selected: false,
+                production_queue: Vec::new(),
+                production_progress: 0.0,
+                attack_cooldown: 0.0,
+                faction: Some(ai_faction),
+            });
+
+            buildings.push(Building {
+                id: sol_id,
+                name: format!("Solar Power Array #{}", sol_id),
+                tile_x: ax + 4,
+                tile_y: ay,
+                width: 2,
+                height: 2,
+                power_cost: -250,
+                is_active: true,
+                is_selected: false,
+                production_queue: Vec::new(),
+                production_progress: 0.0,
+                attack_cooldown: 0.0,
+                faction: Some(ai_faction),
+            });
+
+            buildings.push(Building {
+                id: sm_id,
+                name: format!("Common Ore Smelter #{}", sm_id),
+                tile_x: ax,
+                tile_y: ay + 4,
+                width: 2,
+                height: 2,
+                power_cost: 50,
+                is_active: true,
+                is_selected: false,
+                production_queue: Vec::new(),
+                production_progress: 0.0,
+                attack_cooldown: 0.0,
+                faction: Some(ai_faction),
+            });
+
+            buildings.push(Building {
+                id: vf_id,
+                name: format!("Vehicle Factory #{}", vf_id),
+                tile_x: ax + 4,
+                tile_y: ay + 4,
+                width: 3,
+                height: 3,
+                power_cost: 120,
+                is_active: true,
+                is_selected: false,
+                production_queue: Vec::new(),
+                production_progress: 0.0,
+                attack_cooldown: 0.0,
+                faction: Some(ai_faction),
+            });
+
+            // Mark AI buildings in tile_map
+            let b_len = buildings.len();
+            for b in &buildings[b_len - 4..b_len] {
+                for dy in 0..b.height {
+                    for dx in 0..b.width {
+                        let tx = (b.tile_x + dx) as u32;
+                        let ty = (b.tile_y + dy) as u32;
+                        if let Some(t) = gen_map.tile_map.get_tile_mut(tx, ty) {
+                            t.is_wall_or_building = true;
+                        }
+                    }
+                }
+            }
+
+            connect_with_tubes(&mut tubes, (ax + 1, ay + 1), (ax + 5, ay + 1));
+            connect_with_tubes(&mut tubes, (ax + 1, ay + 1), (ax + 1, ay + 5));
+            connect_with_tubes(&mut tubes, (ax + 1, ay + 5), (ax + 5, ay + 5));
+
+            let u1_id = next_u_id;
+            let u2_id = u1_id + 1;
+            let u3_id = u1_id + 2;
+            next_u_id += 3;
+
+            units.push(Unit {
+                id: u1_id,
+                name: format!("Cargo Truck #{}", u1_id),
+                faction: ai_faction,
+                tile_x: ax + 2,
+                tile_y: ay + 3,
+                hp: 150,
+                max_hp: 150,
+                is_selected: false,
+                current_order: UnitOrder::Idle,
+                path: Vec::new(),
+                move_cooldown: 0.0,
+                weapon: None,
+                attack_cooldown: 0.0,
+                cargo: None,
+                hauler_state: Some(HaulerState::Idle),
+                cargo_kit: None,
+            });
+
+            units.push(Unit {
+                id: u2_id,
+                name: format!("Robo-Miner #{}", u2_id),
+                faction: ai_faction,
+                tile_x: ax + 3,
+                tile_y: ay + 3,
+                hp: 180,
+                max_hp: 180,
+                is_selected: false,
+                current_order: UnitOrder::Idle,
+                path: Vec::new(),
+                move_cooldown: 0.0,
+                weapon: None,
+                attack_cooldown: 0.0,
+                cargo: None,
+                hauler_state: None,
+                cargo_kit: None,
+            });
+
+            let ai_scout_weapon = match ai_faction {
+                Faction::Plymouth => WeaponType::Microwave,
+                Faction::Eden => WeaponType::Laser,
+            };
+            units.push(Unit {
+                id: u3_id,
+                name: format!("Defense Guard #{}", u3_id),
+                faction: ai_faction,
+                tile_x: ax - 1,
+                tile_y: ay,
+                hp: 140,
+                max_hp: 140,
+                is_selected: false,
+                current_order: UnitOrder::Guard { anchor_x: ax, anchor_y: ay },
+                path: Vec::new(),
+                move_cooldown: 0.0,
+                weapon: Some(ai_scout_weapon),
+                attack_cooldown: 0.0,
+                cargo: None,
+                hauler_state: None,
+                cargo_kit: None,
+            });
+
+            ai_players.push(ai);
+        }
+
+        // Initialize Fog of War
+        let mut fog = FogOfWar::new(map_w, map_h);
+        fog.update_visibility(&units, &buildings);
+
+        let initial_building_ids: HashSet<u32> = buildings.iter().map(|b| b.id).collect();
+
+        // Skirmish Mission
+        let mission = Mission::new_skirmish(player_faction);
+
+        let mut state = Self {
+            scenario_id,
+            faction: player_faction,
+            sol: 1.0,
+            population: 150,
+            morale_pct: 100,
+            starship_progress: 0.0,
+            common_ore: 3000,
+            rare_ore: 1000,
+            power_produced: 500,
+            power_consumed: 210,
+            food_units: 1500,
+            units,
+            buildings,
+            tubes,
+            game_map: gen_map.tile_map,
+            tech_tree: TechTree::new(),
+            disasters: DisasterSimulator::new(),
+            fog,
+            day_cycle: 0.25,
+            sunlight: 1.0,
+            active_beams: Vec::new(),
+            active_explosions: Vec::new(),
+            ai_director: FactionAiDirector::new(enemy_faction_default, primary_enemy_spawn.0, primary_enemy_spawn.1),
+            ore_deposits: gen_map.ore_deposits,
+            mission,
+            starship_launched: false,
+            launch_anim_time: 0.0,
+            debriefing_shown: false,
+            tick_count: 0,
+            casualties: 0,
+            evacuated_colonists: 0,
+            terraformer_saturation: 0.0,
+            total_common_ore_mined: 0,
+            total_rare_ore_mined: 0,
+            enemy_units_destroyed: 0,
+            friendly_units_lost: 0,
+            end_game: None,
+            destroyed_building_ids: HashSet::new(),
+            initial_building_ids,
+            event_engine: EventEngine::new(),
+            ai_players,
+            last_under_attack_sol: -999.0,
+        };
+
+        // Refresh power for each AI player
+        for i in 0..state.ai_players.len() {
+            let mut ai = state.ai_players[i].clone();
+            ai.refresh_colony_power(&state);
+            state.ai_players[i] = ai;
+        }
+
+        state
+    }
+
+    /// Construct a complete playable skirmish session directly from generator configuration
+    #[allow(dead_code)]
+    pub fn new_skirmish_map(config: MapGeneratorConfig, player_faction: Faction) -> Self {
+        let gen_map = MapGenerator::generate(&config);
+        Self::from_generated_map(gen_map, player_faction)
+    }
+
     pub fn update(&mut self, dt_secs: f64) -> SimUpdateResult {
         self.tick_count = self.tick_count.wrapping_add(1);
         self.sol += dt_secs * 0.05; // 1 Sol every ~20 seconds
@@ -1370,6 +1853,7 @@ impl ColonyState {
                                     (tx, ty),
                                     weapon,
                                     dmg,
+                                    u.faction,
                                 ));
                             }
                         }
@@ -1384,7 +1868,11 @@ impl ColonyState {
         let mut microwave_fired = false;
         let mut acid_fired = false;
         let mut destroyed_units = Vec::new();
-        for (target_id, from_pos, to_pos, weapon, dmg) in combat_events {
+        let mut under_attack = false;
+        let mut friendly_vehicle_destroyed = false;
+        let mut structure_destroyed = false;
+
+        for (target_id, from_pos, to_pos, weapon, dmg, from_faction) in combat_events {
             match weapon {
                 WeaponType::Railgun => railgun_fired = true,
                 WeaponType::Microwave => microwave_fired = true,
@@ -1402,11 +1890,18 @@ impl ColonyState {
             });
 
             if let Some(target) = self.units.iter_mut().find(|u| u.id == target_id) {
+                if target.faction == self.faction && from_faction != self.faction {
+                    if self.sol - self.last_under_attack_sol > 15.0 {
+                        self.last_under_attack_sol = self.sol;
+                        under_attack = true;
+                    }
+                }
                 target.hp = target.hp.saturating_sub(dmg);
                 if target.hp == 0 {
                     if target.faction == self.faction {
                         self.casualties += 1;
                         self.friendly_units_lost += 1;
+                        friendly_vehicle_destroyed = true;
                     } else {
                         self.enemy_units_destroyed += 1;
                     }
@@ -1455,11 +1950,18 @@ impl ColonyState {
 
                         let dmg = 25 + if guard_faction == player_faction { laser_bonus } else { 0 };
                         if let Some(target) = self.units.iter_mut().find(|u| u.id == target_id) {
+                            if target.faction == player_faction && guard_faction != player_faction {
+                                if self.sol - self.last_under_attack_sol > 15.0 {
+                                    self.last_under_attack_sol = self.sol;
+                                    under_attack = true;
+                                }
+                            }
                             target.hp = target.hp.saturating_sub(dmg);
                             if target.hp == 0 {
                                 if target.faction == self.faction {
                                     self.casualties += 1;
                                     self.friendly_units_lost += 1;
+                                    friendly_vehicle_destroyed = true;
                                 } else {
                                     self.enemy_units_destroyed += 1;
                                 }
@@ -2299,6 +2801,13 @@ impl ColonyState {
             self.morale_pct = (self.morale_pct + 1).min(100);
         }
 
+        // Demographic population growth when thriving with power, food surplus, and high morale
+        if self.power_produced >= self.power_consumed && self.food_units > self.population && self.morale_pct >= 90 {
+            if self.tick_count % 100 == 0 {
+                self.population = self.population.saturating_add(1);
+            }
+        }
+
         // Advance Rival Faction AI Director
         let player_targets: Vec<(i32, i32)> = self.buildings
             .iter()
@@ -2391,10 +2900,64 @@ impl ColonyState {
                         if u.faction == self.faction {
                             self.casualties += 1;
                             self.friendly_units_lost += 1;
+                            friendly_vehicle_destroyed = true;
                         } else {
                             self.enemy_units_destroyed += 1;
                         }
                     }
+                }
+            }
+
+            // Damage and destroy buildings caught in blast radius
+            let mut meteor_destroyed_buildings = Vec::new();
+            for b in &self.buildings {
+                let bx = b.tile_x as f64 + (b.width as f64) * 0.5;
+                let by = b.tile_y as f64 + (b.height as f64) * 0.5;
+                let dist = ((bx - mx).powi(2) + (by - my).powi(2)).sqrt();
+                if dist <= radius {
+                    meteor_destroyed_buildings.push(b.id);
+                }
+            }
+            for b_id in meteor_destroyed_buildings {
+                self.destroyed_building_ids.insert(b_id);
+                structure_destroyed = true;
+                if let Some(idx) = self.buildings.iter().position(|b| b.id == b_id) {
+                    let b = self.buildings.remove(idx);
+                    if b.power_cost > 0 {
+                        self.power_consumed = self.power_consumed.saturating_sub(b.power_cost as u32);
+                    }
+                }
+            }
+        }
+
+        // Check if advancing lava flows overrun colony structures
+        let mut lava_destroyed_b_ids = Vec::new();
+        for b in &self.buildings {
+            let mut hit = false;
+            for dy in 0..b.height {
+                for dx in 0..b.width {
+                    if let Some(tile) = self.game_map.get_tile((b.tile_x + dx) as u32, (b.tile_y + dy) as u32) {
+                        if tile.is_lava {
+                            hit = true;
+                            break;
+                        }
+                    }
+                }
+                if hit {
+                    break;
+                }
+            }
+            if hit {
+                lava_destroyed_b_ids.push(b.id);
+            }
+        }
+        for b_id in lava_destroyed_b_ids {
+            self.destroyed_building_ids.insert(b_id);
+            structure_destroyed = true;
+            if let Some(idx) = self.buildings.iter().position(|b| b.id == b_id) {
+                let b = self.buildings.remove(idx);
+                if b.power_cost > 0 {
+                    self.power_consumed = self.power_consumed.saturating_sub(b.power_cost as u32);
                 }
             }
         }
@@ -2469,7 +3032,10 @@ impl ColonyState {
         self.fog.update_visibility(&self.units, &self.buildings);
 
         let vortex_active = !self.disasters.active_vortices.is_empty();
+        let volcano_erupted = warning.map(|w| w.contains("Volcanic fissure") || w.contains("eruption")).unwrap_or(false);
+        let vortex_spawned = warning.map(|w| w.contains("Rotary dust vortex") || w.contains("Vortex")).unwrap_or(false);
         let disaster_siren = meteor_hit
+            || volcano_erupted
             || ai_alert.map(|a| a.contains("Red Alert")).unwrap_or(false)
             || warning.map(|w| w.contains("Disaster") || w.contains("Tremor") || w.contains("Eruption") || w.contains("Blight")).unwrap_or(false);
 
@@ -2480,12 +3046,17 @@ impl ColonyState {
             microwave_fired,
             acid_fired,
             unit_destroyed,
+            friendly_vehicle_destroyed,
+            structure_destroyed,
+            volcano_erupted,
+            vortex_spawned,
             building_deployed,
             vortex_active,
             meteor_hit,
             disaster_siren,
             mission_ended,
             starship_launched: self.starship_launched,
+            under_attack,
             end_game_sequence: self.end_game.clone(),
         }
     }
@@ -2908,5 +3479,114 @@ impl ColonyState {
                 }
             }
         }
+    }
+
+    /// Issue an 8-way movement order to specific units by id
+    #[allow(dead_code)]
+    pub fn order_unit_move(&mut self, unit_ids: &[u32], target_x: i32, target_y: i32) {
+        for u in &mut self.units {
+            if unit_ids.contains(&u.id) {
+                if let Some(path) = PathFinder::find_path(&self.game_map, (u.tile_x, u.tile_y), (target_x, target_y)) {
+                    u.path = path;
+                    u.current_order = UnitOrder::MoveTo { target_x, target_y };
+                    u.move_cooldown = 0.0;
+                }
+            }
+        }
+    }
+
+    /// Process and execute an incoming network message deterministically
+    #[allow(dead_code)]
+    pub fn apply_net_message(&mut self, msg: &crate::net::NetMessage) {
+        match msg {
+            crate::net::NetMessage::UnitOrder { unit_ids, order } => {
+                match order {
+                    crate::net::NetOrder::MoveTo(x, y) => {
+                        self.order_unit_move(unit_ids, *x, *y);
+                    }
+                    _ => {
+                        let sim_order = order.to_unit_order();
+                        for u in &mut self.units {
+                            if unit_ids.contains(&u.id) {
+                                u.current_order = sim_order.clone();
+                            }
+                        }
+                    }
+                }
+            }
+            crate::net::NetMessage::QueueProduction { building_id, item } => {
+                let _ = self.queue_production(*building_id, item.clone());
+            }
+            crate::net::NetMessage::RecycleStructure { building_id } => {
+                let _ = self.recycle_structure(*building_id);
+            }
+            _ => {}
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_simulation_event_flags_and_audio_triggers() {
+        let mut colony = ColonyState::new(Faction::Eden);
+        // Initially, no disaster or attacks
+        let res = colony.update(0.1);
+        assert!(!res.under_attack);
+        assert!(!res.friendly_vehicle_destroyed);
+        assert!(!res.structure_destroyed);
+        assert!(!res.volcano_erupted);
+        assert!(!res.vortex_spawned);
+
+        // Force an enemy unit to attack player unit
+        let enemy_id = 999;
+        colony.units.push(Unit {
+            id: enemy_id,
+            name: "Enemy Raider".into(),
+            faction: Faction::Plymouth,
+            tile_x: 21,
+            tile_y: 24,
+            hp: 100,
+            max_hp: 100,
+            is_selected: false,
+            current_order: UnitOrder::Attack { target_unit_id: 1 }, // Targets player cargo truck
+            path: Vec::new(),
+            move_cooldown: 0.0,
+            weapon: Some(WeaponType::Laser),
+            attack_cooldown: 0.0,
+            cargo: None,
+            hauler_state: None,
+            cargo_kit: None,
+        });
+
+        // Tick simulation: enemy attacks truck
+        let res_attack = colony.update(0.1);
+        assert!(res_attack.laser_fired);
+        assert!(res_attack.under_attack);
+
+        // Reduce truck hp to 1 so next shot destroys it
+        if let Some(truck) = colony.units.iter_mut().find(|u| u.id == 1) {
+            truck.hp = 1;
+        }
+        if let Some(enemy) = colony.units.iter_mut().find(|u| u.id == enemy_id) {
+            enemy.attack_cooldown = 0.0;
+        }
+        let res_kill = colony.update(0.1);
+        assert!(res_kill.friendly_vehicle_destroyed);
+        assert!(res_kill.unit_destroyed);
+    }
+
+    #[test]
+    fn test_meteor_structure_destruction_event() {
+        let mut colony = ColonyState::new(Faction::Eden);
+        let b = colony.buildings.first().unwrap().clone();
+        colony.disasters.detonation_queue.push((b.tile_x as f64, b.tile_y as f64, 5.0));
+
+        let res = colony.update(0.1);
+        assert!(res.meteor_hit);
+        assert!(res.structure_destroyed);
+        assert!(colony.destroyed_building_ids.contains(&b.id));
     }
 }

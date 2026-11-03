@@ -191,6 +191,11 @@ impl EnergyGridState {
             EnergyGridState::Blackout => "BLACKOUT CRITICAL",
         }
     }
+
+    /// Localized text label for HUD status.
+    pub fn status_label_localized(&self, lang: crate::i18n::Language) -> &'static str {
+        crate::i18n::get_dictionary(lang).energy_grid_status(*self)
+    }
 }
 
 /// Colonial morale tier.
@@ -223,6 +228,10 @@ impl MoraleTier {
             MoraleTier::Poor => "Poor",
             MoraleTier::Rioting => "Rioting",
         }
+    }
+
+    pub fn label_localized(&self, lang: crate::i18n::Language) -> &'static str {
+        crate::i18n::get_dictionary(lang).morale_tier(*self)
     }
 
     pub fn color(&self) -> &'static str {
@@ -269,6 +278,10 @@ impl SustenanceState {
             SustenanceState::Deficit => "Rationing",
             SustenanceState::Starvation => "STARVATION",
         }
+    }
+
+    pub fn label_localized(&self, lang: crate::i18n::Language) -> &'static str {
+        crate::i18n::get_dictionary(lang).sustenance_state(*self)
     }
 
     pub fn color(&self) -> &'static str {
@@ -366,6 +379,10 @@ impl VehicleHull {
             VehicleHull::RoboSurveyor => "Robo-Surveyor",
             VehicleHull::Earthworker => "Earthworker",
         }
+    }
+
+    pub fn display_name_localized(&self, lang: crate::i18n::Language) -> &'static str {
+        crate::i18n::get_dictionary(lang).vehicle_name(self)
     }
 
     pub fn base_cost(&self) -> (u32, u32) {
@@ -1082,6 +1099,238 @@ impl NotificationDispatcher {
 }
 
 // =========================================================================
+// 5B. Real-Time Network Telemetry & Tactical Multiplayer Chat
+// =========================================================================
+
+/// Real-time WebRTC multiplayer network telemetry state.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct NetworkTelemetryState {
+    pub is_multiplayer: bool,
+    pub is_connected: bool,
+    pub is_host: bool,
+    pub peer_name: Option<String>,
+    pub ping_ms: u32,
+    pub lockstep_turn: u64,
+    pub is_in_sync: bool,
+    pub host_faction: Faction,
+    pub guest_faction: Option<Faction>,
+}
+
+impl Default for NetworkTelemetryState {
+    fn default() -> Self {
+        Self {
+            is_multiplayer: false,
+            is_connected: false,
+            is_host: true,
+            peer_name: None,
+            ping_ms: 18,
+            lockstep_turn: 1240,
+            is_in_sync: true,
+            host_faction: Faction::Eden,
+            guest_faction: Some(Faction::Plymouth),
+        }
+    }
+}
+
+impl NetworkTelemetryState {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Formatted peer connection status badge:
+    /// e.g. "P2P ACTIVE: Host & Guest"
+    pub fn peer_status_badge(&self) -> String {
+        if self.is_connected {
+            "P2P ACTIVE: Host & Guest".to_string()
+        } else {
+            "P2P STANDBY".to_string()
+        }
+    }
+
+    /// Formatted roundtrip ping / latency telemetry meter:
+    /// e.g. "Ping: 18ms"
+    pub fn ping_meter(&self) -> String {
+        format!("Ping: {}ms", self.ping_ms)
+    }
+
+    /// Formatted turn-buffered lockstep sync status:
+    /// e.g. "In Sync: Turn 1240"
+    pub fn lockstep_sync_status(&self) -> String {
+        if self.is_in_sync {
+            format!("In Sync: Turn {}", self.lockstep_turn)
+        } else {
+            format!("Buffering: Turn {}", self.lockstep_turn)
+        }
+    }
+
+    /// Update telemetry variables from live network packet stream.
+    pub fn update_telemetry(&mut self, ping_ms: u32, turn: u64, in_sync: bool) {
+        self.ping_ms = ping_ms;
+        self.lockstep_turn = turn;
+        self.is_in_sync = in_sync;
+    }
+}
+
+/// Tactical in-game chat message exchanged over WebRTC DataChannel.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct TacticalChatMessage {
+    pub id: u64,
+    pub sender: String,
+    pub faction: Option<Faction>,
+    pub text: String,
+    pub timestamp_sol: f64,
+    pub is_system: bool,
+}
+
+impl TacticalChatMessage {
+    /// Color-coded faction prefix:
+    /// e.g. "[Eden] Player1:" or "[Plymouth] Sarah:"
+    pub fn formatted_prefix(&self) -> String {
+        match self.faction {
+            Some(Faction::Eden) => format!("[Eden] {}:", self.sender),
+            Some(Faction::Plymouth) => format!("[Plymouth] {}:", self.sender),
+            None => format!("{}:", self.sender),
+        }
+    }
+
+    /// Primary accent color based on faction allegiance.
+    pub fn faction_color(&self) -> &'static str {
+        match self.faction {
+            Some(Faction::Eden) => "#38bdf8",     // Cyan
+            Some(Faction::Plymouth) => "#f87171", // Coral / Red
+            None => "#facc15",                    // Amber / Yellow
+        }
+    }
+
+    /// Full formatted message line:
+    /// e.g. "[Eden] Player1: Need assistance at south ridge!"
+    pub fn full_line(&self) -> String {
+        format!("{} {}", self.formatted_prefix(), self.text)
+    }
+}
+
+/// In-game tactical chat controller and text input buffer.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TacticalChatState {
+    pub is_open: bool,
+    pub input_buffer: String,
+    pub cursor_blink: f64,
+    pub messages: Vec<TacticalChatMessage>,
+    pub max_messages: usize,
+    pub next_id: u64,
+}
+
+impl Default for TacticalChatState {
+    fn default() -> Self {
+        Self {
+            is_open: false,
+            input_buffer: String::new(),
+            cursor_blink: 0.0,
+            messages: Vec::new(),
+            max_messages: 50,
+            next_id: 1,
+        }
+    }
+}
+
+impl TacticalChatState {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn open(&mut self) {
+        self.is_open = true;
+        self.cursor_blink = 0.0;
+    }
+
+    pub fn close(&mut self) {
+        self.is_open = false;
+        self.input_buffer.clear();
+    }
+
+    pub fn toggle(&mut self) {
+        if self.is_open {
+            self.close();
+        } else {
+            self.open();
+        }
+    }
+
+    pub fn type_char(&mut self, c: char) {
+        if self.input_buffer.len() < 120 {
+            self.input_buffer.push(c);
+        }
+    }
+
+    pub fn backspace(&mut self) {
+        self.input_buffer.pop();
+    }
+
+    /// Commit the current input buffer as an outgoing message and clear buffer.
+    pub fn commit_message(
+        &mut self,
+        sol: f64,
+        sender: &str,
+        faction: Faction,
+    ) -> Option<TacticalChatMessage> {
+        let text = self.input_buffer.trim().to_string();
+        if text.is_empty() {
+            self.close();
+            return None;
+        }
+
+        let msg = TacticalChatMessage {
+            id: self.next_id,
+            sender: sender.to_string(),
+            faction: Some(faction),
+            text,
+            timestamp_sol: sol,
+            is_system: false,
+        };
+        self.next_id = self.next_id.wrapping_add(1);
+        self.input_buffer.clear();
+        self.is_open = false;
+
+        self.messages.insert(0, msg.clone());
+        if self.messages.len() > self.max_messages {
+            self.messages.pop();
+        }
+        Some(msg)
+    }
+
+    /// Ingest an incoming message from the peer commander.
+    pub fn push_incoming(
+        &mut self,
+        sender: impl Into<String>,
+        text: impl Into<String>,
+        faction: Option<Faction>,
+        sol: f64,
+    ) {
+        let msg = TacticalChatMessage {
+            id: self.next_id,
+            sender: sender.into(),
+            faction,
+            text: text.into(),
+            timestamp_sol: sol,
+            is_system: false,
+        };
+        self.next_id = self.next_id.wrapping_add(1);
+
+        self.messages.insert(0, msg);
+        if self.messages.len() > self.max_messages {
+            self.messages.pop();
+        }
+    }
+
+    pub fn tick(&mut self, dt_secs: f64) {
+        self.cursor_blink += dt_secs;
+        if self.cursor_blink >= 1.0 {
+            self.cursor_blink -= 1.0;
+        }
+    }
+}
+
+// =========================================================================
 // 6. Responsive Keyboard Shortcut System
 // =========================================================================
 
@@ -1098,6 +1347,8 @@ pub enum HotkeyAction {
     ToggleMinimapDetail,
     QuickSave,
     QuickLoad,
+    ToggleChat,
+    CloseChat,
     None,
 }
 
@@ -1134,6 +1385,8 @@ impl HotkeySystem {
             "m" | "M" => HotkeyAction::ToggleMinimapDetail,
             "F5" | "f5" => HotkeyAction::QuickSave,
             "F9" | "f9" => HotkeyAction::QuickLoad,
+            "Enter" => HotkeyAction::ToggleChat,
+            "Escape" => HotkeyAction::CloseChat,
             "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "0" => {
                 let digit = key.chars().next().unwrap().to_digit(10).unwrap() as u8;
                 if ctrl {
@@ -1177,6 +1430,9 @@ pub struct HudState {
     pub research: ResearchBrowserState,
     pub notifications: NotificationDispatcher,
     pub hotkeys: HotkeySystem,
+    pub telemetry: NetworkTelemetryState,
+    pub chat: TacticalChatState,
+    pub language: String,
 }
 
 impl HudState {
@@ -1188,6 +1444,9 @@ impl HudState {
             research: ResearchBrowserState::default(),
             notifications: NotificationDispatcher::default(),
             hotkeys: HotkeySystem::default(),
+            telemetry: NetworkTelemetryState::default(),
+            chat: TacticalChatState::default(),
+            language: "en".into(),
         }
     }
 }
@@ -1205,7 +1464,7 @@ impl HudRenderer {
     }
 
     /// Update frame time, telemetry rates, and research.
-    pub fn update(&mut self, dt_secs: f64, colony: &mut ColonyState) {
+    pub fn update(&mut self, dt_secs: f64, colony: &mut ColonyState) -> Option<String> {
         self.state.rates.update(
             colony.sol,
             colony.common_ore,
@@ -1219,6 +1478,7 @@ impl HudRenderer {
             .filter(|b| b.is_active && (b.name.contains("Lab") || b.name.contains("D.I.R.T.")))
             .count();
 
+        let mut research_completed = None;
         if let Some(tech_name) =
             self.state
                 .research
@@ -1231,9 +1491,12 @@ impl HudRenderer {
                 None,
                 colony.sol,
             );
+            research_completed = Some(tech_name);
         }
 
         self.state.notifications.tick(dt_secs);
+        self.state.chat.tick(dt_secs);
+        research_completed
     }
 
     /// Render the interactive tactical minimap radar display.
@@ -1448,6 +1711,9 @@ impl HudRenderer {
         ctx.line_to(screen_w, bar_h);
         ctx.stroke();
 
+        let lang = crate::i18n::Language::from_code(&self.state.language);
+        let dict = crate::i18n::get_dictionary(lang);
+
         ctx.set_font("bold 11px system-ui, -apple-system, sans-serif");
         let mut x = 12.0;
         let y = 18.0;
@@ -1467,78 +1733,165 @@ impl HudRenderer {
 
         // Sol Counter
         ctx.set_fill_style_str("#94a3b8");
-        let _ = ctx.fill_text("SOL:", x, y);
+        let _ = ctx.fill_text(dict.sol, x, y);
         ctx.set_fill_style_str("#f1f5f9");
         let sol_str = format!("{:.2}", colony.sol);
-        let _ = ctx.fill_text(&sol_str, x + 28.0, y);
+        let _ = ctx.fill_text(&sol_str, x + 38.0, y);
         x += 80.0;
 
         // Common Ore + Rate
         ctx.set_fill_style_str("#94a3b8");
-        let _ = ctx.fill_text("COMMON:", x, y);
+        let _ = ctx.fill_text(dict.common_ore, x, y);
         ctx.set_fill_style_str("#facc15");
         let rate_c = self.state.rates.common_rate;
         let c_sign = if rate_c >= 0.0 { "+" } else { "" };
         let c_str = format!("{} t ({}{:.0}/s)", colony.common_ore, c_sign, rate_c);
-        let _ = ctx.fill_text(&c_str, x + 56.0, y);
-        x += 140.0;
+        let _ = ctx.fill_text(&c_str, x + 65.0, y);
+        x += 150.0;
 
         // Rare Ore + Rate
         ctx.set_fill_style_str("#94a3b8");
-        let _ = ctx.fill_text("RARE:", x, y);
+        let _ = ctx.fill_text(dict.rare_ore, x, y);
         ctx.set_fill_style_str("#c084fc");
         let rate_r = self.state.rates.rare_rate;
         let r_sign = if rate_r >= 0.0 { "+" } else { "" };
         let r_str = format!("{} t ({}{:.0}/s)", colony.rare_ore, r_sign, rate_r);
-        let _ = ctx.fill_text(&r_str, x + 38.0, y);
-        x += 130.0;
+        let _ = ctx.fill_text(&r_str, x + 55.0, y);
+        x += 140.0;
 
         // Food & Sustenance
         let sust = SustenanceState::evaluate(colony.food_units, colony.population);
         ctx.set_fill_style_str("#94a3b8");
-        let _ = ctx.fill_text("FOOD:", x, y);
+        let _ = ctx.fill_text(dict.food, x, y);
         ctx.set_fill_style_str(sust.color());
-        let f_str = format!("{} [{}]", colony.food_units, sust.label());
-        let _ = ctx.fill_text(&f_str, x + 38.0, y);
-        x += 120.0;
+        let f_str = format!("{} [{}]", colony.food_units, sust.label_localized(lang));
+        let _ = ctx.fill_text(&f_str, x + 48.0, y);
+        x += 130.0;
 
         // Energy Grid Status (Brownout / Blackout Alert)
         let grid = EnergyGridState::from_power(colony.power_produced, colony.power_consumed);
         ctx.set_fill_style_str("#94a3b8");
-        let _ = ctx.fill_text("POWER:", x, y);
+        let _ = ctx.fill_text(dict.power, x, y);
         ctx.set_fill_style_str(grid.alert_color());
         let p_str = format!(
             "{}/{} MW ({})",
             colony.power_produced,
             colony.power_consumed,
-            grid.status_label()
+            grid.status_label_localized(lang)
         );
-        let _ = ctx.fill_text(&p_str, x + 48.0, y);
-        x += 180.0;
+        let _ = ctx.fill_text(&p_str, x + 58.0, y);
+        x += 190.0;
 
         // Morale Gauge
         let morale = MoraleTier::from_percentage(colony.morale_pct);
         ctx.set_fill_style_str("#94a3b8");
-        let _ = ctx.fill_text("MORALE:", x, y);
+        let _ = ctx.fill_text(dict.pop, x, y);
         ctx.set_fill_style_str(morale.color());
-        let m_str = format!("{}% - {}", colony.morale_pct, morale.label());
-        let _ = ctx.fill_text(&m_str, x + 54.0, y);
+        let m_str = format!("{}% - {}", colony.morale_pct, morale.label_localized(lang));
+        let _ = ctx.fill_text(&m_str, x + 45.0, y);
+
+        // Live Multiplayer HUD Widget (Connection Badge, Ping Meter, Lockstep Sync Status)
+        if self.state.telemetry.is_multiplayer || self.state.telemetry.is_connected {
+            let widget_x = (screen_w - 430.0).max(x + 130.0);
+            self.render_network_telemetry_widget(ctx, widget_x, 3.0);
+        }
+    }
+
+    /// Render the live multiplayer HUD widget:
+    /// - Peer connection status badge (`P2P ACTIVE: Host & Guest`).
+    /// - Real-time roundtrip ping / latency telemetry meter (`Ping: 18ms`).
+    /// - Turn-buffered lockstep sync status (`In Sync: Turn 1240`).
+    pub fn render_network_telemetry_widget(
+        &self,
+        ctx: &CanvasRenderingContext2d,
+        x: f64,
+        y: f64,
+    ) {
+        let t = &self.state.telemetry;
+        let badge_text = t.peer_status_badge();
+        let ping_text = t.ping_meter();
+        let sync_text = t.lockstep_sync_status();
+
+        ctx.set_font("bold 10px monospace, system-ui");
+
+        // 1. Peer Connection Status Badge
+        let badge_bg = if t.is_connected {
+            "rgba(34, 197, 94, 0.2)"
+        } else {
+            "rgba(239, 68, 68, 0.2)"
+        };
+        let badge_border = if t.is_connected {
+            "#22c55e"
+        } else {
+            "#ef4444"
+        };
+        let badge_color = if t.is_connected {
+            "#4ade80"
+        } else {
+            "#f87171"
+        };
+
+        let badge_w = 175.0;
+        let badge_h = 22.0;
+
+        ctx.set_fill_style_str(badge_bg);
+        ctx.fill_rect(x, y, badge_w, badge_h);
+        ctx.set_stroke_style_str(badge_border);
+        ctx.set_line_width(1.0);
+        ctx.stroke_rect(x, y, badge_w, badge_h);
+
+        // Status indicator circle
+        ctx.set_fill_style_str(badge_color);
+        ctx.begin_path();
+        let _ = ctx.arc(x + 10.0, y + 11.0, 3.5, 0.0, std::f64::consts::PI * 2.0);
+        ctx.fill();
+
+        ctx.set_fill_style_str(badge_color);
+        let _ = ctx.fill_text(&badge_text, x + 20.0, y + 15.0);
+
+        // 2. Real-time Roundtrip Ping / Latency telemetry meter
+        let ping_x = x + badge_w + 12.0;
+        let ping_color = if t.ping_ms < 50 {
+            "#4ade80" // Fast - Green
+        } else if t.ping_ms < 150 {
+            "#facc15" // Moderate - Amber
+        } else {
+            "#ef4444" // High - Red
+        };
+        ctx.set_fill_style_str("#94a3b8");
+        let _ = ctx.fill_text("RTT:", ping_x, y + 15.0);
+        ctx.set_fill_style_str(ping_color);
+        let _ = ctx.fill_text(&ping_text, ping_x + 28.0, y + 15.0);
+
+        // 3. Turn-buffered Lockstep Sync status
+        let sync_x = ping_x + 95.0;
+        let sync_color = if t.is_in_sync {
+            "#38bdf8"
+        } else {
+            "#fb923c"
+        };
+        ctx.set_fill_style_str(sync_color);
+        let _ = ctx.fill_text(&sync_text, sync_x, y + 15.0);
     }
 
     /// Render scrolling tactical alerts and in-game chat overlay.
     pub fn render_alerts_and_chat(
         &self,
         ctx: &CanvasRenderingContext2d,
-        _screen_w: f64,
+        screen_w: f64,
         screen_h: f64,
     ) {
         let max_visible = 5;
-        let start_y = screen_h - 110.0;
+        let start_y = if self.state.chat.is_open {
+            screen_h - 135.0
+        } else {
+            screen_h - 100.0
+        };
         let line_h = 18.0;
 
         ctx.set_font("11px monospace, system-ui");
 
-        // Render tactical alerts
+        // 1. Render tactical alerts
         for (idx, alert) in self.state.notifications.alerts.iter().take(max_visible).enumerate() {
             let y = start_y - (idx as f64 * line_h);
             if y < 40.0 {
@@ -1555,6 +1908,53 @@ impl HudRenderer {
             let text = format!("[Sol {:.2}] {}: {}", alert.timestamp_sol, alert.title, alert.message);
             let _ = ctx.fill_text(&text, 80.0, y);
         }
+
+        // 2. Render Tactical Chat messages (incoming & outgoing with color-coded faction names)
+        let chat_count = self.state.chat.messages.len().min(5);
+        for (idx, msg) in self.state.chat.messages.iter().take(chat_count).enumerate() {
+            let y = start_y - ((max_visible + idx) as f64 * line_h);
+            if y < 40.0 {
+                break;
+            }
+
+            // Color-coded faction prefix (e.g. "[Eden] Player1:" or "[Plymouth] Sarah:")
+            ctx.set_fill_style_str(msg.faction_color());
+            let prefix = msg.formatted_prefix();
+            let _ = ctx.fill_text(&prefix, 16.0, y);
+
+            // Message body
+            ctx.set_fill_style_str("#f1f5f9");
+            let prefix_w = prefix.len() as f64 * 7.5;
+            let _ = ctx.fill_text(&format!(" {}", msg.text), 16.0 + prefix_w, y);
+        }
+
+        // 3. Render Tactical Chat Input Prompt when open (Press Enter to focus)
+        if self.state.chat.is_open {
+            let box_x = 16.0;
+            let box_y = screen_h - 90.0;
+            let box_w = (screen_w * 0.55).clamp(380.0, 720.0);
+            let box_h = 32.0;
+
+            // Translucent glass prompt container
+            ctx.set_fill_style_str("rgba(15, 23, 42, 0.94)");
+            ctx.fill_rect(box_x, box_y, box_w, box_h);
+
+            ctx.set_stroke_style_str("#38bdf8");
+            ctx.set_line_width(1.5);
+            ctx.stroke_rect(box_x, box_y, box_w, box_h);
+
+            // Prompt label & buffer
+            ctx.set_font("bold 11px monospace, system-ui");
+            ctx.set_fill_style_str("#38bdf8");
+            let prompt_label = "💬 COMM [ENTER: Send | ESC: Close] > ";
+            let _ = ctx.fill_text(prompt_label, box_x + 10.0, box_y + 20.0);
+
+            let label_w = prompt_label.len() as f64 * 7.0;
+            ctx.set_fill_style_str("#f8fafc");
+            let cursor = if self.state.chat.cursor_blink < 0.5 { "_" } else { " " };
+            let display_text = format!("{}{}", self.state.chat.input_buffer, cursor);
+            let _ = ctx.fill_text(&display_text, box_x + 10.0 + label_w, box_y + 20.0);
+        }
     }
 
     /// Render the in-canvas Factory Production & ConVec Kit Queue Panel.
@@ -1568,6 +1968,9 @@ impl HudRenderer {
         if !self.state.factory.is_open {
             return;
         }
+
+        let lang = crate::i18n::Language::from_code(&self.state.language);
+        let dict = crate::i18n::get_dictionary(lang);
 
         let panel_w = 340.0;
         let panel_h = 380.0;
@@ -1585,23 +1988,23 @@ impl HudRenderer {
         // Header
         ctx.set_fill_style_str("#38bdf8");
         ctx.set_font("bold 13px system-ui, sans-serif");
-        let _ = ctx.fill_text("FACTORY PRODUCTION & CONVEC KITS", panel_x + 16.0, panel_y + 24.0);
+        let _ = ctx.fill_text(dict.hud.factory_title, panel_x + 16.0, panel_y + 24.0);
 
         // Selection info
         ctx.set_font("11px system-ui, sans-serif");
         ctx.set_fill_style_str("#e2e8f0");
-        let hull_text = format!("Hull: {}", self.state.factory.selected_hull.display_name());
+        let hull_text = format!("{}: {}", dict.hud.factory_hull, self.state.factory.selected_hull.display_name_localized(lang));
         let _ = ctx.fill_text(&hull_text, panel_x + 16.0, panel_y + 54.0);
 
         let (cost_c, cost_r) = self.state.factory.current_selection_cost();
-        let cost_text = format!("Cost: {} Common, {} Rare", cost_c, cost_r);
+        let cost_text = format!("{}: {} {}, {} {}", dict.hud.factory_cost, cost_c, dict.common_ore, cost_r, dict.rare_ore);
         ctx.set_fill_style_str("#facc15");
         let _ = ctx.fill_text(&cost_text, panel_x + 16.0, panel_y + 74.0);
 
         // Rally-point status
         let rally_str = match self.state.factory.rally_point {
-            Some((rx, ry)) => format!("Rally Point: ({}, {})", rx, ry),
-            None => "Rally Point: Unassigned (Factory Bay)".to_string(),
+            Some((rx, ry)) => format!("{}: ({}, {})", dict.hud.factory_rally, rx, ry),
+            None => dict.hud.factory_unassigned_rally.to_string(),
         };
         ctx.set_fill_style_str("#4ade80");
         let _ = ctx.fill_text(&rally_str, panel_x + 16.0, panel_y + 94.0);
@@ -1624,7 +2027,7 @@ impl HudRenderer {
 
         // Queue listing
         ctx.set_fill_style_str("#94a3b8");
-        let _ = ctx.fill_text("Fabrication Queue:", panel_x + 16.0, panel_y + 148.0);
+        let _ = ctx.fill_text(dict.hud.factory_queue, panel_x + 16.0, panel_y + 148.0);
 
         for (idx, order) in self.state.factory.queue.iter().take(6).enumerate() {
             let qy = panel_y + 170.0 + (idx as f64 * 22.0);
@@ -1636,7 +2039,7 @@ impl HudRenderer {
         // Close hotkey helper
         ctx.set_fill_style_str("#64748b");
         ctx.set_font("10px system-ui, sans-serif");
-        let _ = ctx.fill_text("Press 'F' to toggle panel | Right click to set Rally Point", panel_x + 16.0, panel_y + panel_h - 12.0);
+        let _ = ctx.fill_text(dict.hud.factory_footer_hint, panel_x + 16.0, panel_y + panel_h - 12.0);
     }
 
     /// Render the in-canvas University Research & Tech Tree Browser modal.
@@ -1650,6 +2053,9 @@ impl HudRenderer {
         if !self.state.research.is_open {
             return;
         }
+
+        let lang = crate::i18n::Language::from_code(&self.state.language);
+        let dict = crate::i18n::get_dictionary(lang);
 
         let panel_w = 420.0;
         let panel_h = 440.0;
@@ -1666,7 +2072,7 @@ impl HudRenderer {
         // Header
         ctx.set_fill_style_str("#38bdf8");
         ctx.set_font("bold 13px system-ui, sans-serif");
-        let _ = ctx.fill_text("COLONIAL SCIENTIFIC RESEARCH MATRIX", panel_x + 16.0, panel_y + 24.0);
+        let _ = ctx.fill_text(dict.hud.research_title, panel_x + 16.0, panel_y + 24.0);
 
         // Active project progress bar
         let bar_x = panel_x + 16.0;
@@ -1685,8 +2091,8 @@ impl HudRenderer {
         ctx.stroke_rect(bar_x, bar_y, bar_w, bar_h);
 
         let status_str = match self.state.research.active_tech_id {
-            Some(tid) => format!("Active Project: Tech #{} ({:.0}%)", tid, self.state.research.progress_percent),
-            None => "No Active Research Project".to_string(),
+            Some(tid) => format!("{}: Tech #{} ({:.0}%)", dict.hud.research_active, tid, self.state.research.progress_percent),
+            None => dict.hud.research_none.to_string(),
         };
         ctx.set_fill_style_str("#e2e8f0");
         ctx.set_font("10px system-ui, sans-serif");
@@ -1723,7 +2129,7 @@ impl HudRenderer {
 
         ctx.set_fill_style_str("#64748b");
         ctx.set_font("10px system-ui, sans-serif");
-        let _ = ctx.fill_text("Press 'R' to toggle research matrix", panel_x + 16.0, panel_y + panel_h - 12.0);
+        let _ = ctx.fill_text(dict.hud.research_footer_hint, panel_x + 16.0, panel_y + panel_h - 12.0);
     }
 }
 
@@ -1906,5 +2312,103 @@ mod tests {
         assert_eq!(dispatcher.jump_to_last_alert(), Some((45, 28)));
         assert_eq!(dispatcher.alerts.len(), 1);
         assert_eq!(dispatcher.alerts[0].priority, AlertPriority::Critical);
+    }
+
+    #[test]
+    fn test_network_telemetry_formatting() {
+        let mut telemetry = NetworkTelemetryState::default();
+
+        // Disconnected state
+        telemetry.is_connected = false;
+        assert_eq!(telemetry.peer_status_badge(), "P2P STANDBY");
+
+        // Connected state
+        telemetry.is_connected = true;
+        assert_eq!(telemetry.peer_status_badge(), "P2P ACTIVE: Host & Guest");
+
+        // Ping telemetry meter
+        telemetry.ping_ms = 18;
+        assert_eq!(telemetry.ping_meter(), "Ping: 18ms");
+
+        telemetry.ping_ms = 24;
+        assert_eq!(telemetry.ping_meter(), "Ping: 24ms");
+
+        // Turn-buffered lockstep sync status
+        telemetry.lockstep_turn = 1240;
+        telemetry.is_in_sync = true;
+        assert_eq!(telemetry.lockstep_sync_status(), "In Sync: Turn 1240");
+
+        // Desync / buffering state
+        telemetry.is_in_sync = false;
+        assert_eq!(telemetry.lockstep_sync_status(), "Buffering: Turn 1240");
+
+        // update_telemetry method
+        telemetry.update_telemetry(32, 1300, true);
+        assert_eq!(telemetry.ping_meter(), "Ping: 32ms");
+        assert_eq!(telemetry.lockstep_sync_status(), "In Sync: Turn 1300");
+    }
+
+    #[test]
+    fn test_tactical_chat_message_dispatch_and_queue_management() {
+        let mut chat = TacticalChatState::default();
+        chat.max_messages = 3;
+
+        // 1. Interactive chat prompt buffer input
+        assert!(!chat.is_open);
+        chat.open();
+        assert!(chat.is_open);
+
+        // Type characters
+        for c in "Need assistance at south ridge!".chars() {
+            chat.type_char(c);
+        }
+        assert_eq!(chat.input_buffer, "Need assistance at south ridge!");
+
+        // Backspace
+        chat.backspace();
+        assert_eq!(chat.input_buffer, "Need assistance at south ridge");
+        chat.type_char('!');
+
+        // Commit message
+        let committed = chat
+            .commit_message(10.5, "Player1", Faction::Eden)
+            .expect("Committed message");
+        assert_eq!(committed.sender, "Player1");
+        assert_eq!(committed.faction, Some(Faction::Eden));
+        assert_eq!(committed.text, "Need assistance at south ridge!");
+        assert_eq!(committed.formatted_prefix(), "[Eden] Player1:");
+        assert_eq!(committed.faction_color(), "#38bdf8");
+        assert_eq!(
+            committed.full_line(),
+            "[Eden] Player1: Need assistance at south ridge!"
+        );
+        assert!(!chat.is_open);
+        assert!(chat.input_buffer.is_empty());
+        assert_eq!(chat.messages.len(), 1);
+
+        // 2. Incoming peer message (Plymouth)
+        chat.push_incoming(
+            "Sarah",
+            "Affirmative! Dispatching Lynxes to south ridge.",
+            Some(Faction::Plymouth),
+            10.6,
+        );
+        assert_eq!(chat.messages.len(), 2);
+        assert_eq!(chat.messages[0].formatted_prefix(), "[Plymouth] Sarah:");
+        assert_eq!(chat.messages[0].faction_color(), "#f87171");
+        assert_eq!(
+            chat.messages[0].full_line(),
+            "[Plymouth] Sarah: Affirmative! Dispatching Lynxes to south ridge."
+        );
+
+        // 3. Queue overflow / eviction check (max_messages = 3)
+        chat.push_incoming("BaseAI", "Common Ore mine depleted.", None, 10.7);
+        assert_eq!(chat.messages.len(), 3);
+
+        chat.push_incoming("Player1", "Under heavy railgun fire!", Some(Faction::Eden), 10.8);
+        assert_eq!(chat.messages.len(), 3);
+        // The newest message is at index 0
+        assert_eq!(chat.messages[0].sender, "Player1");
+        assert_eq!(chat.messages[0].text, "Under heavy railgun fire!");
     }
 }

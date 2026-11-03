@@ -9,7 +9,7 @@ mod audio;
 mod i18n;
 pub mod net;
 mod render;
-mod sim;
+pub mod sim;
 
 use audio::AudioManager;
 use render::Viewport;
@@ -28,6 +28,7 @@ struct GameApp {
     viewport: Viewport,
     audio: AudioManager,
     hud: render::HudRenderer,
+    menu: render::MenuManager,
     is_dragging: bool,
     last_mouse_x: f64,
     last_mouse_y: f64,
@@ -76,6 +77,7 @@ pub fn start() -> Result<(), JsValue> {
         viewport: Viewport::new(),
         audio: AudioManager::new(),
         hud: render::HudRenderer::new(64, 64, 180.0, 180.0),
+        menu: render::MenuManager::new(),
         is_dragging: false,
         last_mouse_x: 0.0,
         last_mouse_y: 0.0,
@@ -92,16 +94,191 @@ pub fn start() -> Result<(), JsValue> {
         playtime_seconds: 0,
     }));
 
+    // Responsive Window Resize & High-DPI Viewport Recalibration Handler
+    {
+        let app_clone = app.clone();
+        let canvas_clone = canvas.clone();
+        let minimap_canvas_clone = minimap_canvas.clone();
+        let window_clone = window.clone();
+        let on_resize = Closure::wrap(Box::new(move |_: web_sys::UiEvent| {
+            let mut g = app_clone.borrow_mut();
+            let dpr = window_clone.device_pixel_ratio().max(1.0);
+
+            let client_w = canvas_clone.client_width() as f64;
+            let client_h = canvas_clone.client_height() as f64;
+            if client_w > 0.0 && client_h > 0.0 {
+                let dims = render::touch::compute_high_dpi_canvas_dimensions(client_w, client_h, dpr);
+                if canvas_clone.width() != dims.physical_width || canvas_clone.height() != dims.physical_height {
+                    canvas_clone.set_width(dims.physical_width);
+                    canvas_clone.set_height(dims.physical_height);
+                }
+            }
+
+            let mini_w = minimap_canvas_clone.client_width() as f64;
+            let mini_h = minimap_canvas_clone.client_height() as f64;
+            if mini_w > 0.0 && mini_h > 0.0 {
+                let mini_dims = render::touch::compute_high_dpi_canvas_dimensions(mini_w, mini_h, dpr);
+                if minimap_canvas_clone.width() != mini_dims.physical_width || minimap_canvas_clone.height() != mini_dims.physical_height {
+                    minimap_canvas_clone.set_width(mini_dims.physical_width);
+                    minimap_canvas_clone.set_height(mini_dims.physical_height);
+                }
+                g.hud.state.radar.radar_width = mini_w;
+                g.hud.state.radar.radar_height = mini_h;
+            }
+        }) as Box<dyn FnMut(web_sys::UiEvent)>);
+        window.add_event_listener_with_callback("resize", on_resize.as_ref().unchecked_ref())?;
+        on_resize.forget();
+    }
+
     // Mouse Controls (Pan, Box Select & Ghost Construction Placement)
     {
         let app_clone = app.clone();
         let doc_clone = document.clone();
+        let canvas_clone = canvas.clone();
         let on_mouse_down = Closure::wrap(Box::new(move |e: MouseEvent| {
             let mut g = app_clone.borrow_mut();
             let _ = g.audio.init();
 
             let click_x = e.client_x() as f64;
             let click_y = e.client_y() as f64;
+
+            if !g.menu.is_in_game() {
+                if e.button() == 0 {
+                    let canvas_w = canvas_clone.width() as f64;
+                    let canvas_h = canvas_clone.height() as f64;
+                    let action = g.menu.handle_mouse_down(click_x, click_y, canvas_w, canvas_h, true);
+                    match action {
+                        render::MenuAction::StartScenario(sc_id) => {
+                            g.colony = ColonyState::new_scenario(sc_id);
+                            g.menu.switch_screen(render::MenuScreen::None);
+                            g.audio.play_build_confirm();
+                        }
+                        render::MenuAction::StartSkirmish(cfg) => {
+                            let mut new_colony = ColonyState::new_scenario(cfg.map_index);
+                            let opps = cfg.build_opponents();
+                            new_colony.setup_skirmish(cfg.human_faction, &opps);
+                            let (c_ore, r_ore) = cfg.resources.starting_ore();
+                            new_colony.common_ore = c_ore;
+                            new_colony.rare_ore = r_ore;
+                            g.colony = new_colony;
+                            g.menu.switch_screen(render::MenuScreen::None);
+                            g.audio.play_build_confirm();
+                        }
+                        render::MenuAction::ResumeGame => {
+                            g.menu.switch_screen(render::MenuScreen::None);
+                        }
+                        render::MenuAction::QuickSave => {
+                            let _ = sim::save::execute_quicksave(&g.colony, g.playtime_seconds);
+                            g.menu.set_status("QuickSave Stored (Slot 0)", 3.0);
+                            g.audio.play_build_confirm();
+                        }
+                        render::MenuAction::QuickLoad => {
+                            if let Ok(meta) = sim::save::execute_quickload(&mut g.colony) {
+                                g.menu.set_status(format!("QuickLoad: Sol {:.2}", meta.sol), 3.0);
+                                g.menu.switch_screen(render::MenuScreen::None);
+                                g.audio.play_build_confirm();
+                            } else {
+                                g.menu.set_status("QuickLoad Failed: No QuickSave", 3.0);
+                                g.audio.play_build_error();
+                            }
+                        }
+                        render::MenuAction::LoadSlot(slot) => {
+                            if let Ok(st) = sim::save::LocalStorageBackend::load(slot) {
+                                st.apply_to_colony(&mut g.colony);
+                                g.menu.set_status(format!("Loaded Slot #{}", slot), 3.0);
+                                g.menu.switch_screen(render::MenuScreen::None);
+                                g.audio.play_build_confirm();
+                            } else {
+                                g.menu.set_status(format!("Load failed for Slot #{}", slot), 3.0);
+                                g.audio.play_build_error();
+                            }
+                        }
+                        render::MenuAction::SaveSlot(slot) => {
+                            let st = sim::save::SaveGameState::from_colony(&g.colony, slot, format!("Colony Save #{}", slot), g.playtime_seconds);
+                            if sim::save::LocalStorageBackend::save(slot, &st).is_ok() {
+                                g.menu.refresh_save_slots();
+                                g.menu.set_status(format!("Saved to Slot #{}", slot), 3.0);
+                                g.audio.play_build_confirm();
+                            }
+                        }
+                        render::MenuAction::DeleteSlot(slot) => {
+                            let _ = sim::save::LocalStorageBackend::delete_slot(slot);
+                            g.menu.refresh_save_slots();
+                            g.menu.set_status(format!("Deleted Slot #{}", slot), 3.0);
+                        }
+                        render::MenuAction::ExportOp2Save => {
+                            let st = sim::save::SaveGameState::from_colony(&g.colony, 1, "Outpost 2 Archive", g.playtime_seconds);
+                            if let Ok(json) = sim::save::FileExportBackend::export_to_op2save(&st) {
+                                let filename = sim::save::FileExportBackend::generate_download_filename(&st.metadata);
+                                let _ = sim::save::FileExportBackend::trigger_download(&filename, &json);
+                                g.menu.set_status("Downloaded .op2save file", 3.0);
+                            }
+                        }
+                        render::MenuAction::RestartScenario => {
+                            g.colony = ColonyState::new_scenario(g.colony.mission.scenario_id);
+                            g.menu.switch_screen(render::MenuScreen::None);
+                            g.audio.play_build_confirm();
+                        }
+                        render::MenuAction::SurrenderToMainMenu => {
+                            g.menu.switch_screen(render::MenuScreen::MainMenu);
+                            g.audio.play_defeat_alert();
+                        }
+                        render::MenuAction::CopyOfferToClipboard => {
+                            if let Some(offer) = &g.menu.mp_room.host_offer_sdp {
+                                if let Some(win) = web_sys::window() {
+                                    let _ = win.navigator().clipboard().write_text(offer);
+                                }
+                            }
+                            g.audio.play_ui_beep();
+                        }
+                        render::MenuAction::CopyAnswerToClipboard => {
+                            if let Some(ans) = &g.menu.mp_room.guest_answer_sdp {
+                                if let Some(win) = web_sys::window() {
+                                    let _ = win.navigator().clipboard().write_text(ans);
+                                }
+                            }
+                            g.audio.play_ui_beep();
+                        }
+                        render::MenuAction::LaunchMultiplayerMatch => {
+                            let map_name = g.menu.mp_room.map_name.clone();
+                            let map_idx = if map_name.contains("Eden 1") {
+                                1
+                            } else if map_name.contains("Eden 2") {
+                                2
+                            } else if map_name.contains("Eden 3") {
+                                3
+                            } else if map_name.contains("Plymouth 1") {
+                                4
+                            } else if map_name.contains("Plymouth 2") {
+                                5
+                            } else if map_name.contains("Plymouth 3") {
+                                6
+                            } else {
+                                1
+                            };
+                            g.colony = ColonyState::new_scenario(map_idx);
+                            g.hud.state.telemetry.is_multiplayer = true;
+                            g.hud.state.telemetry.is_connected = true;
+                            g.hud.state.telemetry.host_faction = g.menu.mp_room.faction;
+                            g.hud.state.telemetry.guest_faction = g.menu.mp_room.guest_faction.or(Some(Faction::Plymouth));
+                            g.menu.switch_screen(render::MenuScreen::None);
+                            g.audio.play_build_confirm();
+                        }
+                        render::MenuAction::ApplyOptions(opts) => {
+                            g.menu.options = opts.clone();
+                            g.hud.state.language = opts.language.clone();
+                            i18n::apply_language(&opts.language, &doc_clone);
+                            g.audio.apply_options(opts.master_volume, opts.sfx_volume, opts.music_volume);
+                            g.audio.play_ui_beep();
+                        }
+                        render::MenuAction::PlayBeep => {
+                            g.audio.play_ui_beep();
+                        }
+                        _ => {}
+                    }
+                }
+                return;
+            }
 
             if e.button() == 0 {
                 // If in structure placement mode: deploy structure
@@ -294,6 +471,11 @@ pub fn start() -> Result<(), JsValue> {
             let cur_x = e.client_x() as f64;
             let cur_y = e.client_y() as f64;
 
+            if !g.menu.is_in_game() {
+                g.menu.handle_mouse_move(cur_x, cur_y);
+                return;
+            }
+
             let (tx, ty) = g.viewport.screen_to_tile(cur_x, cur_y);
             g.hover_tile = (tx, ty);
 
@@ -316,6 +498,13 @@ pub fn start() -> Result<(), JsValue> {
         let app_clone = app.clone();
         let on_mouse_up = Closure::wrap(Box::new(move |e: MouseEvent| {
             let mut g = app_clone.borrow_mut();
+            if !g.menu.is_in_game() {
+                g.drag_select_start = None;
+                g.drag_select_current = None;
+                g.is_dragging = false;
+                return;
+            }
+
             let click_x = e.client_x() as f64;
             let click_y = e.client_y() as f64;
 
@@ -330,6 +519,7 @@ pub fn start() -> Result<(), JsValue> {
 
                     let player_faction = g.colony.faction;
                     let mut selected_any = false;
+                    let mut first_selected_name = None;
                     let unit_count = g.colony.units.len();
                     for i in 0..unit_count {
                         if g.colony.units[i].faction == player_faction {
@@ -339,6 +529,9 @@ pub fn start() -> Result<(), JsValue> {
                             );
                             if sx >= min_x && sx <= max_x && sy >= min_y && sy <= max_y {
                                 g.colony.units[i].is_selected = true;
+                                if first_selected_name.is_none() {
+                                    first_selected_name = Some(g.colony.units[i].name.clone());
+                                }
                                 selected_any = true;
                             } else if !e.shift_key() {
                                 g.colony.units[i].is_selected = false;
@@ -350,12 +543,16 @@ pub fn start() -> Result<(), JsValue> {
                         for b in &mut g.colony.buildings {
                             b.is_selected = false;
                         }
-                        g.audio.play_unit_ack();
+                        if let Some(name) = first_selected_name {
+                            g.audio.play_vehicle_selection(&name);
+                        } else {
+                            g.audio.play_unit_ack();
+                        }
                     }
                 } else {
                     // Single Unit or Building Click Selection
                     let zoom = g.viewport.zoom;
-                    let mut clicked_unit = false;
+                    let mut clicked_unit_name = None;
                     let unit_count = g.colony.units.len();
                     for i in 0..unit_count {
                         let tx = g.colony.units[i].tile_x as f64;
@@ -364,17 +561,19 @@ pub fn start() -> Result<(), JsValue> {
                         let d = ((click_x - sx).powi(2) + (click_y - sy).powi(2)).sqrt();
                         if d < 20.0 * zoom {
                             g.colony.units[i].is_selected = true;
-                            clicked_unit = true;
+                            if clicked_unit_name.is_none() {
+                                clicked_unit_name = Some(g.colony.units[i].name.clone());
+                            }
                         } else if !e.shift_key() {
                             g.colony.units[i].is_selected = false;
                         }
                     }
 
-                    if clicked_unit {
+                    if let Some(name) = clicked_unit_name {
                         for b in &mut g.colony.buildings {
                             b.is_selected = false;
                         }
-                        g.audio.play_unit_ack();
+                        g.audio.play_vehicle_selection(&name);
                     } else {
                         let (tx, ty) = g.viewport.screen_to_tile(click_x, click_y);
                         let mut clicked_building = false;
@@ -423,6 +622,62 @@ pub fn start() -> Result<(), JsValue> {
             let ctrl = e.ctrl_key() || e.meta_key();
             let shift = e.shift_key();
 
+            if !g.menu.is_in_game() && g.menu.current_screen != render::MenuScreen::PauseMenu {
+                let action = g.menu.handle_key_down(&key, false);
+                match action {
+                    render::MenuAction::StartScenario(sc_id) => {
+                        g.colony = ColonyState::new_scenario(sc_id);
+                        g.menu.current_screen = render::MenuScreen::None;
+                        g.audio.play_build_confirm();
+                    }
+                    _ => {}
+                }
+                return;
+            }
+
+            // Tactical Chat in-game prompt input interception
+            if g.hud.state.chat.is_open {
+                match key.as_str() {
+                    "Enter" => {
+                        let cur_sol = g.colony.sol;
+                        let my_faction = g.colony.faction;
+                        let my_sender = format!("{:?} Commander", my_faction);
+                        if let Some(msg) = g.hud.state.chat.commit_message(cur_sol, &my_sender, my_faction) {
+                            if let Some(session) = &g.net_session {
+                                let _ = session.send_chat(&msg.sender, &msg.text);
+                            }
+                            g.audio.play_ui_beep();
+                            if let Some(log_el) = doc_clone.get_element_by_id("net-chat-log") {
+                                if let Ok(chat_div) = doc_clone.create_element("div") {
+                                    chat_div.set_text_content(Some(&msg.full_line()));
+                                    let _ = chat_div.set_attribute("style", "color: #38bdf8; margin-bottom: 2px;");
+                                    let _ = log_el.append_child(&chat_div);
+                                }
+                            }
+                        }
+                    }
+                    "Escape" => {
+                        g.hud.state.chat.close();
+                    }
+                    "Backspace" => {
+                        g.hud.state.chat.backspace();
+                    }
+                    s if s.chars().count() == 1 && !ctrl && !e.alt_key() => {
+                        if let Some(c) = s.chars().next() {
+                            g.hud.state.chat.type_char(c);
+                        }
+                    }
+                    _ => {}
+                }
+                return;
+            }
+
+            // Focus in-game tactical chat on Enter keypress
+            if key == "Enter" {
+                g.hud.state.chat.open();
+                return;
+            }
+
             match key.as_str() {
                 "ArrowLeft" | "a" | "A" => g.viewport.camera_x += step,
                 "ArrowRight" | "d" | "D" => g.viewport.camera_x -= step,
@@ -431,12 +686,43 @@ pub fn start() -> Result<(), JsValue> {
                 "+" | "=" => g.viewport.zoom = (g.viewport.zoom * 1.15).min(2.5),
                 "-" | "_" => g.viewport.zoom = (g.viewport.zoom / 1.15).max(0.4),
                 "Escape" => {
-                    g.pending_placement = None;
-                    g.pending_engineering = None;
-                    g.pending_convec_deploy = false;
-                    g.pending_patrol = false;
-                    g.hud.state.factory.is_open = false;
-                    g.hud.state.research.is_open = false;
+                    if g.pending_placement.is_some()
+                        || g.pending_engineering.is_some()
+                        || g.pending_convec_deploy
+                        || g.pending_patrol
+                        || g.hud.state.factory.is_open
+                        || g.hud.state.research.is_open
+                    {
+                        g.pending_placement = None;
+                        g.pending_engineering = None;
+                        g.pending_convec_deploy = false;
+                        g.pending_patrol = false;
+                        g.hud.state.factory.is_open = false;
+                        g.hud.state.research.is_open = false;
+                    } else if g.menu.is_in_game() {
+                        g.menu.switch_screen(render::MenuScreen::PauseMenu);
+                    } else if g.menu.current_screen == render::MenuScreen::PauseMenu {
+                        g.menu.switch_screen(render::MenuScreen::None);
+                    }
+                }
+                "F5" => {
+                    let _ = sim::save::execute_quicksave(&g.colony, g.playtime_seconds);
+                    g.audio.play_build_confirm();
+                    if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                        toast.set_text_content(Some("QuickSave Stored (Slot 0)"));
+                        let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #4ade80; display: block;");
+                    }
+                }
+                "F9" => {
+                    if let Ok(meta) = sim::save::execute_quickload(&mut g.colony) {
+                        g.audio.play_build_confirm();
+                        if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                            toast.set_text_content(Some(&format!("QuickLoad: Sol {:.2}", meta.sol)));
+                            let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #4ade80; display: block;");
+                        }
+                    } else {
+                        g.audio.play_build_error();
+                    }
                 }
                 _ => {}
             }
@@ -593,6 +879,12 @@ pub fn start() -> Result<(), JsValue> {
                             }
                         }
                     }
+                }
+                render::hud::HotkeyAction::ToggleChat => {
+                    g.hud.state.chat.toggle();
+                }
+                render::hud::HotkeyAction::CloseChat => {
+                    g.hud.state.chat.close();
                 }
                 render::hud::HotkeyAction::None => {}
             }
@@ -870,7 +1162,7 @@ pub fn start() -> Result<(), JsValue> {
                                     let mut ore_mut = g_mut.colony.common_ore;
                                     if let Ok(msg) = g_mut.colony.tech_tree.research(tid, &mut ore_mut) {
                                         g_mut.colony.common_ore = ore_mut;
-                                        g_mut.audio.play_build_confirm();
+                                        g_mut.audio.play_research_completed();
                                         if !g_mut.audio.is_muted() {
                                             audio::radio::RadioDispatcher::announce(&format!("Scientific advancement: {}", msg));
                                         }
@@ -1280,11 +1572,15 @@ pub fn start() -> Result<(), JsValue> {
     // In-game Language Switcher
     if let Some(lang_select) = document.get_element_by_id("lang-select") {
         let doc_clone = document.clone();
+        let app_clone = app.clone();
         let cb = Closure::wrap(Box::new(move |e: web_sys::Event| {
             if let Some(target) = e.target() {
                 if let Ok(select) = target.dyn_into::<web_sys::HtmlSelectElement>() {
                     let val = select.value();
                     i18n::apply_language(&val, &doc_clone);
+                    let mut g = app_clone.borrow_mut();
+                    g.menu.options.language = val.clone();
+                    g.hud.state.language = val;
                 }
             }
         }) as Box<dyn FnMut(_)>);
@@ -1791,7 +2087,7 @@ pub fn start() -> Result<(), JsValue> {
         cb.forget();
     }
 
-    // Campaign Briefing Modal Controls
+    // Campaign Briefing Modal Controls & Menu Integration
     if let Some(btn) = document.get_element_by_id("btn-briefing") {
         let doc_clone = document.clone();
         let app_clone = app.clone();
@@ -1799,11 +2095,30 @@ pub fn start() -> Result<(), JsValue> {
             let mut g = app_clone.borrow_mut();
             let _ = g.audio.init();
             g.audio.play_ui_beep();
+            g.menu.selected_scenario_id = g.colony.mission.scenario_id;
+            g.menu.switch_screen(render::MenuScreen::CampaignBriefing);
             if let Some(modal) = doc_clone.get_element_by_id("briefing-modal") {
                 let _ = modal.set_attribute("style", "position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 50;");
             }
         }) as Box<dyn FnMut(_)>);
         btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    // In-game Pause Button
+    if let Some(btn_pause) = document.get_element_by_id("btn-pause") {
+        let app_clone = app.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            g.audio.play_ui_beep();
+            if g.menu.is_in_game() {
+                g.menu.switch_screen(render::MenuScreen::PauseMenu);
+            } else if g.menu.current_screen == render::MenuScreen::PauseMenu {
+                g.menu.switch_screen(render::MenuScreen::None);
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn_pause.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
         cb.forget();
     }
 
@@ -1882,24 +2197,41 @@ pub fn start() -> Result<(), JsValue> {
         let dt = (now - app_borrow.last_frame_time) / 1000.0;
         app_borrow.last_frame_time = now;
 
-        // Resize canvas to match display window
-        let client_w = canvas.client_width() as u32;
-        let client_h = canvas.client_height() as u32;
-        if canvas.width() != client_w || canvas.height() != client_h {
-            canvas.set_width(client_w);
-            canvas.set_height(client_h);
+        // Resize canvas to match display window and high-DPI scaling
+        let dpr = window_clone.device_pixel_ratio().max(1.0);
+        let client_w = canvas.client_width() as f64;
+        let client_h = canvas.client_height() as f64;
+        if client_w > 0.0 && client_h > 0.0 {
+            let dims = render::touch::compute_high_dpi_canvas_dimensions(client_w, client_h, dpr);
+            if canvas.width() != dims.physical_width || canvas.height() != dims.physical_height {
+                canvas.set_width(dims.physical_width);
+                canvas.set_height(dims.physical_height);
+            }
         }
 
-        let mini_w = minimap_canvas.client_width() as u32;
-        let mini_h = minimap_canvas.client_height() as u32;
-        if minimap_canvas.width() != mini_w || minimap_canvas.height() != mini_h {
-            minimap_canvas.set_width(mini_w);
-            minimap_canvas.set_height(mini_h);
+        let mini_w = minimap_canvas.client_width() as f64;
+        let mini_h = minimap_canvas.client_height() as f64;
+        if mini_w > 0.0 && mini_h > 0.0 {
+            let mini_dims = render::touch::compute_high_dpi_canvas_dimensions(mini_w, mini_h, dpr);
+            if minimap_canvas.width() != mini_dims.physical_width || minimap_canvas.height() != mini_dims.physical_height {
+                minimap_canvas.set_width(mini_dims.physical_width);
+                minimap_canvas.set_height(mini_dims.physical_height);
+                app_borrow.hud.state.radar.radar_width = mini_w;
+                app_borrow.hud.state.radar.radar_height = mini_h;
+            }
         }
 
         // WebRTC P2P Multiplayer Packet Dispatch & Telemetry
-        if let Some(session) = &app_borrow.net_session {
-            if session.is_connected() {
+        let net_session_opt = app_borrow.net_session.clone();
+        if let Some(session) = net_session_opt {
+            let connected = session.is_connected();
+            let ping = session.ping_ms();
+            let turn = (app_borrow.colony.sol * 100.0) as u64;
+            app_borrow.hud.state.telemetry.is_multiplayer = true;
+            app_borrow.hud.state.telemetry.is_connected = connected;
+            app_borrow.hud.state.telemetry.update_telemetry(ping, turn, connected);
+
+            if connected {
                 if let Some(badge) = document.get_element_by_id("net-status-badge") {
                     badge.set_text_content(Some("ONLINE (P2P LOCKED)"));
                     let _ = badge.set_attribute("style", "font-size: 11px; font-weight: bold; color: #4ade80; background: rgba(74, 222, 128, 0.15); border: 1px solid #4ade80; border-radius: 4px; padding: 3px 8px;");
@@ -1924,6 +2256,17 @@ pub fn start() -> Result<(), JsValue> {
                     }
                     net::NetMessage::ChatMessage { sender, text } => {
                         let cur_sol = app_borrow.colony.sol;
+                        let faction = if sender.contains("Eden") {
+                            Some(Faction::Eden)
+                        } else if sender.contains("Plymouth") {
+                            Some(Faction::Plymouth)
+                        } else {
+                            match app_borrow.colony.faction {
+                                Faction::Eden => Some(Faction::Plymouth),
+                                Faction::Plymouth => Some(Faction::Eden),
+                            }
+                        };
+                        app_borrow.hud.state.chat.push_incoming(&sender, &text, faction, cur_sol);
                         app_borrow.hud.state.notifications.push_chat(
                             &sender,
                             "[Radio]",
@@ -1943,16 +2286,33 @@ pub fn start() -> Result<(), JsValue> {
             }
         }
 
-        // Update simulation (respecting pause state from 'P' hotkey)
-        let effective_dt = if app_borrow.hud.state.hotkeys.is_paused {
+        // Synchronize DOM interface visibility with menu state
+        let in_game = app_borrow.menu.is_in_game();
+        if let Some(tb) = document.get_element_by_id("top-bar") {
+            let _ = tb.set_attribute("style", if in_game { "" } else { "display: none;" });
+        }
+        if let Some(bb) = document.get_element_by_id("bottom-bar") {
+            let _ = bb.set_attribute("style", if in_game { "" } else { "display: none;" });
+        }
+        if let Some(mc) = document.get_element_by_id("minimap-card") {
+            let _ = mc.set_attribute("style", if in_game { "" } else { "display: none;" });
+        }
+
+        // Update simulation (respecting pause state from 'P' hotkey or Menu)
+        let effective_dt = if app_borrow.hud.state.hotkeys.is_paused || !app_borrow.menu.is_in_game() {
             0.0
         } else {
-            dt.min(0.1)
+            dt.min(0.1) * app_borrow.menu.options.game_speed
         };
+        app_borrow.menu.update(dt);
         let sim_result = app_borrow.colony.update(effective_dt);
-        {
+        let mut hud_tech_completed = None;
+        if app_borrow.menu.is_in_game() {
             let g = &mut *app_borrow;
-            g.hud.update(effective_dt, &mut g.colony);
+            hud_tech_completed = g.hud.update(effective_dt, &mut g.colony);
+        }
+        if hud_tech_completed.is_some() {
+            app_borrow.audio.play_research_completed();
         }
 
         let cur_sol = app_borrow.colony.sol;
@@ -1996,6 +2356,21 @@ pub fn start() -> Result<(), JsValue> {
         }
         if sim_result.unit_destroyed || sim_result.meteor_hit {
             app_borrow.audio.play_explosion();
+        }
+        if sim_result.under_attack {
+            app_borrow.audio.play_under_attack();
+        }
+        if sim_result.structure_destroyed {
+            app_borrow.audio.play_structure_destroyed();
+        }
+        if sim_result.friendly_vehicle_destroyed {
+            app_borrow.audio.play_vehicle_destroyed();
+        }
+        if sim_result.volcano_erupted {
+            app_borrow.audio.play_volcanic_eruption();
+        }
+        if sim_result.vortex_spawned {
+            app_borrow.audio.play_vortex_detected();
         }
         if sim_result.disaster_siren {
             app_borrow.audio.play_disaster_siren();
@@ -2052,8 +2427,11 @@ pub fn start() -> Result<(), JsValue> {
             if let Some(modal) = document.get_element_by_id("debriefing-modal") {
                 let _ = modal.set_attribute("style", "position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 60;");
 
+                let active_lang = crate::i18n::Language::from_code(&app_borrow.menu.options.language);
+                let debrief_dict = crate::i18n::get_dictionary(active_lang).debriefing;
+
                 if let Some(title_el) = document.get_element_by_id("debriefing-title") {
-                    let title_text = if is_victory { "MISSION ACCOMPLISHED: VICTORY" } else { "COLONIAL DEFEAT: MISSION TERMINATED" };
+                    let title_text = if is_victory { debrief_dict.victory_title } else { debrief_dict.defeat_title };
                     let title_col = if is_victory { "#4ade80" } else { "#ef4444" };
                     title_el.set_text_content(Some(title_text));
                     let _ = title_el.set_attribute("style", &format!("font-size: 16px; color: {}; font-weight: bold; margin: 0;", title_col));
@@ -2064,11 +2442,12 @@ pub fn start() -> Result<(), JsValue> {
                 }
 
                 if let Some(sub_el) = document.get_element_by_id("debriefing-subtitle") {
-                    let desc = if is_victory {
-                        format!("Congratulations, Commander! Primary directives for '{}' have been successfully executed.", app_borrow.colony.mission.codename)
+                    let template = if is_victory {
+                        debrief_dict.victory_subtitle_template
                     } else {
-                        format!("Critical failure during '{}'. The Command Center has been obliterated.", app_borrow.colony.mission.codename)
+                        debrief_dict.defeat_subtitle_template
                     };
+                    let desc = template.replace("{}", &app_borrow.colony.mission.codename);
                     sub_el.set_text_content(Some(&desc));
                 }
 
@@ -2321,38 +2700,72 @@ pub fn start() -> Result<(), JsValue> {
             None
         };
 
-        // Render game viewport
-        app_borrow.viewport.render(
-            &ctx,
-            &app_borrow.colony,
-            canvas.width() as f64,
-            canvas.height() as f64,
-            ghost_data,
-            drag_box,
-        );
+        let dpr = window_clone.device_pixel_ratio().max(1.0);
+        let canvas_w = canvas.client_width() as f64;
+        let canvas_h = canvas.client_height() as f64;
+        let mini_w = minimap_canvas.client_width() as f64;
+        let mini_h = minimap_canvas.client_height() as f64;
 
-        // Render modern tactical HUD overlays (Command bar, alerts/chat, factory, research)
-        let canvas_w = canvas.width() as f64;
-        let canvas_h = canvas.height() as f64;
-        app_borrow.hud.render_command_bar(&ctx, &app_borrow.colony, canvas_w);
-        app_borrow.hud.render_alerts_and_chat(&ctx, canvas_w, canvas_h);
-        app_borrow.hud.render_factory_panel(&ctx, &app_borrow.colony, canvas_w, canvas_h);
-        app_borrow.hud.render_research_browser(&ctx, &app_borrow.colony, canvas_w, canvas_h);
+        let _ = ctx.save();
+        let _ = ctx.scale(dpr, dpr);
+        ctx.set_image_smoothing_enabled(false);
 
-        // Render tactical radar
-        app_borrow.hud.render_radar(
-            &minimap_ctx,
-            &app_borrow.colony,
-            app_borrow.viewport.camera_x,
-            app_borrow.viewport.camera_y,
-            canvas_w,
-            canvas_h,
-            app_borrow.viewport.tile_width,
-            app_borrow.viewport.tile_height,
-            app_borrow.viewport.zoom,
-            minimap_canvas.width() as f64,
-            minimap_canvas.height() as f64,
-        );
+        if !app_borrow.menu.is_in_game() {
+            let summary = Some(render::ColonySummary::from_colony(&app_borrow.colony));
+            if app_borrow.menu.current_screen == render::MenuScreen::PauseMenu {
+                // Render game viewport in background
+                app_borrow.viewport.render(
+                    &ctx,
+                    &app_borrow.colony,
+                    canvas_w,
+                    canvas_h,
+                    None,
+                    None,
+                );
+                // Render Pause Menu overlay
+                app_borrow.menu.render(&ctx, canvas_w, canvas_h, summary);
+            } else {
+                // Render full Outpost 2 menu screen
+                app_borrow.menu.render(&ctx, canvas_w, canvas_h, summary);
+            }
+        } else {
+            // Render game viewport
+            app_borrow.viewport.render(
+                &ctx,
+                &app_borrow.colony,
+                canvas_w,
+                canvas_h,
+                ghost_data,
+                drag_box,
+            );
+
+            // Render modern tactical HUD overlays (Command bar, alerts/chat, factory, research)
+            app_borrow.hud.render_command_bar(&ctx, &app_borrow.colony, canvas_w);
+            app_borrow.hud.render_alerts_and_chat(&ctx, canvas_w, canvas_h);
+            app_borrow.hud.render_factory_panel(&ctx, &app_borrow.colony, canvas_w, canvas_h);
+            app_borrow.hud.render_research_browser(&ctx, &app_borrow.colony, canvas_w, canvas_h);
+
+            // Render tactical radar
+            let _ = minimap_ctx.save();
+            let _ = minimap_ctx.scale(dpr, dpr);
+            minimap_ctx.set_image_smoothing_enabled(false);
+            app_borrow.hud.render_radar(
+                &minimap_ctx,
+                &app_borrow.colony,
+                app_borrow.viewport.camera_x,
+                app_borrow.viewport.camera_y,
+                canvas_w,
+                canvas_h,
+                app_borrow.viewport.tile_width,
+                app_borrow.viewport.tile_height,
+                app_borrow.viewport.zoom,
+                mini_w,
+                mini_h,
+            );
+            let _ = minimap_ctx.restore();
+        }
+
+        let _ = ctx.restore();
 
         request_animation_frame(&window_clone, f.borrow().as_ref().unwrap());
     }) as Box<dyn FnMut(f64)>));

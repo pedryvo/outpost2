@@ -6,9 +6,12 @@
 
 [![Rust](https://img.shields.io/badge/rust-1.80+-orange?logo=rust&logoColor=white)](https://www.rust-lang.org/)
 [![WebAssembly](https://img.shields.io/badge/wasm-webassembly-654ff0?logo=webassembly&logoColor=white)](https://webassembly.org/)
+[![CI](https://github.com/pedryvo/outpost2/actions/workflows/ci.yml/badge.svg)](https://github.com/pedryvo/outpost2/actions/workflows/ci.yml)
+[![Версия](https://img.shields.io/badge/версия-v1.0.0-blue)](docs/RELEASE_V1.0.md)
 [![Статус](https://img.shields.io/badge/статус-завершено-brightgreen)](#-прогресс-разработки)
-[![Фаза](https://img.shields.io/badge/фаза-7_%E2%80%94_кампании_и_звездолёт-blue)](docs/PLAN.md)
-[![Платформы](https://img.shields.io/badge/платформы-Web_%7C_Vercel_%7C_Mobile-lightgrey)](#-запуск-игры)
+[![Тесты](https://img.shields.io/badge/тесты-112%20пройдено-brightgreen)](docs/formats/integration_testing_and_qa.md)
+[![Фаза](https://img.shields.io/badge/фаза-v1.0.0_%E2%80%94_релизная_версия-brightgreen)](docs/PLAN.md)
+[![Платформы](https://img.shields.io/badge/платформы-Web_%7C_PWA_%7C_Vercel_%7C_Mobile-lightgrey)](#-запуск-игры)
 [![Лицензия: GPL-3.0](https://img.shields.io/badge/лицензия-GPL--3.0--or--later-blue)](LICENSE)
 
 _Шедевр научно-фантастической стратегии в реальном времени от Sierra и Dynamix,<br>воссозданный для современных веб-браузеров, ПК и мобильных устройств._
@@ -78,7 +81,12 @@ _Шедевр научно-фантастической стратегии в р
 | **Современный WebHUD и Радар**      | ✅ | Радар с туманом войны, индикаторы катастроф (лава, смерчи, метеоры), окна заводов/науки и горячие клавиши · [`docs/formats/ui_and_hud.md`](docs/formats/ui_and_hud.md) |
 | **Сохранение состояния и .op2save** | ✅ | Слоты в `LocalStorage` (1-5, F5 QuickSave, F9 QuickLoad, AutoSave каждые 100 солов) и экспорт/импорт файлов `.op2save` · [`docs/formats/save_games_and_lobby.md`](docs/formats/save_games_and_lobby.md) |
 | **Сборка WASM и Тач-управление**    | ✅ | Масштабирование High-DPI Retina, разблокировка звука касанием, жесты зума/панорамирования и релизный бандл · [`docs/formats/wasm_packaging_and_web_runtime.md`](docs/formats/wasm_packaging_and_web_runtime.md) |
-| **Мультиязычность (i18n)** | ✅ | Поддержка EN, PT-BR, ES, DE, ZH-CN, RU |
+| **Интерактивное ретро-главное меню и система брифингов** | ✅ | Аутентичное главное меню на Canvas, селектор сценариев, кинематографический брифинг с голосом Кэти Каллис и CRT-фильтр сканлайнов · [`docs/formats/main_menu_and_briefing.md`](docs/formats/main_menu_and_briefing.md) |
+| **Процедурный генератор карт для стычек (4 биома, симметрия, связность A\*)** | ✅ | Сбалансированный генератор карт: 4 биома (Вулканический бассейн, Каньоны и утесы, Чумные пустоши, Обсидиановый хребет), 2/4-сторонняя и зеркальная симметрия, связность A* · [`docs/formats/procedural_map_generator.md`](docs/formats/procedural_map_generator.md) |
+| **Офлайн PWA с Service Worker и микшированием аудио** | ✅ | Service Worker Cache-First (`sw.js`), манифест и иконки PWA, матрица узлов громкости Web Audio (Master/SFX/Музыка) и множители скорости 0.5x–4.0x · [`docs/formats/pwa_and_offline_deployment.md`](docs/formats/pwa_and_offline_deployment.md) |
+| **WebRTC-телеметрия мультиплеера и тактический чат в игре** | ✅ | Отображение задержки RTT в реальном времени, статус пошаговой lockstep-синхронизации и цветной тактический чат фракций (`[Eden]` / `[Plymouth]`) · [`docs/formats/multiplayer_matchmaking_and_telemetry.md`](docs/formats/multiplayer_matchmaking_and_telemetry.md) |
+| **Внутриигровой движок локализации на 6 языков** | ✅ | Полная поддержка EN, PT-BR, ES, DE, ZH-CN и RU во всех меню, телеметрии интерфейса, боевых брифингах и финальных дебрифингах с военными рангами · [`docs/formats/i18n_and_localization.md`](docs/formats/i18n_and_localization.md) |
+| **Исчерпывающий набор QA из 112 модульных и интеграционных тестов** | ✅ | 108 модульных тестов + 4 интеграционных теста полной валидации: жизненный цикл кампаний, автономность ботов в стычках, lockstep в WebRTC и надежность сохранений · [`docs/formats/integration_testing_and_qa.md`](docs/formats/integration_testing_and_qa.md) |
 | **Готовность к Vercel и WASM** | ✅ | Сборка через Trunk с оптимизацией LTO (`vercel.json`) |
 
 ---

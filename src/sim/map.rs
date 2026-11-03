@@ -1,9 +1,10 @@
 //! Outpost 2 Map (.map) parser and tile grid representation
 
 use byteorder::{LittleEndian, ReadBytesExt};
+use serde::{Deserialize, Serialize};
 use std::io::Cursor;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct MapTile {
     pub cell_type: u8,
     pub tile_mapping: u16,
@@ -14,7 +15,21 @@ pub struct MapTile {
     pub is_wall_or_building: bool,
 }
 
-#[derive(Debug, Clone)]
+impl Default for MapTile {
+    fn default() -> Self {
+        Self {
+            cell_type: 1,
+            tile_mapping: 0,
+            unit_index: 0,
+            is_lava: false,
+            is_lava_possible: false,
+            is_blight: false,
+            is_wall_or_building: false,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GameMap {
     pub width: u32,
     pub height: u32,
@@ -22,6 +37,26 @@ pub struct GameMap {
 }
 
 impl GameMap {
+    /// Create a new GameMap with explicit dimensions and tile buffer
+    #[allow(dead_code)]
+    pub fn new(width: u32, height: u32, tiles: Vec<MapTile>) -> Self {
+        Self {
+            width,
+            height,
+            tiles,
+        }
+    }
+
+    /// Create a new blank passable GameMap initialized with default tiles
+    #[allow(dead_code)]
+    pub fn new_blank(width: u32, height: u32) -> Self {
+        let total = (width * height) as usize;
+        Self {
+            width,
+            height,
+            tiles: vec![MapTile::default(); total],
+        }
+    }
     /// Parse raw bytes of an Outpost 2 .map file
     pub fn parse(data: &[u8]) -> Result<Self, String> {
         if data.len() < 20 {
@@ -74,5 +109,22 @@ impl GameMap {
         } else {
             None
         }
+    }
+
+    /// Retrieve mutable tile reference at coordinates (x, y)
+    #[allow(dead_code)]
+    pub fn get_tile_mut(&mut self, x: u32, y: u32) -> Option<&mut MapTile> {
+        if x < self.width && y < self.height {
+            let idx = (y * self.width + x) as usize;
+            Some(&mut self.tiles[idx])
+        } else {
+            None
+        }
+    }
+
+    /// Check if tile coordinates (x, y) are within map boundaries
+    #[allow(dead_code)]
+    pub fn in_bounds(&self, x: i32, y: i32) -> bool {
+        x >= 0 && x < self.width as i32 && y >= 0 && y < self.height as i32
     }
 }

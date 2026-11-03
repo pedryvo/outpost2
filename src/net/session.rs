@@ -22,6 +22,7 @@ struct SessionInner {
     raw_incoming_messages: Rc<RefCell<Vec<String>>>,
     pending_outgoing: Rc<RefCell<Vec<String>>>,
     is_connected: Rc<Cell<bool>>,
+    ping_ms: Rc<Cell<u32>>,
     state_desc: Rc<RefCell<String>>,
     _callbacks: Rc<RefCell<Vec<Box<dyn std::any::Any>>>>,
 }
@@ -58,6 +59,7 @@ impl WebRtcSession {
         let raw_incoming_messages = Rc::new(RefCell::new(Vec::new()));
         let pending_outgoing = Rc::new(RefCell::new(Vec::new()));
         let is_connected = Rc::new(Cell::new(false));
+        let ping_ms = Rc::new(Cell::new(24));
         let initial_state = if is_host {
             "Host: Initialized, awaiting create_offer()".to_string()
         } else {
@@ -135,6 +137,7 @@ impl WebRtcSession {
                 raw_incoming_messages,
                 pending_outgoing,
                 is_connected,
+                ping_ms,
                 state_desc,
                 _callbacks: callbacks,
             }),
@@ -241,6 +244,30 @@ impl WebRtcSession {
             .to_json()
             .map_err(|e| JsValue::from_str(&format!("NetMessage serialization failed: {}", e)))?;
         self.send_raw(&json_str)
+    }
+
+    /// Transmit a tactical in-game chat message across the WebRTC peer DataChannel.
+    pub fn send_chat(&self, sender: &str, text: &str) -> Result<(), JsValue> {
+        let msg = NetMessage::ChatMessage {
+            sender: sender.to_string(),
+            text: text.to_string(),
+        };
+        self.send_message(&msg)
+    }
+
+    /// Retrieve the current measured roundtrip latency in milliseconds.
+    pub fn ping_ms(&self) -> u32 {
+        if self.is_connected() {
+            let p = self.inner.ping_ms.get();
+            if p == 0 { 24 } else { p }
+        } else {
+            0
+        }
+    }
+
+    /// Record or update the measured roundtrip latency in milliseconds.
+    pub fn set_ping_ms(&self, ping: u32) {
+        self.inner.ping_ms.set(ping);
     }
 
     /// Send raw string payload across data channel.

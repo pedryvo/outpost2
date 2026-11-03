@@ -6,9 +6,12 @@
 
 [![Rust](https://img.shields.io/badge/rust-1.80+-orange?logo=rust&logoColor=white)](https://www.rust-lang.org/)
 [![WebAssembly](https://img.shields.io/badge/wasm-webassembly-654ff0?logo=webassembly&logoColor=white)](https://webassembly.org/)
+[![CI](https://github.com/pedryvo/outpost2/actions/workflows/ci.yml/badge.svg)](https://github.com/pedryvo/outpost2/actions/workflows/ci.yml)
+[![版本](https://img.shields.io/badge/版本-v1.0.0-blue)](docs/RELEASE_V1.0.md)
 [![状态](https://img.shields.io/badge/状态-已完成-brightgreen)](#-开发进展)
-[![阶段](https://img.shields.io/badge/阶段-7_%E2%80%94_战役与逃逸飞船-blue)](docs/PLAN.md)
-[![平台](https://img.shields.io/badge/平台-Web_%7C_Vercel_%7C_Mobile-lightgrey)](#-运行游戏)
+[![测试](https://img.shields.io/badge/测试-112%20项全部通过-brightgreen)](docs/formats/integration_testing_and_qa.md)
+[![阶段](https://img.shields.io/badge/阶段-v1.0.0_%E2%80%94_生产就绪-brightgreen)](docs/PLAN.md)
+[![平台](https://img.shields.io/badge/平台-Web_%7C_PWA_%7C_Vercel_%7C_Mobile-lightgrey)](#-运行游戏)
 [![开源协议: GPL-3.0](https://img.shields.io/badge/协议-GPL--3.0--or--later-blue)](LICENSE)
 
 _Sierra 和 Dynamix 经典硬科幻即时战略游戏，<br>专为现代浏览器、桌面与移动触控端原生重制。_
@@ -78,7 +81,12 @@ _Sierra 和 Dynamix 经典硬科幻即时战略游戏，<br>专为现代浏览�
 | **现代 WebHUD 与雷达小地图** | ✅ | 战争迷雾雷达、行星灾害警报标点（岩浆、尘暴、陨石）、车间/科研悬浮窗与全快捷键响应 · [`docs/formats/ui_and_hud.md`](docs/formats/ui_and_hud.md) |
 | **全状态持久化与 .op2save 导出** | ✅ | `LocalStorage` 多存档位（1-5 位、F5 快存、F9 快读、100 太阳日自动存档）与独立文件导出 · [`docs/formats/save_games_and_lobby.md`](docs/formats/save_games_and_lobby.md) |
 | **WASM 打包与移动端触控优化**| ✅ | 高清晰度 Retina 缩放、手势轻触解锁 Web Audio、双指缩放/平移与极致发布编译包 · [`docs/formats/wasm_packaging_and_web_runtime.md`](docs/formats/wasm_packaging_and_web_runtime.md) |
-| **多语言本地化 (i18n)** | ✅ | 完美支持 EN, PT-BR, ES, DE, ZH-CN, RU |
+| **交互式复古主菜单与战役简报系统** | ✅ | 纯 Canvas 原生渲染复古主菜单、战役剧场选择器、Kathy Cullis 原版战术简报语音与 CRT 扫描线显像管特效 · [`docs/formats/main_menu_and_briefing.md`](docs/formats/main_menu_and_briefing.md) |
+| **程序化遭遇战地图生成器 (4大生物群落与对称性)** | ✅ | 竞技级程序化地图生成器：4大群落（火山盆地、峡谷峭壁、枯萎荒原、黑曜石山脊）、双向/四向/镜像对称性与 A* 通行度保障 · [`docs/formats/procedural_map_generator.md`](docs/formats/procedural_map_generator.md) |
+| **PWA 离线运行 Service Worker 与音频多通道增益** | ✅ | Cache-First 离线缓存服务工作线程 (`sw.js`)、PWA 应用图标清单、Web Audio 主音量/音效/音乐三路独立增益节点与 0.5x–4.0x 仿真倍速控制 · [`docs/formats/pwa_and_offline_deployment.md`](docs/formats/pwa_and_offline_deployment.md) |
+| **WebRTC 联机战局内网络遥测与阵营战术聊天** | ✅ | 战局顶部实时 RTT 往返延迟状态药丸、定步长指令缓冲区监控与阵营专属颜色战术聊天 (`[Eden]` 蓝绿色 / `[Plymouth]` 红色) · [`docs/formats/multiplayer_matchmaking_and_telemetry.md`](docs/formats/multiplayer_matchmaking_and_telemetry.md) |
+| **游戏内六语言原生本地化引擎** | ✅ | 覆盖英语、葡萄牙语、西班牙语、德语、简体中文、俄语的强类型本地化系统，全面覆盖主菜单、HUD 遥测、战役简报与结算军衔 · [`docs/formats/i18n_and_localization.md`](docs/formats/i18n_and_localization.md) |
+| **112 项单元与端到端集成测试 QA 矩阵** | ✅ | 108 个单元测试 + 4 大端到端集成测试，严格验证战役全生命周期、多 AI 遭遇战自治演化、WebRTC 定步长网络同步与存档往返一致性 · [`docs/formats/integration_testing_and_qa.md`](docs/formats/integration_testing_and_qa.md) |
 | **Vercel & WASM 构建** | ✅ | 基于 Trunk 的自动化发布优化构建 (`vercel.json`) |
 
 ---

@@ -1,6 +1,6 @@
 //! Unit Pathfinding, Orders, and Grid Navigation (A* on Isometric Grid)
 
-use std::collections::{BinaryHeap, HashMap};
+use std::collections::{BinaryHeap, HashMap, HashSet};
 use std::cmp::Ordering;
 use serde::{Deserialize, Serialize};
 use crate::sim::map::GameMap;
@@ -69,10 +69,16 @@ impl PathFinder {
             (1, 1), (-1, 1), (1, -1), (-1, -1),
         ];
 
+        let mut closed_set = HashSet::new();
+        let max_iterations = (map.width * map.height).max(3000);
         let mut iterations = 0;
         while let Some(Node { pos: current, .. }) = open_set.pop() {
+            if !closed_set.insert(current) {
+                continue;
+            }
+
             iterations += 1;
-            if iterations > 1500 {
+            if iterations > max_iterations {
                 // Safeguard budget to prevent frame stalls in WebAssembly
                 break;
             }
