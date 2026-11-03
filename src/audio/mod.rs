@@ -129,6 +129,52 @@ impl AudioManager {
         }
     }
 
+    /// Play microwave thermal beam sizzle discharge
+    pub fn play_microwave(&self) {
+        if self.muted {
+            return;
+        }
+        if let (Some(ctx), Some(gain)) = (&self.ctx, &self.master_gain) {
+            if let Ok(osc) = ctx.create_oscillator() {
+                if let Ok(note_gain) = ctx.create_gain() {
+                    let now = ctx.current_time();
+                    osc.set_type(web_sys::OscillatorType::Sawtooth);
+                    let _ = osc.frequency().set_value_at_time(1250.0, now);
+                    let _ = osc.frequency().linear_ramp_to_value_at_time(380.0, now + 0.11);
+                    let _ = note_gain.gain().set_value_at_time(0.25, now);
+                    let _ = note_gain.gain().exponential_ramp_to_value_at_time(0.01, now + 0.11);
+                    let _ = osc.connect_with_audio_node(&note_gain);
+                    let _ = note_gain.connect_with_audio_node(gain);
+                    let _ = osc.start();
+                    let _ = osc.stop_with_when(now + 0.11);
+                }
+            }
+        }
+    }
+
+    /// Play microbial acid cloud corrosive hiss
+    pub fn play_acid_cloud(&self) {
+        if self.muted {
+            return;
+        }
+        if let (Some(ctx), Some(gain)) = (&self.ctx, &self.master_gain) {
+            if let Ok(osc) = ctx.create_oscillator() {
+                if let Ok(note_gain) = ctx.create_gain() {
+                    let now = ctx.current_time();
+                    osc.set_type(web_sys::OscillatorType::Triangle);
+                    let _ = osc.frequency().set_value_at_time(240.0, now);
+                    let _ = osc.frequency().linear_ramp_to_value_at_time(90.0, now + 0.18);
+                    let _ = note_gain.gain().set_value_at_time(0.32, now);
+                    let _ = note_gain.gain().exponential_ramp_to_value_at_time(0.01, now + 0.18);
+                    let _ = osc.connect_with_audio_node(&note_gain);
+                    let _ = note_gain.connect_with_audio_node(gain);
+                    let _ = osc.start();
+                    let _ = osc.stop_with_when(now + 0.18);
+                }
+            }
+        }
+    }
+
     /// Play heavy vehicle or structure destruction explosion
     pub fn play_explosion(&self) {
         if self.muted {

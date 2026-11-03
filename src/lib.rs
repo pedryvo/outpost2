@@ -458,6 +458,37 @@ pub fn start() -> Result<(), JsValue> {
         }) as Box<dyn FnMut(MouseEvent)>);
         minimap_canvas.add_event_listener_with_callback("mousedown", on_mini_click.as_ref().unchecked_ref())?;
         on_mini_click.forget();
+
+        let app_drag = app.clone();
+        let canvas_drag = canvas.clone();
+        let mini_drag = minimap_canvas.clone();
+        let on_mini_drag = Closure::wrap(Box::new(move |e: MouseEvent| {
+            if e.buttons() == 1 {
+                let mut g = app_drag.borrow_mut();
+                let click_x = e.offset_x() as f64;
+                let click_y = e.offset_y() as f64;
+
+                let rect_w = (mini_drag.client_width() as f64).max(1.0);
+                let rect_h = (mini_drag.client_height() as f64).max(1.0);
+
+                let norm_x = (click_x / rect_w).clamp(0.0, 1.0);
+                let norm_y = (click_y / rect_h).clamp(0.0, 1.0);
+
+                let target_tx = norm_x * (g.viewport.map_cols as f64);
+                let target_ty = norm_y * (g.viewport.map_rows as f64);
+
+                let screen_w = canvas_drag.client_width() as f64;
+                let screen_h = canvas_drag.client_height() as f64;
+
+                let half_w = g.viewport.tile_width * 0.5 * g.viewport.zoom;
+                let half_h = g.viewport.tile_height * 0.5 * g.viewport.zoom;
+
+                g.viewport.camera_x = screen_w * 0.5 - (target_tx - target_ty) * half_w;
+                g.viewport.camera_y = screen_h * 0.5 - (target_tx + target_ty) * half_h;
+            }
+        }) as Box<dyn FnMut(MouseEvent)>);
+        minimap_canvas.add_event_listener_with_callback("mousemove", on_mini_drag.as_ref().unchecked_ref())?;
+        on_mini_drag.forget();
     }
 
     // Zoom Buttons
@@ -1459,6 +1490,12 @@ pub fn start() -> Result<(), JsValue> {
         }
         if sim_result.railgun_fired {
             app_borrow.audio.play_railgun();
+        }
+        if sim_result.microwave_fired {
+            app_borrow.audio.play_microwave();
+        }
+        if sim_result.acid_fired {
+            app_borrow.audio.play_acid_cloud();
         }
         if sim_result.unit_destroyed || sim_result.meteor_hit {
             app_borrow.audio.play_explosion();

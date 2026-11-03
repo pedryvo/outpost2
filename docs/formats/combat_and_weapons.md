@@ -33,5 +33,6 @@ In *Outpost 2: Divided Destiny*, survival on New Terra requires active defense a
    - **Repair Depots:** Base installations generating a continuous healing diagnostic aura for stationed vehicles.
 4. **Visual & Audio FX:**
    - Laser beams and kinetic slugs are rendered as multi-layer glowing energy lines with white-hot cores.
+   - Procedural Web Audio API sound synthesizers generate authentic weapon discharges for Pulse Lasers, Hyper-Velocity Railguns, Microwave Thermal Emitters, and Microbial Acid Clouds.
    - Upon target destruction ($HP \le 0$), a multi-stage explosive detonation shockwave expands and dissipates into planetary ash.
-   - The tactical radar minimap blips hostile Plymouth forces in bright combat red (`#ef4444`).
+   - The tactical radar minimap blips hostile Plymouth forces in bright combat red (`#ef4444`) with real-time mouse drag panning across the operational theater.

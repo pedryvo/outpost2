@@ -129,6 +129,8 @@ pub struct SimUpdateResult {
     pub notice: Option<&'static str>,
     pub laser_fired: bool,
     pub railgun_fired: bool,
+    pub microwave_fired: bool,
+    pub acid_fired: bool,
     pub unit_destroyed: bool,
     pub building_deployed: bool,
     pub vortex_active: bool,
@@ -525,12 +527,15 @@ impl ColonyState {
         // Apply weapon damage and spawn beams/explosions
         let mut laser_fired = false;
         let mut railgun_fired = false;
+        let mut microwave_fired = false;
+        let mut acid_fired = false;
         let mut destroyed_units = Vec::new();
         for (target_id, from_pos, to_pos, weapon, dmg) in combat_events {
-            if weapon == WeaponType::Railgun {
-                railgun_fired = true;
-            } else {
-                laser_fired = true;
+            match weapon {
+                WeaponType::Railgun => railgun_fired = true,
+                WeaponType::Microwave => microwave_fired = true,
+                WeaponType::AcidCloud => acid_fired = true,
+                _ => laser_fired = true,
             }
             self.active_beams.push(CombatBeam {
                 from_x: from_pos.0,
@@ -1376,6 +1381,8 @@ impl ColonyState {
             notice: warning.or(ai_alert).or(unit_notice).or(mission_alert),
             laser_fired,
             railgun_fired,
+            microwave_fired,
+            acid_fired,
             unit_destroyed,
             building_deployed,
             vortex_active,
