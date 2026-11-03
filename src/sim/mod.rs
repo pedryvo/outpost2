@@ -117,6 +117,9 @@ pub struct ColonyState {
     pub ai_director: FactionAiDirector,
     pub ore_deposits: Vec<OreDeposit>,
     pub mission: Mission,
+    pub starship_launched: bool,
+    pub launch_anim_time: f64,
+    pub debriefing_shown: bool,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -127,6 +130,8 @@ pub struct SimUpdateResult {
     pub building_deployed: bool,
     pub vortex_active: bool,
     pub meteor_hit: bool,
+    pub mission_ended: Option<mission::MissionStatus>,
+    pub starship_launched: bool,
 }
 
 impl ColonyState {
@@ -402,6 +407,9 @@ impl ColonyState {
             ai_director: FactionAiDirector::new(enemy_faction, 38, 30),
             ore_deposits,
             mission,
+            starship_launched: false,
+            launch_anim_time: 0.0,
+            debriefing_shown: false,
         }
     }
 
@@ -1160,6 +1168,22 @@ impl ColonyState {
             }
         }
 
+        if self.starship_launched {
+            self.launch_anim_time += dt_secs;
+        }
+
+        let mut mission_ended = None;
+        if !self.debriefing_shown {
+            if self.mission.status == mission::MissionStatus::Victory || self.mission.status == mission::MissionStatus::Defeat {
+                self.debriefing_shown = true;
+                mission_ended = Some(self.mission.status);
+            } else if self.starship_launched && self.launch_anim_time >= 3.0 {
+                self.debriefing_shown = true;
+                self.mission.status = mission::MissionStatus::Victory;
+                mission_ended = Some(mission::MissionStatus::Victory);
+            }
+        }
+
         // Refresh dynamic sensor fog of war
         self.fog.update_visibility(&self.units, &self.buildings);
 
@@ -1172,6 +1196,8 @@ impl ColonyState {
             building_deployed,
             vortex_active,
             meteor_hit,
+            mission_ended,
+            starship_launched: self.starship_launched,
         }
     }
 
@@ -1484,6 +1510,32 @@ impl ColonyState {
         }
 
         self.fog.update_visibility(&self.units, &self.buildings);
+    }
+
+    /// Initiate final countdown and launch the assembled evacuation starship
+    pub fn launch_starship(&mut self) -> Result<String, String> {
+        if self.starship_progress < 100.0 {
+            return Err("Starship evacuation modules incomplete (requires 100% assembly progress)".into());
+        }
+        if self.starship_launched {
+            return Err("Evacuation Starship has already departed New Terra".into());
+        }
+
+        self.starship_launched = true;
+        self.launch_anim_time = 0.0;
+        self.disasters.quake_duration = 3.0;
+
+        // Giant launch thruster ignition shockwave
+        self.active_explosions.push(ExplosionEffect {
+            x: 24.0,
+            y: 20.0,
+            radius: 8.0,
+            max_radius: 36.0,
+            lifetime: 2.0,
+            max_lifetime: 2.0,
+        });
+
+        Ok("STARSHIP EVACUATION INITIATED: Main thruster ignition engaged! Evacuating colonists into orbit.".into())
     }
 
     /// Issue an 8-way movement order to all currently selected units

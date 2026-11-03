@@ -65,7 +65,8 @@ Ziel ist es, den Strategieklassiker in modernen Webbrowsern mit nativer Leistung
 | **Wissenschaftliche Forschungsmatrix**| ✅ | Interaktives Tech-Modal mit Kategorien-Taxonomie und passiven Kolonie-Boni (Panzerung, Laser, Erzschmelze) · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **Multi-Karten-Kampagnen** | ✅ | Authentische Schauplätze (Eden 1, Plymouth 1, Akademie-Tutorial) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
 | **Fabrikwarteschlange & Schweißen** | ✅ | Fahrzeugbau mit Plasma-Schweißeffekt und Fortschrittsbalken |
-| **Raumschiff-Evakuierung** | ✅ | Bau in 4 Phasen und dynamische Lebenserhaltungsmechanik · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
+| **Raumschiff-Evakuierung & Start** | ✅ | Bau in 4 Phasen, orbitale Startanimation mit lodernden Abgasfahnen und Siegesfanfare · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
+| **Missions-Nachbesprechung & Ziele**| ✅ | Operative Nachbesprechung, Überlebenden-Demografie, Richtlinien-Checkliste und Kampagnenfortschritt |
 | **Persistenz & Touch-Gesten** | ✅ | Quicksave/Load im Browserspeicher und mobile Gestensteuerung |
 | **Audio-Engine & Kampf-SFX** | ✅ | Web Audio Synthesizer (Laser, Explosionen, Signaltöne) und klassische Audio-Samples |
 | **Lokalisierung (i18n)** | ✅ | Mehrsprachig: EN, PT-BR, ES, DE, ZH-CN, RU |

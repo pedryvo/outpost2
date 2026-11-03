@@ -60,7 +60,8 @@ Unlike heavyweight virtual machines or x86 emulators, this port runs natively in
 | **Scientific Research Matrix** | ✅ | Interactive tech modal with category taxonomy and passive colony bonuses (armor, laser, smelting) · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **Multi-Map Campaigns** | ✅ | Authentic operational theaters (Eden 1, Plymouth 1, Academy Tutorial) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
 | **Factory Queues & Animation** | ✅ | Production queue scheduling, welding plasma arcs, HUD progress bars |
-| **Starship Evacuation** | ✅ | 4-stage starship assembly and demographic life-support mechanics · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
+| **Starship Evacuation & Launch** | ✅ | 4-stage starship assembly, orbital launch animation with billowing exhaust plumes, and escape fanfare · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
+| **Mission Debriefing & Directives**| ✅ | Post-mission operational evaluation, survivor demographics, directive checklist, and campaign progression |
 | **State Persistence & Touch** | ✅ | Browser storage quicksave/load, mobile pinch-to-zoom & gesture controls |
 | **Audio Engine & Combat SFX** | ✅ | Web Audio procedural synthesizer (lasers, explosions, build hums) & classic audio samples |
 | **Modern Sci-Fi HUD** | ✅ | Real-time telemetry, radar minimap, build queues, and unit command console |

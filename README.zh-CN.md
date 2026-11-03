@@ -65,7 +65,8 @@ _Sierra 和 Dynamix 经典硬科幻即时战略游戏，<br>专为现代浏览�
 | **多学科科研矩阵** | ✅ | 分类科技树交互弹窗、被动殖民地加成（强化装甲、脉冲激光、矿石精炼） · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **多战役战场选择器** | ✅ | 真实战役战场（伊甸 1、普利茅斯 1、学院教学） · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
 | **工厂生产队列与焊接** | ✅ | 战车制造排队机制、等离子火花与 HUD 进度条 |
-| **星际逃逸飞船建造** | ✅ | 四阶段飞船组装与生命支持人口动态机制 · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
+| **星际逃逸飞船建造与点火升空** | ✅ | 四阶段飞船组装、升空轨道点火粒子尾焰动画与胜利号角 · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
+| **任务简报复盘与战后总结** | ✅ | 战后总结模态弹窗、幸存殖民者人口统计、任务指令清单核验与战役关卡推进 |
 | **状态持久化与触控** | ✅ | 浏览器本地极速存取档与移动端手势控制 |
 | **音频引擎与战斗音效** | ✅ | Web Audio 纯程序化音效合成（激光、爆炸、建造蜂鸣）与经典原声音频 |
 | **多语言本地化 (i18n)** | ✅ | 完美支持 EN, PT-BR, ES, DE, ZH-CN, RU |

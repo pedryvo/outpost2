@@ -65,7 +65,8 @@ El objetivo es preservar y modernizar este clásico juego de estrategia en tiemp
 | **Matriz Científica de Investigación** | ✅ | Modal interactivo de tecnologías con taxonomía de ramas y bonificaciones pasivas (blindaje, láser, fundición) · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **Campañas Multi-Mapa** | ✅ | Teatros de operación auténticos (Eden 1, Plymouth 1, Academia) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
 | **Filas de Fábrica y Soldadura** | ✅ | Planificación de producción de vehículos con arcos de plasma y barras de progreso |
-| **Evacuación en Nave Espacial** | ✅ | Fabricación en 4 etapas y mecánica de soporte vital · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
+| **Evacuación y Lanzamiento de Nave**| ✅ | Fabricación en 4 etapas, animación de ignición orbital con plumas de escape y fanfarria de victoria · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
+| **Debriefing de Misión y Directivas**| ✅ | Evaluación operativa post-misión, demografía de supervivientes, lista de directivas y progresión |
 | **Persistencia y Control Táctil** | ✅ | Guardado/carga rápida en navegador y gestos táctiles |
 | **Motor de Audio & SFX de Combate** | ✅ | Sintetizador Web Audio API (láseres, explosiones, pitidos) y muestras de audio clásicas |
 | **Localización (i18n)** | ✅ | Soporte multilíngue para EN, PT-BR, ES, DE, ZH-CN, RU |

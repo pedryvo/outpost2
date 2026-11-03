@@ -125,6 +125,63 @@ impl AudioManager {
         }
     }
 
+    /// Play triumphant victory fanfare upon completing campaign objectives or launching starship
+    pub fn play_victory_fanfare(&self) {
+        if self.muted {
+            return;
+        }
+        if let (Some(ctx), Some(gain)) = (&self.ctx, &self.master_gain) {
+            let notes = [
+                (523.25, 0.00, 0.12), // C5
+                (392.00, 0.12, 0.12), // G4
+                (523.25, 0.24, 0.12), // C5
+                (659.25, 0.36, 0.15), // E5
+                (783.99, 0.52, 0.18), // G5
+                (1046.50, 0.72, 0.55), // C6
+            ];
+            for &(freq, start_offset, dur) in &notes {
+                if let Ok(osc) = ctx.create_oscillator() {
+                    if let Ok(note_gain) = ctx.create_gain() {
+                        let now = ctx.current_time() + start_offset;
+                        osc.set_type(web_sys::OscillatorType::Triangle);
+                        let _ = osc.frequency().set_value_at_time(freq as f32, now);
+                        let _ = note_gain.gain().set_value_at_time(0.4, now);
+                        let _ = note_gain.gain().exponential_ramp_to_value_at_time(0.001, now + dur);
+                        let _ = osc.connect_with_audio_node(&note_gain);
+                        let _ = note_gain.connect_with_audio_node(gain);
+                        let _ = osc.start_with_when(now);
+                        let _ = osc.stop_with_when(now + dur);
+                    }
+                }
+            }
+        }
+    }
+
+    /// Play ominous defeat alert when Command Center is lost
+    pub fn play_defeat_alert(&self) {
+        if self.muted {
+            return;
+        }
+        if let (Some(ctx), Some(gain)) = (&self.ctx, &self.master_gain) {
+            let notes = [220.0, 196.0, 174.61, 146.83]; // A3, G3, F3, D3
+            for (i, &freq) in notes.iter().enumerate() {
+                if let Ok(osc) = ctx.create_oscillator() {
+                    if let Ok(note_gain) = ctx.create_gain() {
+                        let now = ctx.current_time() + (i as f64 * 0.22);
+                        osc.set_type(web_sys::OscillatorType::Sawtooth);
+                        let _ = osc.frequency().set_value_at_time(freq as f32, now);
+                        let _ = note_gain.gain().set_value_at_time(0.35, now);
+                        let _ = note_gain.gain().exponential_ramp_to_value_at_time(0.001, now + 0.35);
+                        let _ = osc.connect_with_audio_node(&note_gain);
+                        let _ = note_gain.connect_with_audio_node(gain);
+                        let _ = osc.start_with_when(now);
+                        let _ = osc.stop_with_when(now + 0.35);
+                    }
+                }
+            }
+        }
+    }
+
     /// Play triumphant structure commissioning / ConVec kit deployment arpeggio
     pub fn play_construction_deploy(&self) {
         if self.muted {

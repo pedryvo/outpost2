@@ -60,7 +60,8 @@ Diferente de máquinas virtuais pesadas ou emuladores x86, este porte roda nativ
 | **Matriz Científica de Pesquisa** | ✅ | Modal interativo de tecnologias com taxonomia de ramos e bônus passivos (blindagem, lasers, fundição) · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **Campanhas Multi-Mapas** | ✅ | Teatros autênticos de operação (Eden 1, Plymouth 1, Tutorial da Academia) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
 | **Filas de Fábrica & Animação** | ✅ | Agendamento de fabricação, arcos elétricos de solda e barras de progresso no HUD |
-| **Evacuação por Espaçonave** | ✅ | Montagem em 4 estágios da nave estelar e mecânica demográfica de suporte de vida · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
+| **Evacuação & Lançamento de Nave**| ✅ | Montagem em 4 estágios da nave estelar, animação de ignição orbital com plumas de escape e fanfarra de vitória · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
+| **Debriefing de Missão & Diretivas**| ✅ | Avaliação operacional pós-missão, contagem de sobreviventes, checklist de diretivas e avanço de campanha |
 | **Persistência de Estado & Touch** | ✅ | Salvamento/carregamento rápido no navegador, gestos touch e pinch-to-zoom |
 | **Engine de Áudio & SFX de Combate** | ✅ | Sintetizador procedural Web Audio (lasers, explosões, zumbidos) e samples clássicos |
 | **HUD Tático Sci-Fi** | ✅ | Telemetria em tempo real, minimapa de radar, filas de produção e console de unidades |

@@ -959,6 +959,88 @@ pub fn start() -> Result<(), JsValue> {
         cb.forget();
     }
 
+    if let Some(btn) = document.get_element_by_id("btn-launch-starship") {
+        let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            match g.colony.launch_starship() {
+                Ok(msg) => {
+                    g.audio.play_victory_fanfare();
+                    if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                        toast.set_text_content(Some(&msg));
+                        let _ = toast.set_attribute("style", "font-size: 11px; font-weight: bold; color: #a855f7; display: block;");
+                    }
+                }
+                Err(err) => {
+                    g.audio.play_build_error();
+                    if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                        toast.set_text_content(Some(&err));
+                        let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #ef4444; display: block;");
+                    }
+                }
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    // Debriefing Modal Controls
+    if let Some(btn) = document.get_element_by_id("btn-close-debriefing") {
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            if let Some(modal) = doc_clone.get_element_by_id("debriefing-modal") {
+                let _ = modal.set_attribute("style", "display: none;");
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    if let Some(btn) = document.get_element_by_id("btn-debriefing-continue") {
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            if let Some(modal) = doc_clone.get_element_by_id("debriefing-modal") {
+                let _ = modal.set_attribute("style", "display: none;");
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    if let Some(btn) = document.get_element_by_id("btn-debriefing-restart") {
+        let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let curr_scen = g.colony.scenario_id;
+            g.colony = sim::ColonyState::new_scenario(curr_scen);
+            g.audio.play_ui_beep();
+            if let Some(modal) = doc_clone.get_element_by_id("debriefing-modal") {
+                let _ = modal.set_attribute("style", "display: none;");
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    if let Some(btn) = document.get_element_by_id("btn-debriefing-next") {
+        let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let next_scen = (g.colony.scenario_id + 1) % 3;
+            g.colony = sim::ColonyState::new_scenario(next_scen);
+            g.audio.play_ui_beep();
+            if let Some(modal) = doc_clone.get_element_by_id("debriefing-modal") {
+                let _ = modal.set_attribute("style", "display: none;");
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
     // Earthworker Contextual Engineering Orders
     if let Some(btn) = document.get_element_by_id("btn-order-wall") {
         let app_clone = app.clone();
@@ -1282,6 +1364,74 @@ pub fn start() -> Result<(), JsValue> {
             app_borrow.audio.play_vortex_howl();
         }
 
+        // Mission Debriefing & Victory/Defeat Trigger
+        if let Some(status) = sim_result.mission_ended {
+            let is_victory = status == sim::mission::MissionStatus::Victory;
+            if is_victory {
+                app_borrow.audio.play_victory_fanfare();
+            } else {
+                app_borrow.audio.play_defeat_alert();
+            }
+
+            if let Some(modal) = document.get_element_by_id("debriefing-modal") {
+                let _ = modal.set_attribute("style", "position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 60;");
+
+                if let Some(title_el) = document.get_element_by_id("debriefing-title") {
+                    let title_text = if is_victory { "MISSION ACCOMPLISHED: VICTORY" } else { "COLONIAL DEFEAT: MISSION TERMINATED" };
+                    let title_col = if is_victory { "#4ade80" } else { "#ef4444" };
+                    title_el.set_text_content(Some(title_text));
+                    let _ = title_el.set_attribute("style", &format!("font-size: 16px; color: {}; font-weight: bold; margin: 0;", title_col));
+                }
+
+                if let Some(icon_el) = document.get_element_by_id("debriefing-icon") {
+                    icon_el.set_text_content(Some(if is_victory { "🏆" } else { "⚠️" }));
+                }
+
+                if let Some(sub_el) = document.get_element_by_id("debriefing-subtitle") {
+                    let desc = if is_victory {
+                        format!("Congratulations, Commander! Primary directives for '{}' have been successfully executed.", app_borrow.colony.mission.codename)
+                    } else {
+                        format!("Critical failure during '{}'. The Command Center has been obliterated.", app_borrow.colony.mission.codename)
+                    };
+                    sub_el.set_text_content(Some(&desc));
+                }
+
+                if let Some(sol_el) = document.get_element_by_id("debriefing-sol") {
+                    sol_el.set_text_content(Some(&format!("{:.2} Sols", app_borrow.colony.sol)));
+                }
+
+                if let Some(ship_el) = document.get_element_by_id("debriefing-starship") {
+                    let ship_text = if app_borrow.colony.starship_launched {
+                        "🚀 Escaped into Orbit!".to_string()
+                    } else {
+                        format!("{:.0}% Assembled", app_borrow.colony.starship_progress)
+                    };
+                    ship_el.set_text_content(Some(&ship_text));
+                }
+
+                if let Some(pop_el) = document.get_element_by_id("debriefing-pop") {
+                    pop_el.set_text_content(Some(&format!("{} Pop | {}% Morale", app_borrow.colony.population, app_borrow.colony.morale_pct)));
+                }
+
+                if let Some(ore_el) = document.get_element_by_id("debriefing-ore") {
+                    ore_el.set_text_content(Some(&format!("{} C | {} R", app_borrow.colony.common_ore, app_borrow.colony.rare_ore)));
+                }
+
+                if let Some(ul) = document.get_element_by_id("debriefing-checklist") {
+                    ul.set_inner_html("");
+                    for obj in &app_borrow.colony.mission.objectives {
+                        if let Ok(li) = document.create_element("li") {
+                            let icon = if obj.is_completed { "✅" } else { "❌" };
+                            let col = if obj.is_completed { "#4ade80" } else { "#ef4444" };
+                            li.set_text_content(Some(&format!("{} {}", icon, obj.description)));
+                            let _ = li.set_attribute("style", &format!("color: {};", col));
+                            let _ = ul.append_child(&li);
+                        }
+                    }
+                }
+            }
+        }
+
         // Update HUD DOM telemetry values
         if let Some(el) = document.get_element_by_id("colony-sol") {
             el.set_text_content(Some(&format!("{:.2}", app_borrow.colony.sol)));
@@ -1344,6 +1494,14 @@ pub fn start() -> Result<(), JsValue> {
                         if let Some(box_el) = document.get_element_by_id("inspect-queue-box") {
                             let _ = box_el.set_attribute("style", "display: none;");
                         }
+                    }
+                }
+
+                if let Some(launch_btn) = document.get_element_by_id("btn-launch-starship") {
+                    if app_borrow.colony.starship_progress >= 100.0 && !app_borrow.colony.starship_launched {
+                        let _ = launch_btn.set_attribute("style", "margin-top: 8px; justify-content: center; background: #581c87; border-color: #c084fc; font-weight: bold; color: #fff; display: flex;");
+                    } else {
+                        let _ = launch_btn.set_attribute("style", "display: none;");
                     }
                 }
             } else {

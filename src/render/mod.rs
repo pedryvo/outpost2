@@ -565,6 +565,59 @@ impl Viewport {
             ctx.stroke();
         }
 
+        // Render Ascending Evacuation Starship & Ignition Plumes
+        if colony.starship_launched {
+            let (base_sx, base_sy) = self.tile_to_screen(24.0, 20.0);
+            let t = colony.launch_anim_time;
+            let ship_y = base_sy - (t * 80.0 + t.powi(2) * 20.0) * self.zoom;
+            let ship_x = base_sx;
+
+            // Exhaust flame plume
+            let flame_len = (45.0 + (t * 30.0).sin() * 8.0) * self.zoom;
+            ctx.set_fill_style_str("#fb923c");
+            ctx.begin_path();
+            ctx.move_to(ship_x - 8.0 * self.zoom, ship_y + 15.0 * self.zoom);
+            ctx.line_to(ship_x + 8.0 * self.zoom, ship_y + 15.0 * self.zoom);
+            ctx.line_to(ship_x, ship_y + 15.0 * self.zoom + flame_len);
+            ctx.close_path();
+            ctx.fill();
+
+            // Inner white-hot flame
+            ctx.set_fill_style_str("#ffffff");
+            ctx.begin_path();
+            ctx.move_to(ship_x - 4.0 * self.zoom, ship_y + 15.0 * self.zoom);
+            ctx.line_to(ship_x + 4.0 * self.zoom, ship_y + 15.0 * self.zoom);
+            ctx.line_to(ship_x, ship_y + 15.0 * self.zoom + flame_len * 0.55);
+            ctx.close_path();
+            ctx.fill();
+
+            // Billowing launch smoke at ground pad
+            let pad_smoke_r = (20.0 + t * 25.0).min(65.0) * self.zoom;
+            ctx.set_fill_style_str("rgba(203, 213, 225, 0.45)");
+            ctx.begin_path();
+            let _ = ctx.arc(base_sx, base_sy, pad_smoke_r, 0.0, std::f64::consts::TAU);
+            ctx.fill();
+
+            // Starship Hull (Streamlined Apollo / OP2 Colony Ark)
+            ctx.set_fill_style_str("#e2e8f0");
+            ctx.begin_path();
+            ctx.move_to(ship_x, ship_y - 30.0 * self.zoom); // Nose cone
+            ctx.line_to(ship_x + 10.0 * self.zoom, ship_y + 10.0 * self.zoom);
+            ctx.line_to(ship_x + 14.0 * self.zoom, ship_y + 16.0 * self.zoom); // Right booster fin
+            ctx.line_to(ship_x - 14.0 * self.zoom, ship_y + 16.0 * self.zoom); // Left booster fin
+            ctx.line_to(ship_x - 10.0 * self.zoom, ship_y + 10.0 * self.zoom);
+            ctx.close_path();
+            ctx.fill();
+
+            ctx.set_stroke_style_str("#0284c7");
+            ctx.set_line_width(2.0);
+            ctx.stroke();
+
+            // Cockpit visor
+            ctx.set_fill_style_str("#0284c7");
+            ctx.fill_rect(ship_x - 4.0 * self.zoom, ship_y - 12.0 * self.zoom, 8.0 * self.zoom, 4.0 * self.zoom);
+        }
+
         // Render Holographic Ghost Blueprint Placement
         if let Some((st, (gx, gy), is_valid)) = ghost_placement {
             let (sx, sy) = self.tile_to_screen(gx as f64, gy as f64);
