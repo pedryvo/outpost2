@@ -186,6 +186,39 @@ impl Viewport {
             }
         }
 
+        // Render Subterranean Ore Deposits
+        for dep in &colony.ore_deposits {
+            let fog = colony.fog.get(dep.tile_x as usize, dep.tile_y as usize);
+            if fog == FogState::Unexplored {
+                continue;
+            }
+
+            let (sx, sy) = self.tile_to_screen(dep.tile_x as f64, dep.tile_y as f64);
+            let color = match dep.ore_type {
+                crate::sim::mining::OreType::Common => "#cbd5e1", // Hematite ore
+                crate::sim::mining::OreType::Rare => "#38bdf8",   // Titanium vein
+            };
+
+            ctx.set_fill_style_str(color);
+            ctx.set_stroke_style_str("#0f172a");
+            ctx.set_line_width(1.0);
+            ctx.begin_path();
+            let _ = ctx.arc(sx, sy, 5.0 * self.zoom, 0.0, std::f64::consts::PI * 2.0);
+            ctx.fill();
+            ctx.stroke();
+
+            // Label
+            if fog == FogState::Visible {
+                ctx.set_fill_style_str(color);
+                ctx.set_font(&format!("bold {}px sans-serif", (9.0 * self.zoom).max(8.0)));
+                let desc = match dep.ore_type {
+                    crate::sim::mining::OreType::Common => "⛏️ Common Ore",
+                    crate::sim::mining::OreType::Rare => "💎 Rare Ore",
+                };
+                let _ = ctx.fill_text(desc, sx - 22.0 * self.zoom, sy - 8.0 * self.zoom);
+            }
+        }
+
         // Render Buildings (if not in completely unexplored terrain)
         for b in &colony.buildings {
             let fog = colony.fog.get(b.tile_x as usize, b.tile_y as usize);
@@ -197,7 +230,9 @@ impl Viewport {
             let b_w = half_w * (b.width as f64);
             let b_h = half_h * (b.height as f64);
 
-            let stroke_col = if fog == FogState::Explored {
+            let stroke_col = if b.is_selected {
+                "#4ade80" // Green selection highlight
+            } else if fog == FogState::Explored {
                 "#475569"
             } else if colony.faction == Faction::Eden {
                 "#00d4ff"
@@ -264,6 +299,19 @@ impl Viewport {
             ctx.fill_rect(sx - 12.0, sy - 14.0 * self.zoom, 24.0, 3.0);
             ctx.set_fill_style_str("#16a34a");
             ctx.fill_rect(sx - 12.0, sy - 14.0 * self.zoom, 24.0 * hp_pct, 3.0);
+
+            // Cargo hauler container payload
+            if let Some((ore_type, _)) = u.cargo {
+                let cargo_col = match ore_type {
+                    crate::sim::mining::OreType::Common => "#cbd5e1",
+                    crate::sim::mining::OreType::Rare => "#38bdf8",
+                };
+                ctx.set_fill_style_str(cargo_col);
+                ctx.fill_rect(sx - 3.5 * self.zoom, sy - 3.5 * self.zoom, 7.0 * self.zoom, 7.0 * self.zoom);
+                ctx.set_stroke_style_str("#0f172a");
+                ctx.set_line_width(1.0);
+                ctx.stroke_rect(sx - 3.5 * self.zoom, sy - 3.5 * self.zoom, 7.0 * self.zoom, 7.0 * self.zoom);
+            }
         }
 
         // Render Active Combat Laser & Energy Beams

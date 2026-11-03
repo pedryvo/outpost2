@@ -90,11 +90,29 @@ pub fn start() -> Result<(), JsValue> {
                 }
 
                 if clicked_unit {
+                    for b in &mut g.colony.buildings {
+                        b.is_selected = false;
+                    }
                     g.audio.play_unit_ack();
                 } else {
-                    g.is_dragging = true;
-                    g.last_mouse_x = click_x;
-                    g.last_mouse_y = click_y;
+                    let (tx, ty) = g.viewport.screen_to_tile(click_x, click_y);
+                    let mut clicked_building = false;
+                    for b in &mut g.colony.buildings {
+                        if tx >= b.tile_x && tx < b.tile_x + b.width && ty >= b.tile_y && ty < b.tile_y + b.height {
+                            b.is_selected = true;
+                            clicked_building = true;
+                        } else if !e.shift_key() {
+                            b.is_selected = false;
+                        }
+                    }
+
+                    if clicked_building {
+                        g.audio.play_build_confirm();
+                    } else {
+                        g.is_dragging = true;
+                        g.last_mouse_x = click_x;
+                        g.last_mouse_y = click_y;
+                    }
                 }
             } else if e.button() == 2 {
                 // Right Click = Tactical Command (Attack if enemy clicked, otherwise Move)
@@ -286,6 +304,8 @@ pub fn start() -> Result<(), JsValue> {
                 move_cooldown: 0.0,
                 weapon,
                 attack_cooldown: 0.0,
+                cargo: None,
+                hauler_state: None,
             });
         }) as Box<dyn FnMut(_)>);
         btn_units.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;

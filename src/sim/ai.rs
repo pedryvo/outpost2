@@ -59,6 +59,8 @@ impl FactionAiDirector {
                 move_cooldown: 0.0,
                 weapon,
                 attack_cooldown: 0.0,
+                cargo: None,
+                hauler_state: None,
             });
 
             alert = Some("Tactical Alert: Hostile Plymouth reinforcements deployed!");

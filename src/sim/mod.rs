@@ -5,6 +5,7 @@ pub mod combat;
 pub mod disasters;
 pub mod fog;
 pub mod map;
+pub mod mining;
 pub mod pathfinding;
 pub mod structures;
 pub mod tech;
@@ -16,6 +17,7 @@ use combat::{CombatBeam, ExplosionEffect, WeaponType};
 use disasters::DisasterSimulator;
 use fog::FogOfWar;
 use map::GameMap;
+use mining::{HaulerState, OreDeposit, OreType};
 use pathfinding::{PathFinder, UnitOrder};
 use structures::{connect_with_tubes, StructureType};
 use tech::TechTree;
@@ -43,6 +45,8 @@ pub struct Unit {
     pub move_cooldown: f64,
     pub weapon: Option<WeaponType>,
     pub attack_cooldown: f64,
+    pub cargo: Option<(OreType, u32)>,
+    pub hauler_state: Option<HaulerState>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -55,6 +59,9 @@ pub struct Building {
     pub height: i32,
     pub power_cost: i32,
     pub is_active: bool,
+    pub is_selected: bool,
+    pub production_queue: Vec<String>,
+    pub production_progress: f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -98,6 +105,7 @@ pub struct ColonyState {
     pub active_beams: Vec<CombatBeam>,
     pub active_explosions: Vec<ExplosionEffect>,
     pub ai_director: FactionAiDirector,
+    pub ore_deposits: Vec<OreDeposit>,
 }
 
 impl ColonyState {
@@ -115,6 +123,9 @@ impl ColonyState {
             height: 3,
             power_cost: 40,
             is_active: true,
+            is_selected: false,
+            production_queue: Vec::new(),
+            production_progress: 0.0,
         });
 
         // Initial Solar Array
@@ -127,6 +138,24 @@ impl ColonyState {
             height: 2,
             power_cost: -250, // Produces power
             is_active: true,
+            is_selected: false,
+            production_queue: Vec::new(),
+            production_progress: 0.0,
+        });
+
+        // Initial Common Ore Smelter (ready for Cargo Trucks)
+        buildings.push(Building {
+            id: 3,
+            name: "Common Ore Smelter".into(),
+            tile_x: 21,
+            tile_y: 25,
+            width: 2,
+            height: 2,
+            power_cost: 50,
+            is_active: true,
+            is_selected: false,
+            production_queue: Vec::new(),
+            production_progress: 0.0,
         });
 
         // Starting ConVec, Cargo Truck, and Combat Escorts
@@ -144,6 +173,8 @@ impl ColonyState {
             move_cooldown: 0.0,
             weapon: None,
             attack_cooldown: 0.0,
+            cargo: None,
+            hauler_state: None,
         });
 
         units.push(Unit {
@@ -160,14 +191,16 @@ impl ColonyState {
             move_cooldown: 0.0,
             weapon: None,
             attack_cooldown: 0.0,
+            cargo: None,
+            hauler_state: Some(HaulerState::Idle),
         });
 
         units.push(Unit {
             id: 3,
             name: "Robo-Miner".into(),
             faction: Faction::Eden,
-            tile_x: 25,
-            tile_y: 23,
+            tile_x: 26,
+            tile_y: 22,
             hp: 180,
             max_hp: 180,
             is_selected: false,
@@ -176,6 +209,8 @@ impl ColonyState {
             move_cooldown: 0.0,
             weapon: None,
             attack_cooldown: 0.0,
+            cargo: None,
+            hauler_state: None,
         });
 
         units.push(Unit {
@@ -192,6 +227,8 @@ impl ColonyState {
             move_cooldown: 0.0,
             weapon: Some(WeaponType::Laser),
             attack_cooldown: 0.0,
+            cargo: None,
+            hauler_state: None,
         });
 
         units.push(Unit {
@@ -208,6 +245,8 @@ impl ColonyState {
             move_cooldown: 0.0,
             weapon: Some(WeaponType::Railgun),
             attack_cooldown: 0.0,
+            cargo: None,
+            hauler_state: None,
         });
 
         // Hostile Plymouth scout raiders
@@ -225,6 +264,8 @@ impl ColonyState {
             move_cooldown: 0.0,
             weapon: Some(WeaponType::Microwave),
             attack_cooldown: 0.0,
+            cargo: None,
+            hauler_state: None,
         });
 
         units.push(Unit {
@@ -241,6 +282,8 @@ impl ColonyState {
             move_cooldown: 0.0,
             weapon: Some(WeaponType::AcidCloud),
             attack_cooldown: 0.0,
+            cargo: None,
+            hauler_state: None,
         });
 
         let game_map = GameMap::parse(DEFAULT_MAP_DATA)
@@ -251,8 +294,16 @@ impl ColonyState {
             });
 
         let mut tubes = HashSet::new();
-        // Initial arterial transport tube between Command Center and Solar Power Array
-        connect_with_tubes(&mut tubes, (22, 21), (24, 21));
+        // Initial arterial transport tubes linking base structures
+        connect_with_tubes(&mut tubes, (22, 21), (24, 21)); // CC to Solar Array
+        connect_with_tubes(&mut tubes, (21, 22), (21, 25)); // CC to Smelter
+
+        let mut ore_deposits = Vec::new();
+        let mut dep1 = OreDeposit::new(1, OreType::Common, 26, 22, 50_000);
+        dep1.has_miner = true; // Robo-Miner is actively extracting!
+        let dep2 = OreDeposit::new(2, OreType::Rare, 18, 28, 25_000);
+        ore_deposits.push(dep1);
+        ore_deposits.push(dep2);
 
         let map_w = game_map.width as usize;
         let map_h = game_map.height as usize;
@@ -281,6 +332,7 @@ impl ColonyState {
             active_beams: Vec::new(),
             active_explosions: Vec::new(),
             ai_director: FactionAiDirector::new(Faction::Plymouth, 38, 30),
+            ore_deposits,
         }
     }
 
@@ -412,6 +464,77 @@ impl ColonyState {
         }
         self.units.retain(|u| u.hp > 0);
 
+        // Autonomous Mining & Ore Logistics Transport
+        let mut ore_delivered_common = 0;
+        let mut ore_delivered_rare = 0;
+        let deposit_coords: Vec<(u32, i32, i32, OreType, bool)> = self.ore_deposits.iter()
+            .map(|d| (d.id, d.tile_x, d.tile_y, d.ore_type, d.has_miner && d.remaining_amount > 0))
+            .collect();
+        let smelter_coords: Vec<(u32, i32, i32)> = self.buildings.iter()
+            .filter(|b| b.name.contains("Smelter"))
+            .map(|b| (b.id, b.tile_x, b.tile_y))
+            .collect();
+
+        for u in &mut self.units {
+            if u.name.contains("Cargo") {
+                match u.hauler_state {
+                    Some(HaulerState::Idle) => {
+                        if let Some(&(dep_id, dx, dy, _, _)) = deposit_coords.iter().find(|d| d.4) {
+                            if let Some(path) = PathFinder::find_path(&self.game_map, (u.tile_x, u.tile_y), (dx, dy)) {
+                                u.path = path;
+                                u.hauler_state = Some(HaulerState::DrivingToMine { deposit_id: dep_id });
+                            }
+                        }
+                    }
+                    Some(HaulerState::DrivingToMine { deposit_id }) => {
+                        if let Some(&(_, dx, dy, _, _)) = deposit_coords.iter().find(|d| d.0 == deposit_id) {
+                            let dist = (u.tile_x - dx).abs() + (u.tile_y - dy).abs();
+                            if dist <= 1 {
+                                u.hauler_state = Some(HaulerState::Loading { deposit_id, progress_pct: 0 });
+                            }
+                        }
+                    }
+                    Some(HaulerState::Loading { deposit_id, ref mut progress_pct }) => {
+                        *progress_pct += (dt_secs * 60.0) as u32;
+                        if *progress_pct >= 100 {
+                            if let Some(&(_, _, _, ore_t, _)) = deposit_coords.iter().find(|d| d.0 == deposit_id) {
+                                u.cargo = Some((ore_t, 50));
+                                if let Some(&(smelter_id, sx, sy)) = smelter_coords.first() {
+                                    if let Some(path) = PathFinder::find_path(&self.game_map, (u.tile_x, u.tile_y), (sx, sy)) {
+                                        u.path = path;
+                                        u.hauler_state = Some(HaulerState::DrivingToSmelter { smelter_id, ore_type: ore_t, amount: 50 });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Some(HaulerState::DrivingToSmelter { smelter_id, ore_type, amount }) => {
+                        if let Some(&(_, sx, sy)) = smelter_coords.iter().find(|s| s.0 == smelter_id) {
+                            let dist = (u.tile_x - sx).abs() + (u.tile_y - sy).abs();
+                            if dist <= 2 {
+                                u.hauler_state = Some(HaulerState::Unloading { smelter_id, ore_type, amount, progress_pct: 0 });
+                            }
+                        }
+                    }
+                    Some(HaulerState::Unloading { smelter_id: _, ore_type, amount, ref mut progress_pct }) => {
+                        *progress_pct += (dt_secs * 70.0) as u32;
+                        if *progress_pct >= 100 {
+                            match ore_type {
+                                OreType::Common => ore_delivered_common += amount,
+                                OreType::Rare => ore_delivered_rare += amount,
+                            }
+                            u.cargo = None;
+                            u.hauler_state = Some(HaulerState::Idle);
+                        }
+                    }
+                    None => {}
+                }
+            }
+        }
+
+        self.common_ore += ore_delivered_common;
+        self.rare_ore += ore_delivered_rare;
+
         // Advance Rival Faction AI Director
         let ai_alert = self.ai_director.update(&mut self.units, dt_secs);
 
@@ -468,6 +591,9 @@ impl ColonyState {
             height: h,
             power_cost: power,
             is_active: true,
+            is_selected: false,
+            production_queue: Vec::new(),
+            production_progress: 0.0,
         };
 
         // Connect new structure to the nearest existing building via pressurized transport tube
