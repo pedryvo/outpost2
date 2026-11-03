@@ -1,5 +1,6 @@
 //! Outpost 2 Colony Simulation and Game State
 
+pub mod combat;
 pub mod disasters;
 pub mod fog;
 pub mod map;
@@ -9,6 +10,7 @@ pub mod tech;
 
 use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
+use combat::{CombatBeam, ExplosionEffect, WeaponType};
 use disasters::DisasterSimulator;
 use fog::FogOfWar;
 use map::GameMap;
@@ -28,6 +30,7 @@ pub enum Faction {
 pub struct Unit {
     pub id: u32,
     pub name: String,
+    pub faction: Faction,
     pub tile_x: i32,
     pub tile_y: i32,
     pub hp: u32,
@@ -36,6 +39,8 @@ pub struct Unit {
     pub current_order: UnitOrder,
     pub path: Vec<(i32, i32)>,
     pub move_cooldown: f64,
+    pub weapon: Option<WeaponType>,
+    pub attack_cooldown: f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -88,6 +93,8 @@ pub struct ColonyState {
     pub fog: FogOfWar,
     pub day_cycle: f64,
     pub sunlight: f64,
+    pub active_beams: Vec<CombatBeam>,
+    pub active_explosions: Vec<ExplosionEffect>,
 }
 
 impl ColonyState {
@@ -119,10 +126,11 @@ impl ColonyState {
             is_active: true,
         });
 
-        // Starting ConVec and Cargo Truck
+        // Starting ConVec, Cargo Truck, and Combat Escorts
         units.push(Unit {
             id: 1,
             name: "ConVec (Structure Kit)".into(),
+            faction: Faction::Eden,
             tile_x: 21,
             tile_y: 24,
             hp: 200,
@@ -131,11 +139,14 @@ impl ColonyState {
             current_order: UnitOrder::Idle,
             path: Vec::new(),
             move_cooldown: 0.0,
+            weapon: None,
+            attack_cooldown: 0.0,
         });
 
         units.push(Unit {
             id: 2,
             name: "Cargo Truck".into(),
+            faction: Faction::Eden,
             tile_x: 23,
             tile_y: 24,
             hp: 150,
@@ -144,11 +155,14 @@ impl ColonyState {
             current_order: UnitOrder::Idle,
             path: Vec::new(),
             move_cooldown: 0.0,
+            weapon: None,
+            attack_cooldown: 0.0,
         });
 
         units.push(Unit {
             id: 3,
             name: "Robo-Miner".into(),
+            faction: Faction::Eden,
             tile_x: 25,
             tile_y: 23,
             hp: 180,
@@ -157,6 +171,73 @@ impl ColonyState {
             current_order: UnitOrder::Idle,
             path: Vec::new(),
             move_cooldown: 0.0,
+            weapon: None,
+            attack_cooldown: 0.0,
+        });
+
+        units.push(Unit {
+            id: 4,
+            name: "Lynx Scout (Pulse Laser)".into(),
+            faction: Faction::Eden,
+            tile_x: 23,
+            tile_y: 26,
+            hp: 140,
+            max_hp: 140,
+            is_selected: false,
+            current_order: UnitOrder::Idle,
+            path: Vec::new(),
+            move_cooldown: 0.0,
+            weapon: Some(WeaponType::Laser),
+            attack_cooldown: 0.0,
+        });
+
+        units.push(Unit {
+            id: 5,
+            name: "Panther Medium Tank (Railgun)".into(),
+            faction: Faction::Eden,
+            tile_x: 25,
+            tile_y: 25,
+            hp: 250,
+            max_hp: 250,
+            is_selected: false,
+            current_order: UnitOrder::Idle,
+            path: Vec::new(),
+            move_cooldown: 0.0,
+            weapon: Some(WeaponType::Railgun),
+            attack_cooldown: 0.0,
+        });
+
+        // Hostile Plymouth scout raiders
+        units.push(Unit {
+            id: 101,
+            name: "Plymouth Raider Lynx".into(),
+            faction: Faction::Plymouth,
+            tile_x: 35,
+            tile_y: 28,
+            hp: 130,
+            max_hp: 130,
+            is_selected: false,
+            current_order: UnitOrder::Idle,
+            path: Vec::new(),
+            move_cooldown: 0.0,
+            weapon: Some(WeaponType::Microwave),
+            attack_cooldown: 0.0,
+        });
+
+        units.push(Unit {
+            id: 102,
+            name: "Plymouth Tiger Assault".into(),
+            faction: Faction::Plymouth,
+            tile_x: 37,
+            tile_y: 30,
+            hp: 300,
+            max_hp: 300,
+            is_selected: false,
+            current_order: UnitOrder::Idle,
+            path: Vec::new(),
+            move_cooldown: 0.0,
+            weapon: Some(WeaponType::AcidCloud),
+            attack_cooldown: 0.0,
         });
 
         let game_map = GameMap::parse(DEFAULT_MAP_DATA)
@@ -194,6 +275,8 @@ impl ColonyState {
             fog,
             day_cycle: 0.25,
             sunlight: 1.0,
+            active_beams: Vec::new(),
+            active_explosions: Vec::new(),
         }
     }
 
@@ -228,6 +311,102 @@ impl ColonyState {
                 }
             }
         }
+
+        // Update active combat tracer beams and explosion effects
+        self.active_beams.retain_mut(|beam| {
+            beam.lifetime -= dt_secs;
+            beam.lifetime > 0.0
+        });
+
+        self.active_explosions.retain_mut(|exp| {
+            exp.lifetime -= dt_secs;
+            let progress = (1.0 - (exp.lifetime / exp.max_lifetime)).clamp(0.0, 1.0);
+            exp.radius = exp.max_radius * progress;
+            exp.lifetime > 0.0
+        });
+
+        // Unit Combat Engagements
+        let mut combat_events = Vec::new();
+        let unit_positions: Vec<(u32, Faction, f64, f64, u32)> = self.units.iter()
+            .map(|u| (u.id, u.faction, u.tile_x as f64, u.tile_y as f64, u.hp))
+            .collect();
+
+        for u in &mut self.units {
+            u.attack_cooldown -= dt_secs;
+            if let Some(weapon) = u.weapon {
+                if u.attack_cooldown <= 0.0 {
+                    // Check target
+                    let mut target_id = None;
+                    if let UnitOrder::Attack { target_unit_id } = u.current_order {
+                        target_id = Some(target_unit_id);
+                    } else {
+                        // Autonomous combat stance: scan for closest enemy faction within range
+                        let max_range = weapon.range_tiles();
+                        let ux = u.tile_x as f64;
+                        let uy = u.tile_y as f64;
+                        let mut closest_dist = max_range;
+                        for &(other_id, other_faction, ox, oy, other_hp) in &unit_positions {
+                            if other_faction != u.faction && other_hp > 0 {
+                                let dist = ((ox - ux).powi(2) + (oy - uy).powi(2)).sqrt();
+                                if dist <= closest_dist {
+                                    closest_dist = dist;
+                                    target_id = Some(other_id);
+                                }
+                            }
+                        }
+                    }
+
+                    if let Some(tid) = target_id {
+                        if let Some(&(_, _, tx, ty, thp)) = unit_positions.iter().find(|p| p.0 == tid) {
+                            let dist = ((tx - u.tile_x as f64).powi(2) + (ty - u.tile_y as f64).powi(2)).sqrt();
+                            if dist <= weapon.range_tiles() && thp > 0 {
+                                u.attack_cooldown = weapon.fire_interval();
+                                combat_events.push((
+                                    tid,
+                                    (u.tile_x as f64, u.tile_y as f64),
+                                    (tx, ty),
+                                    weapon,
+                                    weapon.damage(),
+                                ));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Apply weapon damage and spawn beams/explosions
+        let mut destroyed_units = Vec::new();
+        for (target_id, from_pos, to_pos, weapon, dmg) in combat_events {
+            self.active_beams.push(CombatBeam {
+                from_x: from_pos.0,
+                from_y: from_pos.1,
+                to_x: to_pos.0,
+                to_y: to_pos.1,
+                color: weapon.beam_color(),
+                lifetime: 0.18,
+                max_lifetime: 0.18,
+            });
+
+            if let Some(target) = self.units.iter_mut().find(|u| u.id == target_id) {
+                target.hp = target.hp.saturating_sub(dmg);
+                if target.hp == 0 {
+                    destroyed_units.push((target.tile_x as f64, target.tile_y as f64));
+                }
+            }
+        }
+
+        for (dx, dy) in destroyed_units {
+            self.active_explosions.push(ExplosionEffect {
+                x: dx,
+                y: dy,
+                radius: 4.0,
+                max_radius: 20.0,
+                lifetime: 0.45,
+                max_lifetime: 0.45,
+            });
+        }
+        self.units.retain(|u| u.hp > 0);
 
         // Refresh dynamic sensor fog of war
         self.fog.update_visibility(&self.units, &self.buildings);

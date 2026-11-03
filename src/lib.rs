@@ -96,10 +96,32 @@ pub fn start() -> Result<(), JsValue> {
                     g.last_mouse_y = click_y;
                 }
             } else if e.button() == 2 {
-                // Right Click = Tactical Move Order!
-                let (target_tx, target_ty) = g.viewport.screen_to_tile(click_x, click_y);
-                g.colony.order_selected_move(target_tx, target_ty);
-                g.audio.play_unit_ack();
+                // Right Click = Tactical Command (Attack if enemy clicked, otherwise Move)
+                let zoom = g.viewport.zoom;
+                let mut clicked_enemy = None;
+                for u in &g.colony.units {
+                    if u.faction != sim::Faction::Eden {
+                        let (sx, sy) = g.viewport.tile_to_screen(u.tile_x as f64, u.tile_y as f64);
+                        let dist = ((click_x - sx).powi(2) + (click_y - sy).powi(2)).sqrt();
+                        if dist < 24.0 * zoom {
+                            clicked_enemy = Some(u.id);
+                            break;
+                        }
+                    }
+                }
+
+                if let Some(enemy_id) = clicked_enemy {
+                    for u in &mut g.colony.units {
+                        if u.is_selected && u.faction == sim::Faction::Eden {
+                            u.current_order = sim::pathfinding::UnitOrder::Attack { target_unit_id: enemy_id };
+                        }
+                    }
+                    g.audio.play_build_confirm();
+                } else {
+                    let (target_tx, target_ty) = g.viewport.screen_to_tile(click_x, click_y);
+                    g.colony.order_selected_move(target_tx, target_ty);
+                    g.audio.play_unit_ack();
+                }
             } else if e.button() == 1 {
                 g.is_dragging = true;
                 g.last_mouse_x = click_x;
@@ -243,17 +265,26 @@ pub fn start() -> Result<(), JsValue> {
             let _ = g.audio.init();
             g.audio.play_unit_ack();
             let next_id = g.colony.units.len() as u32 + 1;
+            let (name, hp, weapon) = if next_id % 2 == 0 {
+                ("Panther Battle Tank (Railgun)", 240, Some(sim::combat::WeaponType::Railgun))
+            } else {
+                ("Lynx Combat Scout (Laser)", 140, Some(sim::combat::WeaponType::Laser))
+            };
+
             g.colony.units.push(sim::Unit {
                 id: next_id,
-                name: format!("Scout Lynx #{}", next_id),
-                tile_x: 21 + (next_id as i32) % 5,
-                tile_y: 25 + (next_id as i32) % 5,
-                hp: 120,
-                max_hp: 120,
+                name: format!("{} #{}", name, next_id),
+                faction: sim::Faction::Eden,
+                tile_x: 21 + (next_id as i32) % 6,
+                tile_y: 25 + (next_id as i32) % 6,
+                hp,
+                max_hp: hp,
                 is_selected: false,
                 current_order: sim::pathfinding::UnitOrder::Idle,
                 path: Vec::new(),
                 move_cooldown: 0.0,
+                weapon,
+                attack_cooldown: 0.0,
             });
         }) as Box<dyn FnMut(_)>);
         btn_units.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;

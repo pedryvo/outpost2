@@ -238,8 +238,9 @@ impl Viewport {
 
             let (sx, sy) = self.tile_to_screen(u.tile_x as f64, u.tile_y as f64);
 
-            // Unit chassis
-            ctx.set_fill_style_str(if colony.faction == Faction::Eden { "#38bdf8" } else { "#fb923c" });
+            // Unit chassis: Eden is Cyan, Plymouth is Crimson Red
+            let chassis_color = if u.faction == Faction::Eden { "#38bdf8" } else { "#ef4444" };
+            ctx.set_fill_style_str(chassis_color);
             ctx.begin_path();
             let _ = ctx.arc(sx, sy, 8.0 * self.zoom, 0.0, std::f64::consts::PI * 2.0);
             ctx.fill();
@@ -263,6 +264,49 @@ impl Viewport {
             ctx.fill_rect(sx - 12.0, sy - 14.0 * self.zoom, 24.0, 3.0);
             ctx.set_fill_style_str("#16a34a");
             ctx.fill_rect(sx - 12.0, sy - 14.0 * self.zoom, 24.0 * hp_pct, 3.0);
+        }
+
+        // Render Active Combat Laser & Energy Beams
+        for beam in &colony.active_beams {
+            let (from_sx, from_sy) = self.tile_to_screen(beam.from_x, beam.from_y);
+            let (to_sx, to_sy) = self.tile_to_screen(beam.to_x, beam.to_y);
+
+            ctx.set_stroke_style_str(beam.color);
+            ctx.set_line_width(2.5 * self.zoom);
+            ctx.begin_path();
+            ctx.move_to(from_sx, from_sy);
+            ctx.line_to(to_sx, to_sy);
+            ctx.stroke();
+
+            // White-hot beam core
+            ctx.set_stroke_style_str("#ffffff");
+            ctx.set_line_width(1.0 * self.zoom);
+            ctx.begin_path();
+            ctx.move_to(from_sx, from_sy);
+            ctx.line_to(to_sx, to_sy);
+            ctx.stroke();
+        }
+
+        // Render Active Explosions & Concussive Blast Waves
+        for exp in &colony.active_explosions {
+            let (sx, sy) = self.tile_to_screen(exp.x, exp.y);
+            let r = exp.radius * self.zoom;
+
+            // Outer fiery flash
+            ctx.set_fill_style_str("rgba(249, 115, 22, 0.45)");
+            ctx.begin_path();
+            let _ = ctx.arc(sx, sy, r * 1.5, 0.0, std::f64::consts::PI * 2.0);
+            ctx.fill();
+
+            // Inner white-hot fireball core
+            ctx.set_fill_style_str("rgba(254, 240, 138, 0.85)");
+            ctx.begin_path();
+            let _ = ctx.arc(sx, sy, r, 0.0, std::f64::consts::PI * 2.0);
+            ctx.fill();
+
+            ctx.set_stroke_style_str("#ef4444");
+            ctx.set_line_width(2.0);
+            ctx.stroke();
         }
 
         let _ = ctx.restore();
@@ -315,11 +359,12 @@ impl Viewport {
             }
         }
 
-        // Blip friendly units (only if active in sensor range)
-        ctx.set_fill_style_str("#4ade80");
+        // Blip units (friendly Eden in green, hostile Plymouth in red)
         for u in &colony.units {
             let fog = colony.fog.get(u.tile_x as usize, u.tile_y as usize);
             if fog == FogState::Visible {
+                let color = if u.faction == Faction::Eden { "#4ade80" } else { "#ef4444" };
+                ctx.set_fill_style_str(color);
                 let ux = (u.tile_x as f64) * scale_x;
                 let uy = (u.tile_y as f64) * scale_y;
                 ctx.fill_rect(ux - 1.0, uy - 1.0, 3.0, 3.0);
