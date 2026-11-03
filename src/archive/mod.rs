@@ -1,5 +1,7 @@
 //! Outpost 2 Volume Archive (.vol) streaming reader
 
+pub mod prt;
+
 use byteorder::{LittleEndian, ReadBytesExt};
 use std::io::{Cursor, Read};
 
