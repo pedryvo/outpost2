@@ -1,12 +1,14 @@
 //! Outpost 2 Colony Simulation and Game State
 
 pub mod disasters;
+pub mod fog;
 pub mod map;
 pub mod pathfinding;
 pub mod tech;
 
 use serde::{Deserialize, Serialize};
 use disasters::DisasterSimulator;
+use fog::FogOfWar;
 use map::GameMap;
 use pathfinding::{PathFinder, UnitOrder};
 use tech::TechTree;
@@ -61,6 +63,9 @@ pub struct ColonyState {
     pub game_map: GameMap,
     pub tech_tree: TechTree,
     pub disasters: DisasterSimulator,
+    pub fog: FogOfWar,
+    pub day_cycle: f64,
+    pub sunlight: f64,
 }
 
 impl ColonyState {
@@ -139,6 +144,11 @@ impl ColonyState {
                 tiles: Vec::new(),
             });
 
+        let map_w = game_map.width as usize;
+        let map_h = game_map.height as usize;
+        let mut fog = FogOfWar::new(map_w, map_h);
+        fog.update_visibility(&units, &buildings);
+
         Self {
             faction,
             sol: 1.0,
@@ -154,11 +164,23 @@ impl ColonyState {
             game_map,
             tech_tree: TechTree::new(),
             disasters: DisasterSimulator::new(),
+            fog,
+            day_cycle: 0.25,
+            sunlight: 1.0,
         }
     }
 
     pub fn update(&mut self, dt_secs: f64) -> Option<&'static str> {
         self.sol += dt_secs * 0.05; // 1 Sol every ~20 seconds
+
+        // Dynamic diurnal daylight cycle (~120s per full planetary rotation)
+        self.day_cycle = (self.day_cycle + dt_secs * 0.008) % 1.0;
+        let raw_sun = (self.day_cycle * std::f64::consts::TAU).sin() * 0.45 + 0.55;
+        self.sunlight = raw_sun.clamp(0.20, 1.0);
+
+        // Solar panels vary power with solar intensity
+        let solar_output = (250.0 * self.sunlight) as u32;
+        self.power_produced = 250 + solar_output;
 
         // Update planetary disasters
         let warning = self.disasters.update(&mut self.game_map, dt_secs);
@@ -179,6 +201,9 @@ impl ColonyState {
                 }
             }
         }
+
+        // Refresh dynamic sensor fog of war
+        self.fog.update_visibility(&self.units, &self.buildings);
 
         warning
     }

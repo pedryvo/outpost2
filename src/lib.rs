@@ -329,6 +329,17 @@ pub fn start() -> Result<(), JsValue> {
         if let Some(el) = document.get_element_by_id("colony-sol") {
             el.set_text_content(Some(&format!("{:.2}", app_borrow.colony.sol)));
         }
+        if let Some(el) = document.get_element_by_id("colony-sun") {
+            let pct = (app_borrow.colony.sunlight * 100.0) as u32;
+            let phase_desc = if app_borrow.colony.sunlight > 0.75 {
+                "Zenith"
+            } else if app_borrow.colony.sunlight > 0.40 {
+                "Twilight"
+            } else {
+                "Night"
+            };
+            el.set_text_content(Some(&format!("{}% ({})", pct, phase_desc)));
+        }
         if let Some(el) = document.get_element_by_id("colony-pop") {
             el.set_text_content(Some(&format!("{} ({}% Morale)", app_borrow.colony.population, app_borrow.colony.morale_pct)));
         }

@@ -3,7 +3,7 @@
 pub mod palette;
 
 use web_sys::CanvasRenderingContext2d;
-use crate::sim::{ColonyState, Faction};
+use crate::sim::{fog::FogState, ColonyState, Faction};
 use palette::MASTER_PALETTE;
 
 pub struct Viewport {
@@ -59,10 +59,10 @@ impl Viewport {
         let half_h = self.tile_height * 0.5 * self.zoom;
 
         // Render visible isometric terrain tiles
-        let start_col = 0.max(10);
-        let end_col = 40.min(self.map_cols);
-        let start_row = 0.max(10);
-        let end_row = 40.min(self.map_rows);
+        let start_col = 0;
+        let end_col = (colony.game_map.width as i32).min(self.map_cols);
+        let start_row = 0;
+        let end_row = (colony.game_map.height as i32).min(self.map_rows);
 
         for r in start_row..end_row {
             for c in start_col..end_col {
@@ -73,12 +73,43 @@ impl Viewport {
                     continue;
                 }
 
+                let fog = colony.fog.get(c as usize, r as usize);
+                if fog == FogState::Unexplored {
+                    ctx.set_fill_style_str("#030712");
+                    ctx.set_stroke_style_str("#020408");
+                    ctx.set_line_width(0.5);
+
+                    ctx.begin_path();
+                    ctx.move_to(sx, sy - half_h);
+                    ctx.line_to(sx + half_w, sy);
+                    ctx.line_to(sx, sy + half_h);
+                    ctx.line_to(sx - half_w, sy);
+                    ctx.close_path();
+
+                    ctx.fill();
+                    ctx.stroke();
+                    continue;
+                }
+
+                // Ambient light multiplier: Explored is shrouded (0.35x), Visible scales with diurnal sunlight (0.4x - 1.0x)
+                let light_mult = match fog {
+                    FogState::Explored => 0.35,
+                    FogState::Visible => colony.sunlight,
+                    FogState::Unexplored => 0.0,
+                };
+
                 let tile = colony.game_map.get_tile(c as u32, r as u32);
                 let terrain_color = if let Some(t) = tile {
                     if t.is_lava {
-                        "rgb(239,68,68)".to_string() // Molten lava flow
+                        let r = (239.0 * light_mult.max(0.6)) as u8;
+                        let g = (68.0 * light_mult.max(0.6)) as u8;
+                        let b = (68.0 * light_mult.max(0.6)) as u8;
+                        format!("rgb({},{},{})", r, g, b)
                     } else if t.is_blight {
-                        "rgb(168,85,247)".to_string() // Microbial blight track
+                        let r = (168.0 * light_mult) as u8;
+                        let g = (85.0 * light_mult) as u8;
+                        let b = (247.0 * light_mult) as u8;
+                        format!("rgb({},{},{})", r, g, b)
                     } else {
                         let pal_idx = match t.cell_type {
                             0 => 18, // Basalt rock
@@ -88,15 +119,21 @@ impl Viewport {
                             _ => 40 + ((t.tile_mapping % 16) as usize),
                         };
                         let [pr, pg, pb] = MASTER_PALETTE[pal_idx.min(255)];
-                        format!("rgb({},{},{})", pr, pg, pb)
+                        let r = (pr as f64 * light_mult) as u8;
+                        let g = (pg as f64 * light_mult) as u8;
+                        let b = (pb as f64 * light_mult) as u8;
+                        format!("rgb({},{},{})", r, g, b)
                     }
                 } else {
                     let [pr, pg, pb] = MASTER_PALETTE[45];
-                    format!("rgb({},{},{})", pr, pg, pb)
+                    let r = (pr as f64 * light_mult) as u8;
+                    let g = (pg as f64 * light_mult) as u8;
+                    let b = (pb as f64 * light_mult) as u8;
+                    format!("rgb({},{},{})", r, g, b)
                 };
 
                 ctx.set_fill_style_str(&terrain_color);
-                ctx.set_stroke_style_str("#1c1917");
+                ctx.set_stroke_style_str(if fog == FogState::Explored { "#0f172a" } else { "#1c1917" });
                 ctx.set_line_width(0.75);
 
                 ctx.begin_path();
@@ -111,15 +148,28 @@ impl Viewport {
             }
         }
 
-        // Render Buildings
+        // Render Buildings (if not in completely unexplored terrain)
         for b in &colony.buildings {
+            let fog = colony.fog.get(b.tile_x as usize, b.tile_y as usize);
+            if fog == FogState::Unexplored {
+                continue;
+            }
+
             let (sx, sy) = self.tile_to_screen(b.tile_x as f64, b.tile_y as f64);
             let b_w = half_w * (b.width as f64);
             let b_h = half_h * (b.height as f64);
 
+            let stroke_col = if fog == FogState::Explored {
+                "#475569"
+            } else if colony.faction == Faction::Eden {
+                "#00d4ff"
+            } else {
+                "#ff8c00"
+            };
+
             // Structure footprint
-            ctx.set_fill_style_str("#1e293b");
-            ctx.set_stroke_style_str(if colony.faction == Faction::Eden { "#00d4ff" } else { "#ff8c00" });
+            ctx.set_fill_style_str(if fog == FogState::Explored { "#0f172a" } else { "#1e293b" });
+            ctx.set_stroke_style_str(stroke_col);
             ctx.set_line_width(2.0);
 
             ctx.begin_path();
@@ -132,17 +182,22 @@ impl Viewport {
             ctx.stroke();
 
             // Structure 2.5D extrusion
-            ctx.set_fill_style_str("#334155");
+            ctx.set_fill_style_str(if fog == FogState::Explored { "#1e293b" } else { "#334155" });
             ctx.fill_rect(sx - b_w * 0.5, sy - b_h - 20.0 * self.zoom, b_w, 20.0 * self.zoom);
 
             // Label
-            ctx.set_fill_style_str("#ffffff");
+            ctx.set_fill_style_str(if fog == FogState::Explored { "#94a3b8" } else { "#ffffff" });
             ctx.set_font(&format!("bold {}px sans-serif", (11.0 * self.zoom).max(9.0)));
             let _ = ctx.fill_text(&b.name, sx - b_w * 0.45, sy - b_h - 6.0 * self.zoom);
         }
 
-        // Render Units
+        // Render Units (Only visible when active in sensor range)
         for u in &colony.units {
+            let fog = colony.fog.get(u.tile_x as usize, u.tile_y as usize);
+            if fog != FogState::Visible {
+                continue;
+            }
+
             let (sx, sy) = self.tile_to_screen(u.tile_x as f64, u.tile_y as f64);
 
             // Unit chassis
@@ -175,28 +230,51 @@ impl Viewport {
         let _ = ctx.restore();
     }
 
-    /// Render mini-radar overview
+    /// Render mini-radar overview with authentic Fog of War mask
     pub fn render_minimap(&self, ctx: &CanvasRenderingContext2d, colony: &ColonyState, w: f64, h: f64) {
-        ctx.set_fill_style_str("#090d16");
+        ctx.set_fill_style_str("#030712");
         ctx.fill_rect(0.0, 0.0, w, h);
 
         let scale_x = w / (self.map_cols as f64);
         let scale_y = h / (self.map_rows as f64);
 
-        // Blip buildings
-        ctx.set_fill_style_str("#38bdf8");
-        for b in &colony.buildings {
-            let bx = (b.tile_x as f64) * scale_x;
-            let by = (b.tile_y as f64) * scale_y;
-            ctx.fill_rect(bx, by, (b.width as f64) * scale_x + 1.0, (b.height as f64) * scale_y + 1.0);
+        // Render explored and visible terrain footprint
+        for y in 0..self.map_rows {
+            for x in 0..self.map_cols {
+                let fog = colony.fog.get(x as usize, y as usize);
+                if fog == FogState::Unexplored {
+                    continue;
+                }
+                let color = if fog == FogState::Visible {
+                    "#334155"
+                } else {
+                    "#1e293b"
+                };
+                ctx.set_fill_style_str(color);
+                ctx.fill_rect((x as f64) * scale_x, (y as f64) * scale_y, scale_x + 0.5, scale_y + 0.5);
+            }
         }
 
-        // Blip units
+        // Blip buildings if explored or visible
+        ctx.set_fill_style_str("#38bdf8");
+        for b in &colony.buildings {
+            let fog = colony.fog.get(b.tile_x as usize, b.tile_y as usize);
+            if fog != FogState::Unexplored {
+                let bx = (b.tile_x as f64) * scale_x;
+                let by = (b.tile_y as f64) * scale_y;
+                ctx.fill_rect(bx, by, (b.width as f64) * scale_x + 1.0, (b.height as f64) * scale_y + 1.0);
+            }
+        }
+
+        // Blip friendly units (only if active in sensor range)
         ctx.set_fill_style_str("#4ade80");
         for u in &colony.units {
-            let ux = (u.tile_x as f64) * scale_x;
-            let uy = (u.tile_y as f64) * scale_y;
-            ctx.fill_rect(ux - 1.0, uy - 1.0, 3.0, 3.0);
+            let fog = colony.fog.get(u.tile_x as usize, u.tile_y as usize);
+            if fog == FogState::Visible {
+                let ux = (u.tile_x as f64) * scale_x;
+                let uy = (u.tile_y as f64) * scale_y;
+                ctx.fill_rect(ux - 1.0, uy - 1.0, 3.0, 3.0);
+            }
         }
     }
 }
