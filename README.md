@@ -6,7 +6,8 @@
 
 [![Rust](https://img.shields.io/badge/rust-1.80+-orange?logo=rust&logoColor=white)](https://www.rust-lang.org/)
 [![WebAssembly](https://img.shields.io/badge/wasm-webassembly-654ff0?logo=webassembly&logoColor=white)](https://webassembly.org/)
-[![Status](https://img.shields.io/badge/status-in--progress-yellow)](#-progress)
+[![CI](https://github.com/pedryvo/outpost2/actions/workflows/ci.yml/badge.svg)](https://github.com/pedryvo/outpost2/actions/workflows/ci.yml)
+[![Status](https://img.shields.io/badge/status-active-brightgreen)](#-progress)
 [![Phase](https://img.shields.io/badge/phase-1_%26_2_%E2%80%94_re_%26_rust_engine-blue)](docs/PLAN.md)
 [![Platforms](https://img.shields.io/badge/platforms-Web_%7C_Vercel_%7C_Mobile-lightgrey)](#-running-the-game)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSE)
