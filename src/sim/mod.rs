@@ -117,6 +117,13 @@ pub struct ColonyState {
     pub mission: Mission,
 }
 
+#[derive(Debug, Default, Clone)]
+pub struct SimUpdateResult {
+    pub notice: Option<&'static str>,
+    pub laser_fired: bool,
+    pub unit_destroyed: bool,
+}
+
 impl ColonyState {
     pub fn new(faction: Faction) -> Self {
         let scenario_id = match faction {
@@ -386,7 +393,7 @@ impl ColonyState {
         }
     }
 
-    pub fn update(&mut self, dt_secs: f64) -> Option<&'static str> {
+    pub fn update(&mut self, dt_secs: f64) -> SimUpdateResult {
         self.sol += dt_secs * 0.05; // 1 Sol every ~20 seconds
 
         // Dynamic diurnal daylight cycle (~120s per full planetary rotation)
@@ -482,6 +489,7 @@ impl ColonyState {
         }
 
         // Apply weapon damage and spawn beams/explosions
+        let laser_fired = !combat_events.is_empty();
         let mut destroyed_units = Vec::new();
         for (target_id, from_pos, to_pos, weapon, dmg) in combat_events {
             self.active_beams.push(CombatBeam {
@@ -502,6 +510,7 @@ impl ColonyState {
             }
         }
 
+        let unit_destroyed = !destroyed_units.is_empty();
         for (dx, dy) in destroyed_units {
             self.active_explosions.push(ExplosionEffect {
                 x: dx,
@@ -705,7 +714,11 @@ impl ColonyState {
         // Refresh dynamic sensor fog of war
         self.fog.update_visibility(&self.units, &self.buildings);
 
-        warning.or(ai_alert).or(unit_notice).or(mission_alert)
+        SimUpdateResult {
+            notice: warning.or(ai_alert).or(unit_notice).or(mission_alert),
+            laser_fired,
+            unit_destroyed,
+        }
     }
 
     /// Deploy a colonial structure kit, deducting ore costs and weaving transport tubes

@@ -22,6 +22,10 @@ struct GameApp {
     last_mouse_x: f64,
     last_mouse_y: f64,
     last_frame_time: f64,
+    pending_placement: Option<sim::structures::StructureType>,
+    hover_tile: (i32, i32),
+    drag_select_start: Option<(f64, f64)>,
+    drag_select_current: Option<(f64, f64)>,
 }
 
 #[wasm_bindgen(start)]
@@ -59,11 +63,16 @@ pub fn start() -> Result<(), JsValue> {
         last_mouse_x: 0.0,
         last_mouse_y: 0.0,
         last_frame_time: 0.0,
+        pending_placement: None,
+        hover_tile: (20, 20),
+        drag_select_start: None,
+        drag_select_current: None,
     }));
 
-    // Mouse Controls (Pan & Select Unit)
+    // Mouse Controls (Pan, Box Select & Ghost Construction Placement)
     {
         let app_clone = app.clone();
+        let doc_clone = document.clone();
         let on_mouse_down = Closure::wrap(Box::new(move |e: MouseEvent| {
             let mut g = app_clone.borrow_mut();
             let _ = g.audio.init();
@@ -72,54 +81,49 @@ pub fn start() -> Result<(), JsValue> {
             let click_y = e.client_y() as f64;
 
             if e.button() == 0 {
-                // Check if clicked on a unit
-                let zoom = g.viewport.zoom;
-                let mut clicked_unit = false;
-                let unit_count = g.colony.units.len();
-                for i in 0..unit_count {
-                    let tx = g.colony.units[i].tile_x as f64;
-                    let ty = g.colony.units[i].tile_y as f64;
-                    let (sx, sy) = g.viewport.tile_to_screen(tx, ty);
-                    let dist = ((click_x - sx).powi(2) + (click_y - sy).powi(2)).sqrt();
-                    if dist < 20.0 * zoom {
-                        g.colony.units[i].is_selected = true;
-                        clicked_unit = true;
-                    } else if !e.shift_key() {
-                        g.colony.units[i].is_selected = false;
-                    }
-                }
-
-                if clicked_unit {
-                    for b in &mut g.colony.buildings {
-                        b.is_selected = false;
-                    }
-                    g.audio.play_unit_ack();
-                } else {
-                    let (tx, ty) = g.viewport.screen_to_tile(click_x, click_y);
-                    let mut clicked_building = false;
-                    for b in &mut g.colony.buildings {
-                        if tx >= b.tile_x && tx < b.tile_x + b.width && ty >= b.tile_y && ty < b.tile_y + b.height {
-                            b.is_selected = true;
-                            clicked_building = true;
-                        } else if !e.shift_key() {
-                            b.is_selected = false;
+                // If in structure placement mode: deploy structure
+                if let Some(st) = g.pending_placement {
+                    let (gx, gy) = g.hover_tile;
+                    match g.colony.deploy_structure(st, gx, gy) {
+                        Ok(msg) => {
+                            g.audio.play_build_confirm();
+                            g.pending_placement = None;
+                            if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                                toast.set_text_content(Some(&msg));
+                                let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #4ade80; display: block;");
+                            }
+                        }
+                        Err(err) => {
+                            g.audio.play_build_error();
+                            if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                                toast.set_text_content(Some(&err));
+                                let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #ef4444; display: block;");
+                            }
                         }
                     }
-
-                    if clicked_building {
-                        g.audio.play_build_confirm();
-                    } else {
-                        g.is_dragging = true;
-                        g.last_mouse_x = click_x;
-                        g.last_mouse_y = click_y;
-                    }
+                    return;
                 }
+
+                g.drag_select_start = Some((click_x, click_y));
+                g.drag_select_current = Some((click_x, click_y));
+                g.last_mouse_x = click_x;
+                g.last_mouse_y = click_y;
+                g.is_dragging = true;
             } else if e.button() == 2 {
-                // Right Click = Tactical Command (Attack if enemy clicked, otherwise Move)
+                // Right Click = Cancel Placement or issue Tactical Command
+                if g.pending_placement.is_some() {
+                    g.pending_placement = None;
+                    g.audio.play_ui_beep();
+                    if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                        let _ = toast.set_attribute("style", "display: none;");
+                    }
+                    return;
+                }
+
                 let zoom = g.viewport.zoom;
                 let mut clicked_enemy = None;
                 for u in &g.colony.units {
-                    if u.faction != sim::Faction::Eden {
+                    if u.faction != g.colony.faction {
                         let (sx, sy) = g.viewport.tile_to_screen(u.tile_x as f64, u.tile_y as f64);
                         let dist = ((click_x - sx).powi(2) + (click_y - sy).powi(2)).sqrt();
                         if dist < 24.0 * zoom {
@@ -130,8 +134,9 @@ pub fn start() -> Result<(), JsValue> {
                 }
 
                 if let Some(enemy_id) = clicked_enemy {
+                    let player_faction = g.colony.faction;
                     for u in &mut g.colony.units {
-                        if u.is_selected && u.faction == sim::Faction::Eden {
+                        if u.is_selected && u.faction == player_faction {
                             u.current_order = sim::pathfinding::UnitOrder::Attack { target_unit_id: enemy_id };
                         }
                     }
@@ -155,9 +160,15 @@ pub fn start() -> Result<(), JsValue> {
         let app_clone = app.clone();
         let on_mouse_move = Closure::wrap(Box::new(move |e: MouseEvent| {
             let mut g = app_clone.borrow_mut();
-            if g.is_dragging {
-                let cur_x = e.client_x() as f64;
-                let cur_y = e.client_y() as f64;
+            let cur_x = e.client_x() as f64;
+            let cur_y = e.client_y() as f64;
+
+            let (tx, ty) = g.viewport.screen_to_tile(cur_x, cur_y);
+            g.hover_tile = (tx, ty);
+
+            if g.drag_select_start.is_some() {
+                g.drag_select_current = Some((cur_x, cur_y));
+            } else if g.is_dragging {
                 let dx = cur_x - g.last_mouse_x;
                 let dy = cur_y - g.last_mouse_y;
                 g.viewport.camera_x += dx;
@@ -172,8 +183,89 @@ pub fn start() -> Result<(), JsValue> {
 
     {
         let app_clone = app.clone();
-        let on_mouse_up = Closure::wrap(Box::new(move |_: MouseEvent| {
-            app_clone.borrow_mut().is_dragging = false;
+        let on_mouse_up = Closure::wrap(Box::new(move |e: MouseEvent| {
+            let mut g = app_clone.borrow_mut();
+            let click_x = e.client_x() as f64;
+            let click_y = e.client_y() as f64;
+
+            if let (Some((x1, y1)), Some((x2, y2))) = (g.drag_select_start, g.drag_select_current) {
+                let dist = ((x2 - x1).powi(2) + (y2 - y1).powi(2)).sqrt();
+                if dist > 12.0 {
+                    // Multi-Unit Box Selection
+                    let min_x = x1.min(x2);
+                    let max_x = x1.max(x2);
+                    let min_y = y1.min(y2);
+                    let max_y = y1.max(y2);
+
+                    let player_faction = g.colony.faction;
+                    let mut selected_any = false;
+                    let unit_count = g.colony.units.len();
+                    for i in 0..unit_count {
+                        if g.colony.units[i].faction == player_faction {
+                            let (sx, sy) = g.viewport.tile_to_screen(
+                                g.colony.units[i].tile_x as f64,
+                                g.colony.units[i].tile_y as f64,
+                            );
+                            if sx >= min_x && sx <= max_x && sy >= min_y && sy <= max_y {
+                                g.colony.units[i].is_selected = true;
+                                selected_any = true;
+                            } else if !e.shift_key() {
+                                g.colony.units[i].is_selected = false;
+                            }
+                        }
+                    }
+
+                    if selected_any {
+                        for b in &mut g.colony.buildings {
+                            b.is_selected = false;
+                        }
+                        g.audio.play_unit_ack();
+                    }
+                } else {
+                    // Single Unit or Building Click Selection
+                    let zoom = g.viewport.zoom;
+                    let mut clicked_unit = false;
+                    let unit_count = g.colony.units.len();
+                    for i in 0..unit_count {
+                        let tx = g.colony.units[i].tile_x as f64;
+                        let ty = g.colony.units[i].tile_y as f64;
+                        let (sx, sy) = g.viewport.tile_to_screen(tx, ty);
+                        let d = ((click_x - sx).powi(2) + (click_y - sy).powi(2)).sqrt();
+                        if d < 20.0 * zoom {
+                            g.colony.units[i].is_selected = true;
+                            clicked_unit = true;
+                        } else if !e.shift_key() {
+                            g.colony.units[i].is_selected = false;
+                        }
+                    }
+
+                    if clicked_unit {
+                        for b in &mut g.colony.buildings {
+                            b.is_selected = false;
+                        }
+                        g.audio.play_unit_ack();
+                    } else {
+                        let (tx, ty) = g.viewport.screen_to_tile(click_x, click_y);
+                        let mut clicked_building = false;
+                        for b in &mut g.colony.buildings {
+                            if tx >= b.tile_x && tx < b.tile_x + b.width && ty >= b.tile_y && ty < b.tile_y + b.height {
+                                b.is_selected = true;
+                                clicked_building = true;
+                            } else if !e.shift_key() {
+                                b.is_selected = false;
+                            }
+                        }
+
+                        if clicked_building {
+                            g.audio.play_build_confirm();
+                        }
+                    }
+                }
+            }
+
+            g.drag_select_start = None;
+            g.drag_select_current = None;
+            g.is_dragging = false;
         }) as Box<dyn FnMut(MouseEvent)>);
         window.add_event_listener_with_callback("mouseup", on_mouse_up.as_ref().unchecked_ref())?;
         on_mouse_up.forget();
@@ -201,6 +293,9 @@ pub fn start() -> Result<(), JsValue> {
                 "ArrowDown" | "s" | "S" => g.viewport.camera_y -= step,
                 "+" | "=" => g.viewport.zoom = (g.viewport.zoom * 1.15).min(2.5),
                 "-" | "_" => g.viewport.zoom = (g.viewport.zoom / 1.15).max(0.4),
+                "Escape" => {
+                    g.pending_placement = None;
+                }
                 _ => {}
             }
         }) as Box<dyn FnMut(KeyboardEvent)>);
@@ -267,48 +362,76 @@ pub fn start() -> Result<(), JsValue> {
         cb.forget();
     }
 
-    // Tactical Command Buttons
+    // Tactical Command Buttons (Build Base Drawer & Construction Menu)
     if let Some(btn_build) = document.get_element_by_id("btn-build") {
-        let app_clone = app.clone();
         let doc_clone = document.clone();
+        let app_clone = app.clone();
         let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
             let mut g = app_clone.borrow_mut();
             let _ = g.audio.init();
-
-            let count = g.colony.buildings.len();
-            let structure_types = [
-                sim::structures::StructureType::CommonOreSmelter,
-                sim::structures::StructureType::DirtLab,
-                sim::structures::StructureType::Residence,
-                sim::structures::StructureType::Agrodome,
-                sim::structures::StructureType::TokamakReactor,
-                sim::structures::StructureType::VehicleFactory,
-            ];
-            let st = structure_types[count % structure_types.len()];
-
-            // Compute coordinate adjacent to base
-            let base_x = 20 + ((count as i32 * 3) % 15);
-            let base_y = 25 + ((count as i32 * 3) / 15 * 3);
-
-            match g.colony.deploy_structure(st, base_x, base_y) {
-                Ok(msg) => {
-                    g.audio.play_build_confirm();
-                    if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
-                        toast.set_text_content(Some(&msg));
-                        let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #4ade80; display: block;");
-                    }
-                }
-                Err(err) => {
-                    g.audio.play_ui_beep();
-                    if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
-                        toast.set_text_content(Some(&err));
-                        let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #ef4444; display: block;");
-                    }
+            g.audio.play_ui_beep();
+            if let Some(drawer) = doc_clone.get_element_by_id("build-drawer") {
+                let is_open = drawer.get_attribute("style").map_or(false, |s| s.contains("display: flex"));
+                if is_open {
+                    let _ = drawer.set_attribute("style", "display: none;");
+                } else {
+                    let _ = drawer.set_attribute("style", "position: absolute; bottom: 76px; left: 16px; width: 330px; max-height: calc(100vh - 160px); background: rgba(12, 14, 18, 0.95); border: 2px solid var(--op2-accent-eden); border-radius: 8px; backdrop-filter: blur(12px); box-shadow: 0 12px 32px rgba(0,0,0,0.8); z-index: 20; display: flex; flex-direction: column; overflow: hidden;");
                 }
             }
         }) as Box<dyn FnMut(_)>);
         btn_build.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
         cb.forget();
+    }
+
+    if let Some(btn_close_build) = document.get_element_by_id("btn-close-build") {
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            if let Some(drawer) = doc_clone.get_element_by_id("build-drawer") {
+                let _ = drawer.set_attribute("style", "display: none;");
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn_close_build.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    if let Ok(structure_buttons) = document.query_selector_all(".btn-structure-choice") {
+        for i in 0..structure_buttons.length() {
+            if let Some(node) = structure_buttons.item(i) {
+                if let Ok(btn) = node.dyn_into::<web_sys::HtmlElement>() {
+                    let st_type = btn.get_attribute("data-type").unwrap_or_default();
+                    let structure_type = match st_type.as_str() {
+                        "SolarArray" => sim::structures::StructureType::SolarArray,
+                        "TokamakReactor" => sim::structures::StructureType::TokamakReactor,
+                        "CommonOreSmelter" => sim::structures::StructureType::CommonOreSmelter,
+                        "RareOreSmelter" => sim::structures::StructureType::RareOreSmelter,
+                        "DirtLab" => sim::structures::StructureType::DirtLab,
+                        "StandardLab" => sim::structures::StructureType::StandardLab,
+                        "Agrodome" => sim::structures::StructureType::Agrodome,
+                        "Residence" => sim::structures::StructureType::Residence,
+                        "VehicleFactory" => sim::structures::StructureType::VehicleFactory,
+                        "Spaceport" => sim::structures::StructureType::Spaceport,
+                        _ => sim::structures::StructureType::SolarArray,
+                    };
+                    let app_c = app.clone();
+                    let doc_c = document.clone();
+                    let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+                        let mut g = app_c.borrow_mut();
+                        let _ = g.audio.init();
+                        g.audio.play_build_confirm();
+                        g.pending_placement = Some(structure_type);
+                        if let Some(drawer) = doc_c.get_element_by_id("build-drawer") {
+                            let _ = drawer.set_attribute("style", "display: none;");
+                        }
+                        if let Some(toast) = doc_c.get_element_by_id("research-toast") {
+                            toast.set_text_content(Some(&format!("Deploying {}: Click ground to place. Right-click or ESC to cancel.", structure_type.name())));
+                            let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #38bdf8; display: block;");
+                        }
+                    }) as Box<dyn FnMut(_)>);
+                    let _ = btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref());
+                    cb.forget();
+                }
+            }
+        }
     }
 
     if let Some(btn_units) = document.get_element_by_id("btn-units") {
@@ -710,14 +833,20 @@ pub fn start() -> Result<(), JsValue> {
         }
 
         // Update simulation
-        let disaster_warning = app_borrow.colony.update(dt.min(0.1));
+        let sim_result = app_borrow.colony.update(dt.min(0.1));
 
-        if let Some(warning) = disaster_warning {
+        if let Some(warning) = sim_result.notice {
             audio::radio::RadioDispatcher::announce(warning);
             if let Some(toast) = document.get_element_by_id("research-toast") {
                 toast.set_text_content(Some(warning));
                 let _ = toast.set_attribute("style", "font-size: 11px; font-weight: bold; color: #f97316; display: block;");
             }
+        }
+        if sim_result.laser_fired {
+            app_borrow.audio.play_laser();
+        }
+        if sim_result.unit_destroyed {
+            app_borrow.audio.play_explosion();
         }
 
         // Update HUD DOM telemetry values
@@ -789,12 +918,61 @@ pub fn start() -> Result<(), JsValue> {
             }
         }
 
+        let ghost_data = if let Some(st) = app_borrow.pending_placement {
+            let (gx, gy) = app_borrow.hover_tile;
+            let (w, h) = st.dimensions();
+            let (c_cost, r_cost) = st.ore_cost();
+            let has_resources = app_borrow.colony.common_ore >= c_cost && app_borrow.colony.rare_ore >= r_cost;
+            let inside_map = gx >= 0 && gx + w <= app_borrow.colony.game_map.width as i32 && gy >= 0 && gy + h <= app_borrow.colony.game_map.height as i32;
+
+            let mut obstructed = false;
+            if inside_map {
+                for b in &app_borrow.colony.buildings {
+                    let ox = gx < b.tile_x + b.width && gx + w > b.tile_x;
+                    let oy = gy < b.tile_y + b.height && gy + h > b.tile_y;
+                    if ox && oy {
+                        obstructed = true;
+                        break;
+                    }
+                }
+                if !obstructed {
+                    for dy in 0..h {
+                        for dx in 0..w {
+                            if let Some(tile) = app_borrow.colony.game_map.get_tile((gx + dx) as u32, (gy + dy) as u32) {
+                                if tile.is_lava {
+                                    obstructed = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            let is_valid = has_resources && inside_map && !obstructed;
+            Some((st, (gx, gy), is_valid))
+        } else {
+            None
+        };
+
+        let drag_box = if let (Some(start), Some(curr)) = (app_borrow.drag_select_start, app_borrow.drag_select_current) {
+            let dist = ((curr.0 - start.0).powi(2) + (curr.1 - start.1).powi(2)).sqrt();
+            if dist > 10.0 {
+                Some((start, curr))
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
         // Render game viewport
         app_borrow.viewport.render(
             &ctx,
             &app_borrow.colony,
             canvas.width() as f64,
             canvas.height() as f64,
+            ghost_data,
+            drag_box,
         );
 
         // Render tactical radar

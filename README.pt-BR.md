@@ -48,13 +48,15 @@ Diferente de máquinas virtuais pesadas ou emuladores x86, este porte roda nativ
 | **Névoa de Guerra & Radar** | ✅ | Grid sensorial de visibilidade em 3 níveis (Inexplorado, Explorado, Visível) · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
 | **Núcleo de Simulação da Colônia** | ✅ | Logística Eden e Plymouth: fluxo de energia, suporte à vida, minério, moral e desastres · [`docs/formats/disasters.md`](docs/formats/disasters.md) |
 | **Estruturas & Rede de Tubos** | ✅ | Kits modulares de construção e rede arterial de tubos pressurizados · [`docs/formats/structures_and_tubes.md`](docs/formats/structures_and_tubes.md) |
+| **Pátio de Construção Interativo** | ✅ | Gaveta retrátil de blueprints (10 estruturas), posicionamento holográfico fantasma e projeção de tubos |
 | **Controle de Unidades & 8-Way A\*** | ✅ | Pathfinding A* isométrico em 8 direções, evasão de lava e ordens com botão direito · [`docs/ENGINE_ARCHITECTURE.md`](docs/ENGINE_ARCHITECTURE.md) |
+| **Seleção Tática por Área (Drag)** | ✅ | Caixa de seleção em arrasto com retículos angulares sci-fi e agrupamento via Shift |
 | **Árvore de Pesquisa Tecnológica** | ✅ | 12 disciplinas científicas com investimento dinâmico de laboratório · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **Campanhas Multi-Mapas** | ✅ | Teatros autênticos de operação (Eden 1, Plymouth 1, Tutorial da Academia) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
 | **Filas de Fábrica & Animação** | ✅ | Agendamento de fabricação, arcos elétricos de solda e barras de progresso no HUD |
 | **Evacuação por Espaçonave** | ✅ | Montagem em 4 estágios da nave estelar e mecânica demográfica de suporte de vida · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
 | **Persistência de Estado & Touch** | ✅ | Salvamento/carregamento rápido no navegador, gestos touch e pinch-to-zoom |
-| **Engine de Áudio** | ✅ | Sintetizador Web Audio API para beeps de interface, chimes de seleção e ordens |
+| **Engine de Áudio & SFX de Combate** | ✅ | Sintetizador procedural Web Audio (lasers, explosões, zumbidos) e samples clássicos |
 | **HUD Tático Sci-Fi** | ✅ | Telemetria em tempo real, minimapa de radar, filas de produção e console de unidades |
 | **Localização (i18n)** | ✅ | Esquema multilíngue: EN, PT-BR, ES, DE, ZH-CN, RU |
 | **Pronto para Vercel & WASM** | ✅ | Pipeline do Trunk com otimização LTO em modo release (`vercel.json`) |

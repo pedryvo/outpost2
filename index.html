@@ -269,6 +269,56 @@
         <button class="action-btn" id="btn-toggle-power" style="margin-top: 8px; justify-content: center; background: #334155;">⚡ Toggle Power Grid</button>
       </aside>
 
+      <!-- Colonial Construction Yard Drawer -->
+      <aside id="build-drawer" style="position: absolute; bottom: 76px; left: 16px; width: 330px; max-height: calc(100vh - 160px); background: rgba(12, 14, 18, 0.95); border: 2px solid var(--op2-accent-eden); border-radius: 8px; backdrop-filter: blur(12px); box-shadow: 0 12px 32px rgba(0,0,0,0.8); z-index: 20; display: none; flex-direction: column; overflow: hidden;">
+        <div style="height: 32px; background: #161f30; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; border-bottom: 1px solid var(--op2-border);">
+          <span style="font-size: 11px; font-weight: bold; color: var(--op2-accent-eden); text-transform: uppercase; letter-spacing: 0.5px;">Colony Construction Yard</span>
+          <button id="btn-close-build" style="background: none; border: none; color: var(--op2-muted); font-size: 14px; cursor: pointer;">✕</button>
+        </div>
+        <div id="build-items-list" style="display: flex; flex-direction: column; gap: 6px; padding: 10px; overflow-y: auto;">
+          <button class="action-btn btn-structure-choice" data-type="SolarArray" style="justify-content: space-between;">
+            <span>☀️ Solar Power Array</span>
+            <span style="font-size: 10px; color: #facc15;">200 C | +250 kW</span>
+          </button>
+          <button class="action-btn btn-structure-choice" data-type="TokamakReactor" style="justify-content: space-between;">
+            <span>⚛️ Tokamak Reactor</span>
+            <span style="font-size: 10px; color: #facc15;">600 C, 250 R | +800 kW</span>
+          </button>
+          <button class="action-btn btn-structure-choice" data-type="CommonOreSmelter" style="justify-content: space-between;">
+            <span>🔥 Common Smelter</span>
+            <span style="font-size: 10px; color: #94a3b8;">350 C, 50 R | -50 kW</span>
+          </button>
+          <button class="action-btn btn-structure-choice" data-type="RareOreSmelter" style="justify-content: space-between;">
+            <span>💎 Rare Smelter</span>
+            <span style="font-size: 10px; color: #94a3b8;">400 C, 150 R | -75 kW</span>
+          </button>
+          <button class="action-btn btn-structure-choice" data-type="DirtLab" style="justify-content: space-between;">
+            <span>🔬 D.I.R.T. Lab</span>
+            <span style="font-size: 10px; color: #38bdf8;">300 C, 100 R | -60 kW</span>
+          </button>
+          <button class="action-btn btn-structure-choice" data-type="StandardLab" style="justify-content: space-between;">
+            <span>🧪 Standard Lab</span>
+            <span style="font-size: 10px; color: #38bdf8;">500 C, 200 R | -90 kW</span>
+          </button>
+          <button class="action-btn btn-structure-choice" data-type="Agrodome" style="justify-content: space-between;">
+            <span>🌱 Bio-Dome Hydroponics</span>
+            <span style="font-size: 10px; color: #4ade80;">200 C, 50 R | -30 kW</span>
+          </button>
+          <button class="action-btn btn-structure-choice" data-type="Residence" style="justify-content: space-between;">
+            <span>🏠 Colonial Residence</span>
+            <span style="font-size: 10px; color: #4ade80;">150 C | -20 kW</span>
+          </button>
+          <button class="action-btn btn-structure-choice" data-type="VehicleFactory" style="justify-content: space-between;">
+            <span>🚜 Vehicle Factory</span>
+            <span style="font-size: 10px; color: #f97316;">500 C, 150 R | -120 kW</span>
+          </button>
+          <button class="action-btn btn-structure-choice" data-type="Spaceport" style="justify-content: space-between; border-color: #a855f7;">
+            <span>🚀 Starship Gantry</span>
+            <span style="font-size: 10px; color: #c084fc;">800 C, 350 R | -160 kW</span>
+          </button>
+        </div>
+      </aside>
+
       <!-- Tactical Radar Minimap -->
       <aside id="minimap-card">
         <div id="minimap-header">

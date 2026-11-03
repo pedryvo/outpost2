@@ -48,13 +48,15 @@ Unlike heavyweight virtual machines or x86 emulators, this port runs natively in
 | **Fog of War & Radar** | ✅ | 3-tier visibility sensor grid (Unexplored, Explored, Visible) · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
 | **Colony Simulation Core** | ✅ | Eden & Plymouth logistics: power flux, life support, ore, morale, disasters · [`docs/formats/disasters.md`](docs/formats/disasters.md) |
 | **Structures & Tube Network** | ✅ | Modular base kits & pressurized transport tube grid · [`docs/formats/structures_and_tubes.md`](docs/formats/structures_and_tubes.md) |
+| **Interactive Construction Yard**| ✅ | Slide-out blueprint drawer (10 buildings), holographic ghost placement & tube projections |
 | **Unit Control & 8-Way A\*** | ✅ | A* isometric pathfinding, lava avoidance, right-click orders · [`docs/ENGINE_ARCHITECTURE.md`](docs/ENGINE_ARCHITECTURE.md) |
+| **Tactical Drag Selection** | ✅ | Multi-unit drag-box with corner bracket reticles and Shift-click grouping |
 | **Tech Research Tree** | ✅ | 12 primary scientific disciplines with live lab investment · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **Multi-Map Campaigns** | ✅ | Authentic operational theaters (Eden 1, Plymouth 1, Academy Tutorial) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
 | **Factory Queues & Animation** | ✅ | Production queue scheduling, welding plasma arcs, HUD progress bars |
 | **Starship Evacuation** | ✅ | 4-stage starship assembly and demographic life-support mechanics · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
 | **State Persistence & Touch** | ✅ | Browser storage quicksave/load, mobile pinch-to-zoom & gesture controls |
-| **Audio Engine** | ✅ | Web Audio API synthesizer for UI beeps, unit selection chimes, and build orders |
+| **Audio Engine & Combat SFX** | ✅ | Web Audio procedural synthesizer (lasers, explosions, build hums) & classic audio samples |
 | **Modern Sci-Fi HUD** | ✅ | Real-time telemetry, radar minimap, build queues, and unit command console |
 | **Localization (i18n)** | ✅ | Multi-language schema: EN, PT-BR, ES, DE, ZH-CN, RU |
 | **Vercel & WASM Ready** | ✅ | Trunk pipeline with release LTO optimization (`vercel.json`) |

@@ -45,8 +45,16 @@ impl Viewport {
         (tx, ty)
     }
 
-    /// Render the terrain, colony buildings, and units
-    pub fn render(&self, ctx: &CanvasRenderingContext2d, colony: &ColonyState, width: f64, height: f64) {
+    /// Render the terrain, colony buildings, units, and active tactical overlays
+    pub fn render(
+        &self,
+        ctx: &CanvasRenderingContext2d,
+        colony: &ColonyState,
+        width: f64,
+        height: f64,
+        ghost_placement: Option<(crate::sim::structures::StructureType, (i32, i32), bool)>,
+        drag_selection: Option<((f64, f64), (f64, f64))>,
+    ) {
         let (shake_x, shake_y) = colony.disasters.quake_shake_offset;
         let _ = ctx.save();
         let _ = ctx.translate(shake_x, shake_y);
@@ -409,7 +417,87 @@ impl Viewport {
             ctx.stroke();
         }
 
+        // Render Holographic Ghost Blueprint Placement
+        if let Some((st, (gx, gy), is_valid)) = ghost_placement {
+            let (sx, sy) = self.tile_to_screen(gx as f64, gy as f64);
+            let (w, h) = st.dimensions();
+            let b_w = half_w * (w as f64);
+            let b_h = half_h * (h as f64);
+
+            let fill_col = if is_valid { "rgba(56, 189, 248, 0.35)" } else { "rgba(239, 68, 68, 0.35)" };
+            let stroke_col = if is_valid { "#38bdf8" } else { "#ef4444" };
+
+            // Isometric blueprint footprint
+            ctx.set_fill_style_str(fill_col);
+            ctx.set_stroke_style_str(stroke_col);
+            ctx.set_line_width(2.0);
+
+            ctx.begin_path();
+            ctx.move_to(sx, sy - b_h);
+            ctx.line_to(sx + b_w, sy);
+            ctx.line_to(sx, sy + b_h);
+            ctx.line_to(sx - b_w, sy);
+            ctx.close_path();
+            ctx.fill();
+            ctx.stroke();
+
+            // 2.5D Holographic extrusion
+            ctx.set_fill_style_str(if is_valid { "rgba(56, 189, 248, 0.20)" } else { "rgba(239, 68, 68, 0.20)" });
+            ctx.fill_rect(sx - b_w * 0.5, sy - b_h - 20.0 * self.zoom, b_w, 20.0 * self.zoom);
+
+            // Projected transport tube connection to nearest structure
+            if let Some(nearest) = colony.buildings.iter().min_by_key(|b| (b.tile_x - gx).abs() + (b.tile_y - gy).abs()) {
+                let (nx, ny) = self.tile_to_screen(nearest.tile_x as f64 + (nearest.width as f64) * 0.5, nearest.tile_y as f64 + (nearest.height as f64) * 0.5);
+                ctx.set_stroke_style_str("rgba(56, 189, 248, 0.7)");
+                ctx.set_line_width(1.5);
+                ctx.begin_path();
+                ctx.move_to(sx, sy);
+                ctx.line_to(nx, ny);
+                ctx.stroke();
+            }
+
+            // Blueprint Header Badge
+            let status_msg = if is_valid { "READY TO DEPLOY" } else { "OBSTRUCTED / INSUFFICIENT ORE" };
+            ctx.set_fill_style_str(if is_valid { "#4ade80" } else { "#ef4444" });
+            ctx.set_font(&format!("bold {}px sans-serif", (11.0 * self.zoom).max(10.0)));
+            let badge_text = format!("{} [{}]", st.name(), status_msg);
+            let _ = ctx.fill_text(&badge_text, sx - b_w * 0.5, sy - b_h - 26.0 * self.zoom);
+        }
+
         let _ = ctx.restore();
+
+        // Render Tactical Drag-Selection Box (Screen space, outside shake transform)
+        if let Some(((x1, y1), (x2, y2))) = drag_selection {
+            let min_x = x1.min(x2);
+            let min_y = y1.min(y2);
+            let box_w = (x1 - x2).abs();
+            let box_h = (y1 - y2).abs();
+
+            ctx.set_fill_style_str("rgba(56, 189, 248, 0.18)");
+            ctx.fill_rect(min_x, min_y, box_w, box_h);
+
+            ctx.set_stroke_style_str("#38bdf8");
+            ctx.set_line_width(1.5);
+            ctx.stroke_rect(min_x, min_y, box_w, box_h);
+
+            let corner = (8.0_f64).min(box_w * 0.3).min(box_h * 0.3);
+            ctx.set_stroke_style_str("#4ade80");
+            ctx.set_line_width(2.0);
+
+            // Top-left corner
+            ctx.begin_path();
+            ctx.move_to(min_x, min_y + corner);
+            ctx.line_to(min_x, min_y);
+            ctx.line_to(min_x + corner, min_y);
+            ctx.stroke();
+
+            // Bottom-right corner
+            ctx.begin_path();
+            ctx.move_to(min_x + box_w - corner, min_y + box_h);
+            ctx.line_to(min_x + box_w, min_y + box_h);
+            ctx.line_to(min_x + box_w, min_y + box_h - corner);
+            ctx.stroke();
+        }
     }
 
     /// Render mini-radar overview with authentic Fog of War mask

@@ -53,13 +53,15 @@ El objetivo es preservar y modernizar este clásico juego de estrategia en tiemp
 | **Niebla de Guerra y Radar** | ✅ | Rejilla de sensores de 3 niveles (Inexplorado, Explorado, Visible) · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
 | **Núcleo de Simulación Colonial** | ✅ | Logística Eden y Plymouth: energía, soporte vital, minerales, moral y desastres · [`docs/formats/disasters.md`](docs/formats/disasters.md) |
 | **Estructuras y Red de Tubos** | ✅ | Kits modulares de construcción y red de tubos presurizados · [`docs/formats/structures_and_tubes.md`](docs/formats/structures_and_tubes.md) |
+| **Astillero de Construcción Interactivo**| ✅ | Cajón deslizable de planos (10 edificios), colocación fantasma holográfica y tubos proyectados |
 | **Control de Unidades y A\* 8-Vías** | ✅ | Pathfinding A* isométrico en 8 direcciones y órdenes tácticas · [`docs/ENGINE_ARCHITECTURE.md`](docs/ENGINE_ARCHITECTURE.md) |
+| **Selección Táctica por Arrastre** | ✅ | Caja de selección multi-unidad con retículas angulares sci-fi y agrupación con Shift |
 | **Árbol de Investigación** | ✅ | 12 disciplinas científicas con inversión en laboratorios · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **Campañas Multi-Mapa** | ✅ | Teatros de operación auténticos (Eden 1, Plymouth 1, Academia) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
 | **Filas de Fábrica y Soldadura** | ✅ | Planificación de producción de vehículos con arcos de plasma y barras de progreso |
 | **Evacuación en Nave Espacial** | ✅ | Fabricación en 4 etapas y mecánica de soporte vital · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
 | **Persistencia y Control Táctil** | ✅ | Guardado/carga rápida en navegador y gestos táctiles |
-| **Motor de Audio y Radio** | ✅ | Sintetizador Web Audio, música procedural y radio militar |
+| **Motor de Audio & SFX de Combate** | ✅ | Sintetizador Web Audio API (láseres, explosiones, pitidos) y muestras de audio clásicas |
 | **Localización (i18n)** | ✅ | Soporte multilíngue para EN, PT-BR, ES, DE, ZH-CN, RU |
 | **Despliegue Vercel & WASM** | ✅ | Pipeline de Trunk con optimización LTO release (`vercel.json`) |
 

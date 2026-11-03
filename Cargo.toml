@@ -48,6 +48,7 @@ features = [
   "Request",
   "RequestInit",
   "Storage",
+  "NodeList",
   "HtmlSelectElement",
   "BiquadFilterNode",
   "BiquadFilterType",

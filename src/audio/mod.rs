@@ -79,6 +79,74 @@ impl AudioManager {
         }
     }
 
+    /// Play high-energy laser beam discharge sound
+    pub fn play_laser(&self) {
+        if self.muted {
+            return;
+        }
+        if let (Some(ctx), Some(gain)) = (&self.ctx, &self.master_gain) {
+            if let Ok(osc) = ctx.create_oscillator() {
+                if let Ok(note_gain) = ctx.create_gain() {
+                    let now = ctx.current_time();
+                    osc.set_type(web_sys::OscillatorType::Sawtooth);
+                    let _ = osc.frequency().set_value_at_time(880.0, now);
+                    let _ = osc.frequency().exponential_ramp_to_value_at_time(110.0, now + 0.12);
+                    let _ = note_gain.gain().set_value_at_time(0.4, now);
+                    let _ = note_gain.gain().exponential_ramp_to_value_at_time(0.01, now + 0.12);
+                    let _ = osc.connect_with_audio_node(&note_gain);
+                    let _ = note_gain.connect_with_audio_node(gain);
+                    let _ = osc.start();
+                    let _ = osc.stop_with_when(now + 0.12);
+                }
+            }
+        }
+    }
+
+    /// Play heavy vehicle or structure destruction explosion
+    pub fn play_explosion(&self) {
+        if self.muted {
+            return;
+        }
+        if let (Some(ctx), Some(gain)) = (&self.ctx, &self.master_gain) {
+            if let Ok(osc) = ctx.create_oscillator() {
+                if let Ok(note_gain) = ctx.create_gain() {
+                    let now = ctx.current_time();
+                    osc.set_type(web_sys::OscillatorType::Triangle);
+                    let _ = osc.frequency().set_value_at_time(140.0, now);
+                    let _ = osc.frequency().exponential_ramp_to_value_at_time(28.0, now + 0.35);
+                    let _ = note_gain.gain().set_value_at_time(0.6, now);
+                    let _ = note_gain.gain().exponential_ramp_to_value_at_time(0.01, now + 0.35);
+                    let _ = osc.connect_with_audio_node(&note_gain);
+                    let _ = note_gain.connect_with_audio_node(gain);
+                    let _ = osc.start();
+                    let _ = osc.stop_with_when(now + 0.35);
+                }
+            }
+        }
+    }
+
+    /// Play building placement error / obstructed buzzer
+    pub fn play_build_error(&self) {
+        if self.muted {
+            return;
+        }
+        if let (Some(ctx), Some(gain)) = (&self.ctx, &self.master_gain) {
+            if let Ok(osc) = ctx.create_oscillator() {
+                if let Ok(note_gain) = ctx.create_gain() {
+                    let now = ctx.current_time();
+                    osc.set_type(web_sys::OscillatorType::Square);
+                    let _ = osc.frequency().set_value_at_time(130.0, now);
+                    let _ = note_gain.gain().set_value_at_time(0.3, now);
+                    let _ = note_gain.gain().exponential_ramp_to_value_at_time(0.01, now + 0.15);
+                    let _ = osc.connect_with_audio_node(&note_gain);
+                    let _ = note_gain.connect_with_audio_node(gain);
+                    let _ = osc.start();
+                    let _ = osc.stop_with_when(now + 0.15);
+                }
+            }
+        }
+    }
+
     fn play_tone(&self, ctx: &AudioContext, out: &GainNode, freq: f32, duration: f64) -> Result<(), JsValue> {
         let osc: OscillatorNode = ctx.create_oscillator()?;
         let note_gain: GainNode = ctx.create_gain()?;

@@ -53,13 +53,15 @@ _Sierra 和 Dynamix 经典硬科幻即时战略游戏，<br>专为现代浏览�
 | **战争迷雾与战术雷达** | ✅ | 三层视野状态（未探索、已探索、完全可见） · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
 | **殖民地模拟核心** | ✅ | 伊甸与普利茅斯物流：电力平衡、生命维持、采矿与地质灾害 · [`docs/formats/disasters.md`](docs/formats/disasters.md) |
 | **建筑与承压运输管道** | ✅ | 模块化建筑组装与正交加压运输管道网络 · [`docs/formats/structures_and_tubes.md`](docs/formats/structures_and_tubes.md) |
+| **交互式建造厂抽屉** | ✅ | 10 大建筑滑动蓝图抽屉、全息虚影预览与连接管道自动投射 |
 | **单位控制与八方向 A\*** | ✅ | 等轴测八方向 A* 路径规划、右键指令 · [`docs/ENGINE_ARCHITECTURE.md`](docs/ENGINE_ARCHITECTURE.md) |
+| **框选多选与战术标线** | ✅ | 经典多单位拖拽框选、高科技直角瞄准标线与 Shift 增选 |
 | **科研技术树** | ✅ | 12 大基础学科与实验室科研投资 · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **多战役战场选择器** | ✅ | 真实战役战场（伊甸 1、普利茅斯 1、学院教学） · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
 | **工厂生产队列与焊接** | ✅ | 战车制造排队机制、等离子火花与 HUD 进度条 |
 | **星际逃逸飞船建造** | ✅ | 四阶段飞船组装与生命支持人口动态机制 · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
 | **状态持久化与触控** | ✅ | 浏览器本地极速存取档与移动端手势控制 |
-| **音频引擎与战术电台** | ✅ | Web Audio 合成器、太空氛围音乐与语音警报播报 |
+| **音频引擎与战斗音效** | ✅ | Web Audio 纯程序化音效合成（激光、爆炸、建造蜂鸣）与经典原声音频 |
 | **多语言本地化 (i18n)** | ✅ | 完美支持 EN, PT-BR, ES, DE, ZH-CN, RU |
 | **Vercel & WASM 构建** | ✅ | 基于 Trunk 的自动化发布优化构建 (`vercel.json`) |
 
