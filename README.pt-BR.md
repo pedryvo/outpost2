@@ -50,6 +50,9 @@ Diferente de máquinas virtuais pesadas ou emuladores x86, este porte roda nativ
 | **Estruturas & Rede de Tubos** | ✅ | Kits modulares de construção e rede arterial de tubos pressurizados · [`docs/formats/structures_and_tubes.md`](docs/formats/structures_and_tubes.md) |
 | **Controle de Unidades & 8-Way A\*** | ✅ | Pathfinding A* isométrico em 8 direções, evasão de lava e ordens com botão direito · [`docs/ENGINE_ARCHITECTURE.md`](docs/ENGINE_ARCHITECTURE.md) |
 | **Árvore de Pesquisa Tecnológica** | ✅ | 12 disciplinas científicas com investimento dinâmico de laboratório · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
+| **Campanhas Multi-Mapas** | ✅ | Teatros autênticos de operação (Eden 1, Plymouth 1, Tutorial da Academia) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
+| **Filas de Fábrica & Animação** | ✅ | Agendamento de fabricação, arcos elétricos de solda e barras de progresso no HUD |
+| **Evacuação por Espaçonave** | ✅ | Montagem em 4 estágios da nave estelar e mecânica demográfica de suporte de vida · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
 | **Persistência de Estado & Touch** | ✅ | Salvamento/carregamento rápido no navegador, gestos touch e pinch-to-zoom |
 | **Engine de Áudio** | ✅ | Sintetizador Web Audio API para beeps de interface, chimes de seleção e ordens |
 | **HUD Tático Sci-Fi** | ✅ | Telemetria em tempo real, minimapa de radar, filas de produção e console de unidades |

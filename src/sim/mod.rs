@@ -24,7 +24,9 @@ use pathfinding::{PathFinder, UnitOrder};
 use structures::{connect_with_tubes, StructureType};
 use tech::TechTree;
 
-const DEFAULT_MAP_DATA: &[u8] = include_bytes!("../../assets/eden01.map");
+const EDEN_MAP_DATA: &[u8] = include_bytes!("../../assets/eden01.map");
+const PLYMOUTH_MAP_DATA: &[u8] = include_bytes!("../../assets/ply01.map");
+const TUTORIAL_MAP_DATA: &[u8] = include_bytes!("../../assets/tutorial.map");
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Faction {
@@ -68,10 +70,12 @@ pub struct Building {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SaveGameData {
+    pub scenario_id: usize,
     pub faction: Faction,
     pub sol: f64,
     pub population: u32,
     pub morale_pct: u32,
+    pub starship_progress: f64,
     pub common_ore: u32,
     pub rare_ore: u32,
     pub power_produced: u32,
@@ -86,10 +90,12 @@ pub struct SaveGameData {
 
 #[derive(Debug, Clone)]
 pub struct ColonyState {
+    pub scenario_id: usize,
     pub faction: Faction,
     pub sol: f64,
     pub population: u32,
     pub morale_pct: u32,
+    pub starship_progress: f64,
     pub common_ore: u32,
     pub rare_ore: u32,
     pub power_produced: u32,
@@ -113,10 +119,24 @@ pub struct ColonyState {
 
 impl ColonyState {
     pub fn new(faction: Faction) -> Self {
+        let scenario_id = match faction {
+            Faction::Eden => 0,
+            Faction::Plymouth => 1,
+        };
+        Self::new_scenario(scenario_id)
+    }
+
+    pub fn new_scenario(scenario_id: usize) -> Self {
+        let (faction, map_data, mission, enemy_faction) = match scenario_id {
+            1 => (Faction::Plymouth, PLYMOUTH_MAP_DATA, Mission::new_plymouth_mission_1(), Faction::Eden),
+            2 => (Faction::Eden, TUTORIAL_MAP_DATA, Mission::new_tutorial_mission(), Faction::Plymouth),
+            _ => (Faction::Eden, EDEN_MAP_DATA, Mission::new_eden_mission_1(), Faction::Plymouth),
+        };
+
         let mut units = Vec::new();
         let mut buildings = Vec::new();
 
-        // Initial Command Center base
+        // Base Command Center
         buildings.push(Building {
             id: 1,
             name: "Command Center".into(),
@@ -131,7 +151,7 @@ impl ColonyState {
             production_progress: 0.0,
         });
 
-        // Initial Solar Array
+        // Solar Array
         buildings.push(Building {
             id: 2,
             name: "Solar Power Array".into(),
@@ -139,14 +159,14 @@ impl ColonyState {
             tile_y: 20,
             width: 2,
             height: 2,
-            power_cost: -250, // Produces power
+            power_cost: -250,
             is_active: true,
             is_selected: false,
             production_queue: Vec::new(),
             production_progress: 0.0,
         });
 
-        // Initial Common Ore Smelter (ready for Cargo Trucks)
+        // Common Ore Smelter
         buildings.push(Building {
             id: 3,
             name: "Common Ore Smelter".into(),
@@ -161,11 +181,28 @@ impl ColonyState {
             production_progress: 0.0,
         });
 
-        // Starting ConVec, Cargo Truck, and Combat Escorts
+        if scenario_id == 1 {
+            // Plymouth starts with an active Vehicle Factory
+            buildings.push(Building {
+                id: 4,
+                name: "Vehicle Factory".into(),
+                tile_x: 16,
+                tile_y: 24,
+                width: 3,
+                height: 3,
+                power_cost: 120,
+                is_active: true,
+                is_selected: false,
+                production_queue: Vec::new(),
+                production_progress: 0.0,
+            });
+        }
+
+        // Starting Units
         units.push(Unit {
             id: 1,
             name: "ConVec (Structure Kit)".into(),
-            faction: Faction::Eden,
+            faction,
             tile_x: 21,
             tile_y: 24,
             hp: 200,
@@ -183,7 +220,7 @@ impl ColonyState {
         units.push(Unit {
             id: 2,
             name: "Cargo Truck".into(),
-            faction: Faction::Eden,
+            faction,
             tile_x: 23,
             tile_y: 24,
             hp: 150,
@@ -201,7 +238,7 @@ impl ColonyState {
         units.push(Unit {
             id: 3,
             name: "Robo-Miner".into(),
-            faction: Faction::Eden,
+            faction,
             tile_x: 26,
             tile_y: 22,
             hp: 180,
@@ -218,10 +255,10 @@ impl ColonyState {
 
         units.push(Unit {
             id: 4,
-            name: "Lynx Scout (Pulse Laser)".into(),
-            faction: Faction::Eden,
-            tile_x: 23,
-            tile_y: 26,
+            name: if faction == Faction::Eden { "Lynx Scout #1".into() } else { "Plymouth Raider #1".into() },
+            faction,
+            tile_x: 18,
+            tile_y: 21,
             hp: 140,
             max_hp: 140,
             is_selected: false,
@@ -234,62 +271,67 @@ impl ColonyState {
             hauler_state: None,
         });
 
-        units.push(Unit {
-            id: 5,
-            name: "Panther Medium Tank (Railgun)".into(),
-            faction: Faction::Eden,
-            tile_x: 25,
-            tile_y: 25,
-            hp: 250,
-            max_hp: 250,
-            is_selected: false,
-            current_order: UnitOrder::Idle,
-            path: Vec::new(),
-            move_cooldown: 0.0,
-            weapon: Some(WeaponType::Railgun),
-            attack_cooldown: 0.0,
-            cargo: None,
-            hauler_state: None,
-        });
+        if scenario_id == 0 {
+            // Eden starts with 1 Panther Tank
+            units.push(Unit {
+                id: 5,
+                name: "Panther Heavy Tank #1".into(),
+                faction: Faction::Eden,
+                tile_x: 25,
+                tile_y: 25,
+                hp: 250,
+                max_hp: 250,
+                is_selected: false,
+                current_order: UnitOrder::Idle,
+                path: Vec::new(),
+                move_cooldown: 0.0,
+                weapon: Some(WeaponType::Railgun),
+                attack_cooldown: 0.0,
+                cargo: None,
+                hauler_state: None,
+            });
+        }
 
-        // Hostile Plymouth scout raiders
-        units.push(Unit {
-            id: 101,
-            name: "Plymouth Raider Lynx".into(),
-            faction: Faction::Plymouth,
-            tile_x: 35,
-            tile_y: 28,
-            hp: 130,
-            max_hp: 130,
-            is_selected: false,
-            current_order: UnitOrder::Idle,
-            path: Vec::new(),
-            move_cooldown: 0.0,
-            weapon: Some(WeaponType::Microwave),
-            attack_cooldown: 0.0,
-            cargo: None,
-            hauler_state: None,
-        });
+        // Rival enemy incursion scouts
+        if scenario_id != 2 {
+            units.push(Unit {
+                id: 101,
+                name: format!("{:?} Incursion Scout", enemy_faction),
+                faction: enemy_faction,
+                tile_x: 35,
+                tile_y: 28,
+                hp: 130,
+                max_hp: 130,
+                is_selected: false,
+                current_order: UnitOrder::Idle,
+                path: Vec::new(),
+                move_cooldown: 0.0,
+                weapon: Some(WeaponType::Microwave),
+                attack_cooldown: 0.0,
+                cargo: None,
+                hauler_state: None,
+            });
 
-        units.push(Unit {
-            id: 102,
-            name: "Plymouth Tiger Assault".into(),
-            faction: Faction::Plymouth,
-            tile_x: 37,
-            tile_y: 30,
-            hp: 300,
-            max_hp: 300,
-            is_selected: false,
-            current_order: UnitOrder::Idle,
-            path: Vec::new(),
-            move_cooldown: 0.0,
-            weapon: Some(WeaponType::AcidCloud),
-            attack_cooldown: 0.0,
-            cargo: None,
-            hauler_state: None,
-        });
+            units.push(Unit {
+                id: 102,
+                name: format!("{:?} Heavy Vanguard", enemy_faction),
+                faction: enemy_faction,
+                tile_x: 37,
+                tile_y: 30,
+                hp: 300,
+                max_hp: 300,
+                is_selected: false,
+                current_order: UnitOrder::Idle,
+                path: Vec::new(),
+                move_cooldown: 0.0,
+                weapon: Some(WeaponType::AcidCloud),
+                attack_cooldown: 0.0,
+                cargo: None,
+                hauler_state: None,
+            });
+        }
 
-        let game_map = GameMap::parse(DEFAULT_MAP_DATA)
+        let game_map = GameMap::parse(map_data)
             .unwrap_or_else(|_| GameMap {
                 width: 64,
                 height: 64,
@@ -297,13 +339,15 @@ impl ColonyState {
             });
 
         let mut tubes = HashSet::new();
-        // Initial arterial transport tubes linking base structures
-        connect_with_tubes(&mut tubes, (22, 21), (24, 21)); // CC to Solar Array
-        connect_with_tubes(&mut tubes, (21, 22), (21, 25)); // CC to Smelter
+        connect_with_tubes(&mut tubes, (22, 21), (24, 21));
+        connect_with_tubes(&mut tubes, (21, 22), (21, 25));
+        if scenario_id == 1 {
+            connect_with_tubes(&mut tubes, (20, 24), (18, 24));
+        }
 
         let mut ore_deposits = Vec::new();
         let mut dep1 = OreDeposit::new(1, OreType::Common, 26, 22, 50_000);
-        dep1.has_miner = true; // Robo-Miner is actively extracting!
+        dep1.has_miner = true;
         let dep2 = OreDeposit::new(2, OreType::Rare, 18, 28, 25_000);
         ore_deposits.push(dep1);
         ore_deposits.push(dep2);
@@ -314,10 +358,12 @@ impl ColonyState {
         fog.update_visibility(&units, &buildings);
 
         Self {
+            scenario_id,
             faction,
             sol: 1.0,
             population: 120,
             morale_pct: 95,
+            starship_progress: 0.0,
             common_ore: 2500,
             rare_ore: 500,
             power_produced: 500,
@@ -334,9 +380,9 @@ impl ColonyState {
             sunlight: 1.0,
             active_beams: Vec::new(),
             active_explosions: Vec::new(),
-            ai_director: FactionAiDirector::new(Faction::Plymouth, 38, 30),
+            ai_director: FactionAiDirector::new(enemy_faction, 38, 30),
             ore_deposits,
-            mission: Mission::new_eden_mission_1(),
+            mission,
         }
     }
 
@@ -539,6 +585,107 @@ impl ColonyState {
         self.common_ore += ore_delivered_common;
         self.rare_ore += ore_delivered_rare;
 
+        // Building Production Queue & Fabrication Progress
+        let mut completed_items = Vec::new();
+        for b in &mut self.buildings {
+            if b.is_active && !b.production_queue.is_empty() {
+                b.production_progress += dt_secs * 20.0;
+                if b.production_progress >= 100.0 {
+                    b.production_progress = 0.0;
+                    let item = b.production_queue.remove(0);
+                    completed_items.push((b.id, b.tile_x + b.width, b.tile_y + b.height / 2, item));
+                }
+            }
+        }
+
+        let mut unit_notice = None;
+        for (_b_id, spawn_x, spawn_y, item) in completed_items {
+            let next_id = self.units.len() as u32 + 1;
+            match item.as_str() {
+                "Panther Battle Tank" => {
+                    self.units.push(Unit {
+                        id: next_id,
+                        name: format!("Panther Battle Tank #{}", next_id),
+                        faction: self.faction,
+                        tile_x: spawn_x,
+                        tile_y: spawn_y,
+                        hp: 250,
+                        max_hp: 250,
+                        is_selected: false,
+                        current_order: UnitOrder::Idle,
+                        path: Vec::new(),
+                        move_cooldown: 0.0,
+                        weapon: Some(WeaponType::Railgun),
+                        attack_cooldown: 0.0,
+                        cargo: None,
+                        hauler_state: None,
+                    });
+                    unit_notice = Some("FABRICATION COMPLETE: Panther Battle Tank rolled out of production bay.");
+                }
+                "Lynx Scout" => {
+                    self.units.push(Unit {
+                        id: next_id,
+                        name: format!("Lynx Scout #{}", next_id),
+                        faction: self.faction,
+                        tile_x: spawn_x,
+                        tile_y: spawn_y,
+                        hp: 140,
+                        max_hp: 140,
+                        is_selected: false,
+                        current_order: UnitOrder::Idle,
+                        path: Vec::new(),
+                        move_cooldown: 0.0,
+                        weapon: Some(WeaponType::Laser),
+                        attack_cooldown: 0.0,
+                        cargo: None,
+                        hauler_state: None,
+                    });
+                    unit_notice = Some("FABRICATION COMPLETE: Lynx Scout commissioned for reconnaissance.");
+                }
+                "Cargo Truck" => {
+                    self.units.push(Unit {
+                        id: next_id,
+                        name: format!("Cargo Truck #{}", next_id),
+                        faction: self.faction,
+                        tile_x: spawn_x,
+                        tile_y: spawn_y,
+                        hp: 150,
+                        max_hp: 150,
+                        is_selected: false,
+                        current_order: UnitOrder::Idle,
+                        path: Vec::new(),
+                        move_cooldown: 0.0,
+                        weapon: None,
+                        attack_cooldown: 0.0,
+                        cargo: None,
+                        hauler_state: Some(HaulerState::Idle),
+                    });
+                    unit_notice = Some("FABRICATION COMPLETE: Cargo Truck deployed for ore logistics.");
+                }
+                "Starship Component" => {
+                    self.starship_progress = (self.starship_progress + 25.0).min(100.0);
+                    if self.starship_progress >= 100.0 {
+                        unit_notice = Some("STARSHIP COMPLETE: Evacuation Starship is fully assembled and ready for launch!");
+                    } else {
+                        unit_notice = Some("STARSHIP PROGRESS: Evacuation module installed (+25%).");
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        // Colony Demographics & Life Support Dynamics
+        if self.power_consumed > self.power_produced {
+            if (self.sol * 10.0) as u32 % 50 == 0 {
+                self.morale_pct = self.morale_pct.saturating_sub(1);
+                if self.morale_pct < 50 && self.population > 20 {
+                    self.population -= 1;
+                }
+            }
+        } else if self.morale_pct < 100 && (self.sol * 10.0) as u32 % 50 == 0 {
+            self.morale_pct = (self.morale_pct + 1).min(100);
+        }
+
         // Advance Rival Faction AI Director
         let ai_alert = self.ai_director.update(&mut self.units, dt_secs);
 
@@ -546,6 +693,10 @@ impl ColonyState {
         let mission_alert = self.mission.evaluate(
             self.common_ore,
             self.rare_ore,
+            self.power_produced,
+            self.power_consumed,
+            self.tubes.len(),
+            self.morale_pct,
             &self.buildings,
             &self.units,
             &self.tech_tree,
@@ -554,7 +705,7 @@ impl ColonyState {
         // Refresh dynamic sensor fog of war
         self.fog.update_visibility(&self.units, &self.buildings);
 
-        warning.or(ai_alert).or(mission_alert)
+        warning.or(ai_alert).or(unit_notice).or(mission_alert)
     }
 
     /// Deploy a colonial structure kit, deducting ore costs and weaving transport tubes
@@ -628,6 +779,30 @@ impl ColonyState {
         Ok(format!("Deployed {} successfully", name))
     }
 
+    /// Queue a vehicle or starship module in a selected factory
+    pub fn queue_production(&mut self, building_id: u32, item: String) -> Result<String, String> {
+        let (cost_common, cost_rare) = match item.as_str() {
+            "Panther Battle Tank" => (250, 50),
+            "Lynx Scout" => (140, 0),
+            "Cargo Truck" => (150, 0),
+            "Starship Component" => (500, 200),
+            _ => (100, 0),
+        };
+
+        if self.common_ore < cost_common || self.rare_ore < cost_rare {
+            return Err(format!("Insufficient Ore: requires {} Common, {} Rare", cost_common, cost_rare));
+        }
+
+        if let Some(b) = self.buildings.iter_mut().find(|b| b.id == building_id) {
+            self.common_ore -= cost_common;
+            self.rare_ore -= cost_rare;
+            b.production_queue.push(item.clone());
+            Ok(format!("Queued {}", item))
+        } else {
+            Err("Target facility not found".into())
+        }
+    }
+
     /// Export colony state to a JSON-serializable snapshot
     pub fn to_save_data(&self) -> SaveGameData {
         let researched_tech_ids = self.tech_tree.techs.iter()
@@ -636,10 +811,12 @@ impl ColonyState {
             .collect();
 
         SaveGameData {
+            scenario_id: self.scenario_id,
             faction: self.faction,
             sol: self.sol,
             population: self.population,
             morale_pct: self.morale_pct,
+            starship_progress: self.starship_progress,
             common_ore: self.common_ore,
             rare_ore: self.rare_ore,
             power_produced: self.power_produced,
@@ -655,10 +832,12 @@ impl ColonyState {
 
     /// Restore colony state from a save data snapshot
     pub fn apply_save_data(&mut self, data: SaveGameData) {
+        self.scenario_id = data.scenario_id;
         self.faction = data.faction;
         self.sol = data.sol;
         self.population = data.population;
         self.morale_pct = data.morale_pct;
+        self.starship_progress = data.starship_progress;
         self.common_ore = data.common_ore;
         self.rare_ore = data.rare_ore;
         self.power_produced = data.power_produced;

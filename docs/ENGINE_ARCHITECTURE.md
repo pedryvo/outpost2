@@ -97,6 +97,12 @@ This document provides a comprehensive technical overview of the Rust / WebAssem
 ### 10. `src/i18n.rs` (Live In-Game Localization)
 - Real-time language switching without page reload across English, Portuguese (BR), Spanish, German, Simplified Chinese, and Russian.
 
+### 11. Multi-Map Campaign Engine & Starship Evacuation
+- **Authentic Scenarios:** Directly incorporates extracted `eden01.map`, `ply01.map`, and `tutorial.map` from `maps.vol`.
+- **Factory Fabrication Queues:** Vehicle Factories display real-time animated electromagnetic welding arcs and HUD progress bars over the structure roof during unit fabrication.
+- **Evacuation Starship Assembly:** Command Centers and Launch Gantries construct interstellar escape components (Command Bridge, Cryo-Stasis, Fusion Thruster, Radiation Shield) to achieve planetary evacuation victory.
+- **Colony Demographics:** Life support deficits trigger morale decay and civilian casualties, while power surpluses sustain growth and high morale.
+
 ---
 
 ## 🛠️ Tooling & Build Pipeline

@@ -18,6 +18,7 @@ pub enum StructureType {
     Residence,
     Agrodome,
     VehicleFactory,
+    Spaceport,
 }
 
 impl StructureType {
@@ -33,6 +34,7 @@ impl StructureType {
             Self::Residence => "Colonial Residence",
             Self::Agrodome => "Bio-Dome Hydroponics",
             Self::VehicleFactory => "Vehicle Factory",
+            Self::Spaceport => "Starship Launch Gantry",
         }
     }
 
@@ -42,6 +44,7 @@ impl StructureType {
             Self::SolarArray => (2, 2),
             Self::TokamakReactor => (3, 3),
             Self::VehicleFactory => (3, 3),
+            Self::Spaceport => (3, 3),
             _ => (2, 2),
         }
     }
@@ -58,6 +61,7 @@ impl StructureType {
             Self::Residence => 20,
             Self::Agrodome => 30,
             Self::VehicleFactory => 120,
+            Self::Spaceport => 160,
         }
     }
 
@@ -74,6 +78,7 @@ impl StructureType {
             Self::Residence => (150, 0),
             Self::Agrodome => (200, 50),
             Self::VehicleFactory => (500, 150),
+            Self::Spaceport => (800, 350),
         }
     }
 }

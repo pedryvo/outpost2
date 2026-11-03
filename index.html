@@ -219,6 +219,17 @@
           <span class="telemetry-val val-food" id="colony-food">1,200</span>
         </div>
         <div class="telemetry-item">
+          <span class="telemetry-label" id="lbl-starship">Starship:</span>
+          <span class="telemetry-val" style="color: #c084fc; font-weight: bold;" id="colony-starship">0%</span>
+        </div>
+        <div class="telemetry-item">
+          <select id="campaign-select" style="background: #1e2636; color: #facc15; border: 1px solid #3b475e; border-radius: 4px; padding: 2px 6px; font-size: 11px; font-weight: bold; cursor: pointer;">
+            <option value="0">🚀 Eden 1: New Dawn</option>
+            <option value="1">🔥 Plymouth 1: Vanguard</option>
+            <option value="2">🎓 Academy Simulator</option>
+          </select>
+        </div>
+        <div class="telemetry-item">
           <select id="lang-select" style="background: #1e2636; color: #38bdf8; border: 1px solid #3b475e; border-radius: 4px; padding: 2px 6px; font-size: 11px; font-weight: bold; cursor: pointer;">
             <option value="en">🌐 EN</option>
             <option value="pt-BR">🌐 PT-BR</option>
@@ -245,10 +256,15 @@
           <span>Power Load:</span>
           <span id="inspect-power" style="color: #facc15; font-weight: bold;">-40 kW</span>
         </div>
+        <div id="inspect-queue-box" style="margin-bottom: 6px; font-size: 11px; color: #38bdf8; display: none;">
+          <span style="color: var(--op2-muted);">Queue:</span>
+          <span id="inspect-queue" style="font-weight: bold;">Idle</span>
+        </div>
         <div id="factory-actions" style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
           <button class="action-btn" id="btn-queue-tank" style="justify-content: center;">⚔️ Build Panther Tank</button>
           <button class="action-btn" id="btn-queue-scout" style="justify-content: center;">🛰️ Build Lynx Scout</button>
           <button class="action-btn" id="btn-queue-truck" style="justify-content: center;">🚚 Build Cargo Truck</button>
+          <button class="action-btn" id="btn-queue-starship" style="justify-content: center; background: #3b0764; border-color: #a855f7;">🚀 Assemble Starship Module</button>
         </div>
         <button class="action-btn" id="btn-toggle-power" style="margin-top: 8px; justify-content: center; background: #334155;">⚡ Toggle Power Grid</button>
       </aside>

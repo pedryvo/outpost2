@@ -50,6 +50,9 @@ Unlike heavyweight virtual machines or x86 emulators, this port runs natively in
 | **Structures & Tube Network** | ✅ | Modular base kits & pressurized transport tube grid · [`docs/formats/structures_and_tubes.md`](docs/formats/structures_and_tubes.md) |
 | **Unit Control & 8-Way A\*** | ✅ | A* isometric pathfinding, lava avoidance, right-click orders · [`docs/ENGINE_ARCHITECTURE.md`](docs/ENGINE_ARCHITECTURE.md) |
 | **Tech Research Tree** | ✅ | 12 primary scientific disciplines with live lab investment · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
+| **Multi-Map Campaigns** | ✅ | Authentic operational theaters (Eden 1, Plymouth 1, Academy Tutorial) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
+| **Factory Queues & Animation** | ✅ | Production queue scheduling, welding plasma arcs, HUD progress bars |
+| **Starship Evacuation** | ✅ | 4-stage starship assembly and demographic life-support mechanics · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
 | **State Persistence & Touch** | ✅ | Browser storage quicksave/load, mobile pinch-to-zoom & gesture controls |
 | **Audio Engine** | ✅ | Web Audio API synthesizer for UI beeps, unit selection chimes, and build orders |
 | **Modern Sci-Fi HUD** | ✅ | Real-time telemetry, radar minimap, build queues, and unit command console |

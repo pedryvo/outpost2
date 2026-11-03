@@ -514,131 +514,96 @@ pub fn start() -> Result<(), JsValue> {
         cb.forget();
     }
 
-    // Structure Inspector Controls
-    if let Some(btn) = document.get_element_by_id("btn-queue-tank") {
+    // Campaign Scenario Selector
+    if let Some(camp_select) = document.get_element_by_id("campaign-select") {
         let app_clone = app.clone();
         let doc_clone = document.clone();
-        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
-            let mut g = app_clone.borrow_mut();
-            if g.colony.common_ore >= 250 && g.colony.rare_ore >= 50 {
-                g.colony.common_ore -= 250;
-                g.colony.rare_ore -= 50;
-                let next_id = g.colony.units.len() as u32 + 1;
-                let spawn_x = g.colony.buildings.iter().find(|b| b.is_selected).map(|b| b.tile_x + 3).unwrap_or(24);
-                let spawn_y = g.colony.buildings.iter().find(|b| b.is_selected).map(|b| b.tile_y + 1).unwrap_or(24);
-                g.colony.units.push(sim::Unit {
-                    id: next_id,
-                    name: format!("Panther Battle Tank #{}", next_id),
-                    faction: sim::Faction::Eden,
-                    tile_x: spawn_x,
-                    tile_y: spawn_y,
-                    hp: 250,
-                    max_hp: 250,
-                    is_selected: false,
-                    current_order: sim::pathfinding::UnitOrder::Idle,
-                    path: Vec::new(),
-                    move_cooldown: 0.0,
-                    weapon: Some(sim::combat::WeaponType::Railgun),
-                    attack_cooldown: 0.0,
-                    cargo: None,
-                    hauler_state: None,
-                });
-                g.audio.play_build_confirm();
-                if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
-                    toast.set_text_content(Some("Panther Battle Tank commissioned!"));
-                    let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #4ade80; display: block;");
-                }
-            } else {
-                g.audio.play_ui_beep();
-                if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
-                    toast.set_text_content(Some("Insufficient resources: Requires 250 Common, 50 Rare Ore."));
-                    let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #ef4444; display: block;");
+        let cb = Closure::wrap(Box::new(move |e: web_sys::Event| {
+            if let Some(target) = e.target() {
+                if let Ok(select) = target.dyn_into::<web_sys::HtmlSelectElement>() {
+                    let val = select.value();
+                    let scenario_id = val.parse::<usize>().unwrap_or(0);
+                    let mut g = app_clone.borrow_mut();
+                    let _ = g.audio.init();
+                    g.colony = sim::ColonyState::new_scenario(scenario_id);
+                    g.audio.play_build_confirm();
+
+                    // Update faction label
+                    if let Some(badge) = doc_clone.get_element_by_id("colony-faction") {
+                        match g.colony.faction {
+                            sim::Faction::Eden => {
+                                badge.set_text_content(Some("EDEN"));
+                                let _ = badge.set_attribute("class", "telemetry-val val-eden");
+                            }
+                            sim::Faction::Plymouth => {
+                                badge.set_text_content(Some("PLYMOUTH"));
+                                let _ = badge.set_attribute("class", "telemetry-val val-plymouth");
+                            }
+                        }
+                    }
+
+                    // Update modal briefing
+                    if let Some(title) = doc_clone.get_element_by_id("briefing-title") {
+                        title.set_text_content(Some(&g.colony.mission.codename));
+                    }
+                    if let Some(text) = doc_clone.get_element_by_id("briefing-text") {
+                        text.set_text_content(Some(&g.colony.mission.briefing));
+                    }
+                    if let Some(ul) = doc_clone.get_element_by_id("briefing-objectives") {
+                        ul.set_inner_html("");
+                        for obj in &g.colony.mission.objectives {
+                            if let Ok(li) = doc_clone.create_element("li") {
+                                li.set_text_content(Some(&obj.description));
+                                let _ = ul.append_child(&li);
+                            }
+                        }
+                    }
+
+                    audio::radio::RadioDispatcher::announce(&format!("Tactical computer initialized: {}", g.colony.mission.codename));
                 }
             }
         }) as Box<dyn FnMut(_)>);
-        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        camp_select.add_event_listener_with_callback("change", cb.as_ref().unchecked_ref())?;
         cb.forget();
     }
 
-    if let Some(btn) = document.get_element_by_id("btn-queue-scout") {
-        let app_clone = app.clone();
-        let doc_clone = document.clone();
-        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
-            let mut g = app_clone.borrow_mut();
-            if g.colony.common_ore >= 140 {
-                g.colony.common_ore -= 140;
-                let next_id = g.colony.units.len() as u32 + 1;
-                let spawn_x = g.colony.buildings.iter().find(|b| b.is_selected).map(|b| b.tile_x + 3).unwrap_or(24);
-                let spawn_y = g.colony.buildings.iter().find(|b| b.is_selected).map(|b| b.tile_y + 1).unwrap_or(24);
-                g.colony.units.push(sim::Unit {
-                    id: next_id,
-                    name: format!("Lynx Scout #{}", next_id),
-                    faction: sim::Faction::Eden,
-                    tile_x: spawn_x,
-                    tile_y: spawn_y,
-                    hp: 140,
-                    max_hp: 140,
-                    is_selected: false,
-                    current_order: sim::pathfinding::UnitOrder::Idle,
-                    path: Vec::new(),
-                    move_cooldown: 0.0,
-                    weapon: Some(sim::combat::WeaponType::Laser),
-                    attack_cooldown: 0.0,
-                    cargo: None,
-                    hauler_state: None,
-                });
-                g.audio.play_build_confirm();
-                if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
-                    toast.set_text_content(Some("Lynx Scout commissioned!"));
-                    let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #4ade80; display: block;");
+    // Structure Inspector Controls (Queue Units / Starship Modules)
+    let setup_queue_btn = |btn_id: &'static str, item_name: &'static str, app_rc: Rc<RefCell<GameApp>>, doc_rc: web_sys::Document| {
+        if let Some(btn) = doc_rc.get_element_by_id(btn_id) {
+            let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+                let mut g = app_rc.borrow_mut();
+                let _ = g.audio.init();
+                let selected_b_id = g.colony.buildings.iter().find(|b| b.is_selected).map(|b| b.id);
+                if let Some(b_id) = selected_b_id {
+                    match g.colony.queue_production(b_id, item_name.to_string()) {
+                        Ok(msg) => {
+                            g.audio.play_build_confirm();
+                            if let Some(toast) = doc_rc.get_element_by_id("research-toast") {
+                                toast.set_text_content(Some(&msg));
+                                let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #4ade80; display: block;");
+                            }
+                        }
+                        Err(err) => {
+                            g.audio.play_ui_beep();
+                            if let Some(toast) = doc_rc.get_element_by_id("research-toast") {
+                                toast.set_text_content(Some(&err));
+                                let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #ef4444; display: block;");
+                            }
+                        }
+                    }
+                } else {
+                    g.audio.play_ui_beep();
                 }
-            } else {
-                g.audio.play_ui_beep();
-            }
-        }) as Box<dyn FnMut(_)>);
-        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
-        cb.forget();
-    }
+            }) as Box<dyn FnMut(_)>);
+            let _ = btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref());
+            cb.forget();
+        }
+    };
 
-    if let Some(btn) = document.get_element_by_id("btn-queue-truck") {
-        let app_clone = app.clone();
-        let doc_clone = document.clone();
-        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
-            let mut g = app_clone.borrow_mut();
-            if g.colony.common_ore >= 150 {
-                g.colony.common_ore -= 150;
-                let next_id = g.colony.units.len() as u32 + 1;
-                let spawn_x = g.colony.buildings.iter().find(|b| b.is_selected).map(|b| b.tile_x + 3).unwrap_or(24);
-                let spawn_y = g.colony.buildings.iter().find(|b| b.is_selected).map(|b| b.tile_y + 1).unwrap_or(24);
-                g.colony.units.push(sim::Unit {
-                    id: next_id,
-                    name: format!("Cargo Truck #{}", next_id),
-                    faction: sim::Faction::Eden,
-                    tile_x: spawn_x,
-                    tile_y: spawn_y,
-                    hp: 150,
-                    max_hp: 150,
-                    is_selected: false,
-                    current_order: sim::pathfinding::UnitOrder::Idle,
-                    path: Vec::new(),
-                    move_cooldown: 0.0,
-                    weapon: None,
-                    attack_cooldown: 0.0,
-                    cargo: None,
-                    hauler_state: Some(sim::mining::HaulerState::Idle),
-                });
-                g.audio.play_build_confirm();
-                if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
-                    toast.set_text_content(Some("Cargo Truck commissioned for hauling routes!"));
-                    let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #4ade80; display: block;");
-                }
-            } else {
-                g.audio.play_ui_beep();
-            }
-        }) as Box<dyn FnMut(_)>);
-        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
-        cb.forget();
-    }
+    setup_queue_btn("btn-queue-tank", "Panther Battle Tank", app.clone(), document.clone());
+    setup_queue_btn("btn-queue-scout", "Lynx Scout", app.clone(), document.clone());
+    setup_queue_btn("btn-queue-truck", "Cargo Truck", app.clone(), document.clone());
+    setup_queue_btn("btn-queue-starship", "Starship Component", app.clone(), document.clone());
 
     if let Some(btn) = document.get_element_by_id("btn-toggle-power") {
         let app_clone = app.clone();
@@ -785,6 +750,9 @@ pub fn start() -> Result<(), JsValue> {
         if let Some(el) = document.get_element_by_id("colony-food") {
             el.set_text_content(Some(&format!("{}", app_borrow.colony.food_units)));
         }
+        if let Some(el) = document.get_element_by_id("colony-starship") {
+            el.set_text_content(Some(&format!("{:.0}%", app_borrow.colony.starship_progress)));
+        }
 
         // Update Building Inspector Card
         let selected_b = app_borrow.colony.buildings.iter().find(|b| b.is_selected);
@@ -802,6 +770,19 @@ pub fn start() -> Result<(), JsValue> {
                 }
                 if let Some(power_el) = document.get_element_by_id("inspect-power") {
                     power_el.set_text_content(Some(&format!("{} kW", b.power_cost)));
+                }
+                if let Some(queue_el) = document.get_element_by_id("inspect-queue") {
+                    if let Some(item) = b.production_queue.first() {
+                        queue_el.set_text_content(Some(&format!("{} ({:.0}%)", item, b.production_progress)));
+                        if let Some(box_el) = document.get_element_by_id("inspect-queue-box") {
+                            let _ = box_el.set_attribute("style", "margin-bottom: 6px; font-size: 11px; color: #38bdf8; display: block;");
+                        }
+                    } else {
+                        queue_el.set_text_content(Some("Idle"));
+                        if let Some(box_el) = document.get_element_by_id("inspect-queue-box") {
+                            let _ = box_el.set_attribute("style", "display: none;");
+                        }
+                    }
                 }
             } else {
                 let _ = card.set_attribute("style", "display: none;");

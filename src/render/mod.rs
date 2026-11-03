@@ -145,6 +145,23 @@ impl Viewport {
 
                 ctx.fill();
                 ctx.stroke();
+
+                if let Some(t) = tile {
+                    if (t.is_wall_or_building || t.cell_type == 3) && fog != FogState::Unexplored {
+                        // 2.5D cliff drop facet and shadow
+                        let drop_h = 6.0 * self.zoom;
+                        ctx.set_fill_style_str(if fog == FogState::Explored { "#07090e" } else { "#111726" });
+                        ctx.begin_path();
+                        ctx.move_to(sx - half_w, sy);
+                        ctx.line_to(sx, sy + half_h);
+                        ctx.line_to(sx + half_w, sy);
+                        ctx.line_to(sx + half_w, sy + drop_h);
+                        ctx.line_to(sx, sy + half_h + drop_h);
+                        ctx.line_to(sx - half_w, sy + drop_h);
+                        ctx.close_path();
+                        ctx.fill();
+                    }
+                }
             }
         }
 
@@ -262,6 +279,41 @@ impl Viewport {
             ctx.set_fill_style_str(if fog == FogState::Explored { "#94a3b8" } else { "#ffffff" });
             ctx.set_font(&format!("bold {}px sans-serif", (11.0 * self.zoom).max(9.0)));
             let _ = ctx.fill_text(&b.name, sx - b_w * 0.45, sy - b_h - 6.0 * self.zoom);
+
+            // Active Vehicle / Starship Fabrication Visuals
+            if !b.production_queue.is_empty() && b.production_progress > 0.0 && fog == FogState::Visible {
+                let spark_pulse = (colony.sol * 12.0).sin().abs();
+                let spark_color = if colony.faction == Faction::Eden {
+                    format!("rgba(56, 189, 248, {:.2})", 0.4 + 0.5 * spark_pulse)
+                } else {
+                    format!("rgba(249, 115, 22, {:.2})", 0.4 + 0.5 * spark_pulse)
+                };
+                ctx.set_stroke_style_str(&spark_color);
+                ctx.set_line_width(2.0 * self.zoom);
+                ctx.begin_path();
+                let _ = ctx.arc(sx, sy, (12.0 + 4.0 * spark_pulse) * self.zoom, 0.0, std::f64::consts::TAU);
+                ctx.stroke();
+
+                // Progress Bar
+                let bar_w = (b_w * 0.85).max(40.0 * self.zoom);
+                let bar_h = 5.0 * self.zoom;
+                let bar_x = sx - bar_w * 0.5;
+                let bar_y = sy - b_h - 26.0 * self.zoom;
+
+                ctx.set_fill_style_str("#090d16");
+                ctx.fill_rect(bar_x, bar_y, bar_w, bar_h);
+
+                let fill_pct = (b.production_progress / 100.0).clamp(0.0, 1.0);
+                ctx.set_fill_style_str(if colony.faction == Faction::Eden { "#38bdf8" } else { "#f97316" });
+                ctx.fill_rect(bar_x, bar_y, bar_w * fill_pct, bar_h);
+
+                if let Some(item) = b.production_queue.first() {
+                    ctx.set_fill_style_str("#e2e8f0");
+                    ctx.set_font(&format!("bold {}px monospace", (8.0 * self.zoom).max(8.0)));
+                    let label = format!("{} {}%", item, b.production_progress as u32);
+                    let _ = ctx.fill_text(&label, bar_x, bar_y - 3.0);
+                }
+            }
         }
 
         // Render Units (Only visible when active in sensor range)

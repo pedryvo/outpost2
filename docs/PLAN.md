@@ -44,6 +44,14 @@ Porting Sierra / Dynamix's 1997 hard sci-fi real-time strategy classic *Outpost 
 - [x] Multi-language support (EN, PT-BR, ES, DE, ZH-CN, RU).
 
 ### Phase 6: Vercel Deployment & Persistence (Completed)
-- [x] Automated Trunk release build with LTO and binary optimization (~220 KB standalone WASM).
+- [x] Automated Trunk release build with LTO and binary optimization (~370 KB standalone WASM).
 - [x] Zero-latency edge deployment configuration on Vercel with streaming WebAssembly headers.
 - [x] Browser storage save state manager to persist campaign progress across browser sessions.
+
+### Phase 7: Authentic Campaigns, Starship Assembly & Production Queues (Completed)
+- [x] Multi-campaign operational theater selector (Eden "Operation New Dawn", Plymouth "Badland Vanguard", Academy "Proving Grounds").
+- [x] Multi-map embedding (`eden01.map`, `ply01.map`, `tutorial.map`) extracted directly from `maps.vol`.
+- [x] Vehicle Factory production queue and fabrication welding particle / progress bar animation.
+- [x] Evacuation Starship multi-stage component assembly (Command Bridge, Cryo-Stasis, Fusion Thruster, Life Support Shield).
+- [x] Population life support dynamics (energy deficits cause morale decay and civilian casualties; surplus restores morale).
+- [x] 2.5D cliff ledges and drop-shadows on elevated terrain cells.

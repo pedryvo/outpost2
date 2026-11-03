@@ -2,11 +2,16 @@
 
 # outpost2
 
-**Обратная разработка и современный веб-порт (Rust, WebAssembly, HTML5 Canvas и Web Audio API) игры _Outpost 2: Divided Destiny_ (Sierra On-Line / Dynamix, 1997)**
+**Реверс-инжиниринг и современный веб-порт (Rust, WebAssembly, HTML5 Canvas и Web Audio API) игры _Outpost 2: Divided Destiny_ (Sierra On-Line / Dynamix, 1997)**
 
 [![Rust](https://img.shields.io/badge/rust-1.80+-orange?logo=rust&logoColor=white)](https://www.rust-lang.org/)
 [![WebAssembly](https://img.shields.io/badge/wasm-webassembly-654ff0?logo=webassembly&logoColor=white)](https://webassembly.org/)
-[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSE)
+[![Статус](https://img.shields.io/badge/статус-завершено-brightgreen)](#-прогресс-разработки)
+[![Фаза](https://img.shields.io/badge/фаза-7_%E2%80%94_кампании_и_звездолёт-blue)](docs/PLAN.md)
+[![Платформы](https://img.shields.io/badge/платформы-Web_%7C_Vercel_%7C_Mobile-lightgrey)](#-запуск-игры)
+[![Лицензия: GPL-3.0](https://img.shields.io/badge/лицензия-GPL--3.0--or--later-blue)](LICENSE)
+
+_Шедевр научно-фантастической стратегии в реальном времени от Sierra и Dynamix,<br>воссозданный для современных веб-браузеров, ПК и мобильных устройств._
 
 [English](README.md) · [Português](README.pt-BR.md) · [Español](README.es.md) · [Deutsch](README.de.md) · [中文](README.zh-CN.md) · **Русский**
 
@@ -16,6 +21,65 @@
 
 ## 🚀 О проекте
 
-**outpost2** исследует оригинальный исполняемый файл _Outpost 2_ (`Outpost2.exe`) и архивы данных (`.vol`) с помощью инструментария **REA** и Ghidra, реализуя нативную симуляцию стратегии в реальном времени на **Rust и WebAssembly** для браузера и Vercel.
+**outpost2** исследует оригинальный исполняемый файл _Outpost 2: Divided Destiny_ (`Outpost2.exe`) и архивные пакеты ресурсов (`art.vol`, `maps.vol`, `sound.vol`, `tech.vol`) 1997 года выпуска с помощью инструментов **REA** (Reverse Engineer Anything) и Ghidra, воссоздавая чистую, высокопроизводительную реализацию на **Rust и WebAssembly**.
 
-Исходный код лицензирован под **GPL-3.0 или более поздней версии** ([LICENSE](LICENSE)).
+Цель проекта — обеспечить мгновенный нативный запуск легендарной RTS в современных браузерах без медленных эмуляторов и слоёв совместимости Windows, с современным футуристическим HUD, процедурным звуком и развёртыванием на Vercel Edge.
+
+---
+
+## ✨ Возможности
+
+- 🦀 **Чистый движок на Rust и WebAssembly**: Нулевой оверхед эмуляции, компактный автономный бинарник WASM (~370 КБ).
+- 🗺️ **Изометрический 2D-движок высокого разрешения**: Плавный зум, субпиксельная камера, динамическая смена дня и ночи и 2.5D рельефные тени скал.
+- ⚙️ **Футуристический тактический интерфейс**: Телеметрия колонии в реальном времени, баланс энергосети, жизнеобеспечение, склад руды и радарная миникарта.
+- 🚀 **Сборка эвакуационного звездолёта**: Гонка со временем за постройку 4 ключевых модулей корабля спасения (Командный мостик, Криостазис, Термоядерный двигатель, Радиационный щит) до уничтожения колонии лавой и био-скверной.
+- ⚔️ **Аутентичные кампании и сценарии**: Селектор миссий с картами (`eden01.map`, `ply01.map`, `tutorial.map`) и искусственным интеллектом противника.
+- 🏭 **Очереди завода и плазменная сварка**: Анимированные электрические дуги сварки и HUD-индикаторы прогресса сборки боевой техники.
+- 📱 **Поддержка мобильных устройств и тач-управления**: Управление жестами, перемещение пальцем и масштабирование щепотком (pinch-to-zoom).
+- 🔊 **Звуковой движок Web Audio и радио**: Процедурный синтезатор эффектов, эмбиент-музыка и речевые оповещения через Web Speech API.
+- 🌍 **Мгновенная локализация (i18n)**: Поддержка 6 языков с переключением на лету (**English**, **Português do Brasil**, **Español**, **Deutsch**, **简体中文**, **Русский**).
+
+---
+
+## 📊 Прогресс разработки
+
+| Область | Статус | Подробности |
+|---|:---:|---|
+| **План и архитектура** | ✅ | Дорожная карта и спецификация · [`docs/PLAN.md`](docs/PLAN.md) |
+| **Реверс-инжиниринг REA** | ✅ | Анализ `Outpost2.exe`, 509 экспортированных функций C++ · [`re/engine_symbols.json`](re/engine_symbols.json) |
+| **Парсер архивов `.vol`** | ✅ | Потоковый ридер томов Outpost 2 на Rust · [`docs/formats/vol_archive.md`](docs/formats/vol_archive.md) |
+| **Декодер палитры и спрайтов** | ✅ | 256-цветная палитра и 5 390 спрайтов · [`docs/formats/prt_format.md`](docs/formats/prt_format.md) |
+| **Изометрический рендерер** | ✅ | Сетка, суточный цикл освещения и 2.5D рельеф · [`docs/formats/palette_and_tiles.md`](docs/formats/palette_and_tiles.md) |
+| **Туман войны и радар** | ✅ | 3 уровня видимости (Неисследовано, Разведано, Видимо) · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
+| **Симуляция колонии** | ✅ | Логистика Эдема и Плимута: энергия, руда, мораль, катастрофы · [`docs/formats/disasters.md`](docs/formats/disasters.md) |
+| **Здания и трубы** | ✅ | Модульные строительные наборы и герметичные трубы · [`docs/formats/structures_and_tubes.md`](docs/formats/structures_and_tubes.md) |
+| **Управление и поиск пути A\*** | ✅ | 8-направленный поиск пути A*, обход лавы · [`docs/ENGINE_ARCHITECTURE.md`](docs/ENGINE_ARCHITECTURE.md) |
+| **Древо технологий** | ✅ | 12 научных дисциплин с инвестициями лабораторий · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
+| **Кампании и миссии** | ✅ | Аутентичные театры действий (Эдем 1, Плимут 1, Академия) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
+| **Очереди завода и сварка** | ✅ | Очередь сборки техники, плазменные искры и индикаторы HUD |
+| **Эвакуация на звездолёте** | ✅ | 4 фазы постройки корабля и динамика жизнеобеспечения · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
+| **Сохранения и тач-управление** | ✅ | Быстрое сохранение/загрузка в браузере и поддержка тачпада |
+| **Аудио и радиодиспетчер** | ✅ | Синтезатор Web Audio, музыка и речевые военные оповещения |
+| **Мультиязычность (i18n)** | ✅ | Поддержка EN, PT-BR, ES, DE, ZH-CN, RU |
+| **Готовность к Vercel и WASM** | ✅ | Сборка через Trunk с оптимизацией LTO (`vercel.json`) |
+
+---
+
+## 🎮 Запуск игры
+
+```bash
+# Установка инструментов через mise
+mise install
+
+# Запуск локального сервера разработки
+mise exec -- trunk serve
+
+# Сборка релизной оптимизированной версии
+mise exec -- trunk build --release
+```
+
+---
+
+## 📜 Лицензия
+
+Исходный код **outpost2** распространяется под лицензией **GNU General Public License v3.0 или более поздней** ([LICENSE](LICENSE)).
