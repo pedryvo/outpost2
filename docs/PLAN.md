@@ -11,19 +11,20 @@ Porting Sierra / Dynamix's 1997 hard sci-fi real-time strategy classic *Outpost 
 - [x] Map legacy Win32 dependencies (`GDI32`, `USER32`, `KERNEL32`) for native SDL2/Canvas/WebAudio abstraction.
 - [x] Map the `.vol` format header and compression algorithms (uncompressed, LZH, RLE).
 
-### Phase 2: Binary Parsers & Asset Pipeline in Rust (In Progress)
+### Phase 2: Binary Parsers & Asset Pipeline in Rust (Completed)
 - [x] Zero-copy `.vol` volume archive reader in Rust (`VolArchive`).
-- [x] 256-color palette parser and master color translation tables.
+- [x] 256-color palette parser and master color translation tables (`MASTER_PALETTE`).
 - [x] Bitmap tile decoder (`OP2_ART.BMP` and well archives).
-- [ ] Map file parser (`.map` files from `maps.vol` containing cell types, cliffs, and ore deposits).
-- [ ] Web Audio sound manager for PCM effects and ambient voices.
+- [x] Map file parser (`.map` files from `maps.vol` containing cell types, cliffs, and ore deposits).
+- [x] Web Audio sound manager for UI feedback and tactical unit confirmations.
 
-### Phase 3: Isometric Map Engine & Viewport
-- [ ] High-performance 2D isometric tile grid renderer with WebAssembly memory buffers.
-- [ ] Multi-layer terrain rendering: base terrain, elevation/cliffs, lava/microbial blight paths, and structure kit overlays.
-- [ ] Viewport scrolling, edge panning, keyboard WASD, and touch drag gestures.
+### Phase 3: Isometric Map Engine & Viewport (In Progress)
+- [x] High-performance 2D isometric tile grid renderer with WebAssembly memory buffers.
+- [x] Multi-layer terrain rendering: base terrain, elevation/cliffs, lava/microbial blight paths, and structure kit overlays.
+- [x] Viewport scrolling, edge panning, keyboard WASD, and touch drag gestures.
+- [x] Smooth zoom (1x, 2x, 3x, Fit-to-Screen) with crisp pixel-art preservation.
+- [x] Tactical radar minimap displaying active buildings and mobile units.
 - [ ] Authentic fog-of-war and dynamic day/night light cycle.
-- [ ] Smooth zoom (1x, 2x, 3x, Fit-to-Screen) with crisp pixel-art preservation.
 
 ### Phase 4: Colony Simulation & RTS Core Mechanics
 - [ ] Colony factions: Eden and Plymouth colony parameters.

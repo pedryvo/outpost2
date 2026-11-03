@@ -55,15 +55,14 @@ impl VolArchive {
         if &vols_tag != b"vols" {
             return Err("Missing vols section header".into());
         }
-        let _padded_vols_len = cursor.read_u32::<LittleEndian>().map_err(|e| e.to_string())? & 0x7FFFFFFF;
+        let padded_vols_len = cursor.read_u32::<LittleEndian>().map_err(|e| e.to_string())? & 0x7FFFFFFF;
         let actual_str_len = cursor.read_u32::<LittleEndian>().map_err(|e| e.to_string())? as usize;
 
         let mut string_table = vec![0u8; actual_str_len];
         cursor.read_exact(&mut string_table).map_err(|e| e.to_string())?;
 
-        let padded_str_len = (actual_str_len + 7) & !3;
         // Position cursor right at start of voli section
-        cursor.set_position((8 + 8 + 8 + padded_str_len) as u64);
+        cursor.set_position((8 + 8 + 8 + padded_vols_len) as u64);
 
         // 4. Tag "voli" (index table)
         let mut voli_tag = [0u8; 4];

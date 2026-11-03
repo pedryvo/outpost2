@@ -5,15 +5,18 @@ use wasm_bindgen::JsCast;
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, KeyboardEvent, MouseEvent, Window};
 
 mod archive;
+mod audio;
 mod render;
 mod sim;
 
+use audio::AudioManager;
 use render::Viewport;
 use sim::{ColonyState, Faction};
 
 struct GameApp {
     colony: ColonyState,
     viewport: Viewport,
+    audio: AudioManager,
     is_dragging: bool,
     last_mouse_x: f64,
     last_mouse_y: f64,
@@ -50,21 +53,52 @@ pub fn start() -> Result<(), JsValue> {
     let app = Rc::new(RefCell::new(GameApp {
         colony: ColonyState::new(Faction::Eden),
         viewport: Viewport::new(),
+        audio: AudioManager::new(),
         is_dragging: false,
         last_mouse_x: 0.0,
         last_mouse_y: 0.0,
         last_frame_time: 0.0,
     }));
 
-    // Mouse Controls (Pan & Select)
+    // Mouse Controls (Pan & Select Unit)
     {
         let app_clone = app.clone();
         let on_mouse_down = Closure::wrap(Box::new(move |e: MouseEvent| {
             let mut g = app_clone.borrow_mut();
-            if e.button() == 0 || e.button() == 1 {
+            let _ = g.audio.init();
+
+            let click_x = e.client_x() as f64;
+            let click_y = e.client_y() as f64;
+
+            if e.button() == 0 {
+                // Check if clicked on a unit
+                let zoom = g.viewport.zoom;
+                let mut clicked_unit = false;
+                let unit_count = g.colony.units.len();
+                for i in 0..unit_count {
+                    let tx = g.colony.units[i].tile_x as f64;
+                    let ty = g.colony.units[i].tile_y as f64;
+                    let (sx, sy) = g.viewport.tile_to_screen(tx, ty);
+                    let dist = ((click_x - sx).powi(2) + (click_y - sy).powi(2)).sqrt();
+                    if dist < 20.0 * zoom {
+                        g.colony.units[i].is_selected = true;
+                        clicked_unit = true;
+                    } else if !e.shift_key() {
+                        g.colony.units[i].is_selected = false;
+                    }
+                }
+
+                if clicked_unit {
+                    g.audio.play_unit_ack();
+                } else {
+                    g.is_dragging = true;
+                    g.last_mouse_x = click_x;
+                    g.last_mouse_y = click_y;
+                }
+            } else if e.button() == 1 || e.button() == 2 {
                 g.is_dragging = true;
-                g.last_mouse_x = e.client_x() as f64;
-                g.last_mouse_y = e.client_y() as f64;
+                g.last_mouse_x = click_x;
+                g.last_mouse_y = click_y;
             }
         }) as Box<dyn FnMut(MouseEvent)>);
         canvas.add_event_listener_with_callback("mousedown", on_mouse_down.as_ref().unchecked_ref())?;
@@ -124,6 +158,8 @@ pub fn start() -> Result<(), JsValue> {
         let app_clone = app.clone();
         let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
             let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            g.audio.play_ui_beep();
             g.viewport.zoom = (g.viewport.zoom * 1.25).min(2.5);
         }) as Box<dyn FnMut(_)>);
         btn_in.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
@@ -134,9 +170,68 @@ pub fn start() -> Result<(), JsValue> {
         let app_clone = app.clone();
         let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
             let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            g.audio.play_ui_beep();
             g.viewport.zoom = (g.viewport.zoom / 1.25).max(0.4);
         }) as Box<dyn FnMut(_)>);
         btn_out.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    // Tactical Command Buttons
+    if let Some(btn_build) = document.get_element_by_id("btn-build") {
+        let app_clone = app.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            g.audio.play_build_confirm();
+            // Deploy new structure kit
+            let next_id = g.colony.buildings.len() as u32 + 1;
+            g.colony.buildings.push(sim::Building {
+                id: next_id,
+                name: format!("Common Ore Smelter #{}", next_id),
+                tile_x: 22 + (next_id as i32 * 2) % 8,
+                tile_y: 26 + (next_id as i32 * 2) % 6,
+                width: 2,
+                height: 2,
+                power_cost: 35,
+                is_active: true,
+            });
+            g.colony.power_consumed += 35;
+        }) as Box<dyn FnMut(_)>);
+        btn_build.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    if let Some(btn_units) = document.get_element_by_id("btn-units") {
+        let app_clone = app.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            g.audio.play_unit_ack();
+            let next_id = g.colony.units.len() as u32 + 1;
+            g.colony.units.push(sim::Unit {
+                id: next_id,
+                name: format!("Scout Lynx #{}", next_id),
+                tile_x: 21 + (next_id as i32) % 5,
+                tile_y: 25 + (next_id as i32) % 5,
+                hp: 120,
+                max_hp: 120,
+                is_selected: false,
+            });
+        }) as Box<dyn FnMut(_)>);
+        btn_units.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    if let Some(btn_research) = document.get_element_by_id("btn-research") {
+        let app_clone = app.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            g.audio.play_ui_beep();
+        }) as Box<dyn FnMut(_)>);
+        btn_research.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
         cb.forget();
     }
 
