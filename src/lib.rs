@@ -195,23 +195,42 @@ pub fn start() -> Result<(), JsValue> {
     // Tactical Command Buttons
     if let Some(btn_build) = document.get_element_by_id("btn-build") {
         let app_clone = app.clone();
+        let doc_clone = document.clone();
         let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
             let mut g = app_clone.borrow_mut();
             let _ = g.audio.init();
-            g.audio.play_build_confirm();
-            // Deploy new structure kit
-            let next_id = g.colony.buildings.len() as u32 + 1;
-            g.colony.buildings.push(sim::Building {
-                id: next_id,
-                name: format!("Common Ore Smelter #{}", next_id),
-                tile_x: 22 + (next_id as i32 * 2) % 8,
-                tile_y: 26 + (next_id as i32 * 2) % 6,
-                width: 2,
-                height: 2,
-                power_cost: 35,
-                is_active: true,
-            });
-            g.colony.power_consumed += 35;
+
+            let count = g.colony.buildings.len();
+            let structure_types = [
+                sim::structures::StructureType::CommonOreSmelter,
+                sim::structures::StructureType::DirtLab,
+                sim::structures::StructureType::Residence,
+                sim::structures::StructureType::Agrodome,
+                sim::structures::StructureType::TokamakReactor,
+                sim::structures::StructureType::VehicleFactory,
+            ];
+            let st = structure_types[count % structure_types.len()];
+
+            // Compute coordinate adjacent to base
+            let base_x = 20 + ((count as i32 * 3) % 15);
+            let base_y = 25 + ((count as i32 * 3) / 15 * 3);
+
+            match g.colony.deploy_structure(st, base_x, base_y) {
+                Ok(msg) => {
+                    g.audio.play_build_confirm();
+                    if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                        toast.set_text_content(Some(&msg));
+                        let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #4ade80; display: block;");
+                    }
+                }
+                Err(err) => {
+                    g.audio.play_ui_beep();
+                    if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                        toast.set_text_content(Some(&err));
+                        let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #ef4444; display: block;");
+                    }
+                }
+            }
         }) as Box<dyn FnMut(_)>);
         btn_build.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
         cb.forget();

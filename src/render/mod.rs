@@ -148,6 +148,44 @@ impl Viewport {
             }
         }
 
+        // Render Pressurized Colonial Transport Tubes
+        for &(tx, ty) in &colony.tubes {
+            let fog = colony.fog.get(tx as usize, ty as usize);
+            if fog == FogState::Unexplored {
+                continue;
+            }
+
+            let (sx, sy) = self.tile_to_screen(tx as f64, ty as f64);
+            if sx < -50.0 || sx > width + 50.0 || sy < -50.0 || sy > height + 50.0 {
+                continue;
+            }
+
+            let tube_w = 10.0 * self.zoom;
+            let tube_h = 5.0 * self.zoom;
+
+            // Outer pressurized metallic conduit casing
+            ctx.set_fill_style_str(if fog == FogState::Explored { "#1e293b" } else { "#475569" });
+            ctx.begin_path();
+            ctx.move_to(sx, sy - tube_h);
+            ctx.line_to(sx + tube_w, sy);
+            ctx.line_to(sx, sy + tube_h);
+            ctx.line_to(sx - tube_w, sy);
+            ctx.close_path();
+            ctx.fill();
+
+            // Inner cyan luminous plasma life-support artery
+            if fog == FogState::Visible {
+                ctx.set_stroke_style_str("#38bdf8");
+                ctx.set_line_width(1.2 * self.zoom);
+                ctx.stroke();
+
+                ctx.set_fill_style_str("#0ea5e9");
+                ctx.begin_path();
+                let _ = ctx.arc(sx, sy, 2.0 * self.zoom, 0.0, std::f64::consts::PI * 2.0);
+                ctx.fill();
+            }
+        }
+
         // Render Buildings (if not in completely unexplored terrain)
         for b in &colony.buildings {
             let fog = colony.fog.get(b.tile_x as usize, b.tile_y as usize);
@@ -252,6 +290,17 @@ impl Viewport {
                 };
                 ctx.set_fill_style_str(color);
                 ctx.fill_rect((x as f64) * scale_x, (y as f64) * scale_y, scale_x + 0.5, scale_y + 0.5);
+            }
+        }
+
+        // Blip transport tubes
+        ctx.set_fill_style_str("#64748b");
+        for &(tx, ty) in &colony.tubes {
+            let fog = colony.fog.get(tx as usize, ty as usize);
+            if fog != FogState::Unexplored {
+                let px = (tx as f64) * scale_x;
+                let py = (ty as f64) * scale_y;
+                ctx.fill_rect(px, py, 1.5, 1.5);
             }
         }
 

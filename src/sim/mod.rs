@@ -4,13 +4,16 @@ pub mod disasters;
 pub mod fog;
 pub mod map;
 pub mod pathfinding;
+pub mod structures;
 pub mod tech;
 
+use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
 use disasters::DisasterSimulator;
 use fog::FogOfWar;
 use map::GameMap;
 use pathfinding::{PathFinder, UnitOrder};
+use structures::{connect_with_tubes, StructureType};
 use tech::TechTree;
 
 const DEFAULT_MAP_DATA: &[u8] = include_bytes!("../../assets/eden01.map");
@@ -60,6 +63,7 @@ pub struct ColonyState {
     pub food_units: u32,
     pub units: Vec<Unit>,
     pub buildings: Vec<Building>,
+    pub tubes: HashSet<(i32, i32)>,
     pub game_map: GameMap,
     pub tech_tree: TechTree,
     pub disasters: DisasterSimulator,
@@ -144,6 +148,10 @@ impl ColonyState {
                 tiles: Vec::new(),
             });
 
+        let mut tubes = HashSet::new();
+        // Initial arterial transport tube between Command Center and Solar Power Array
+        connect_with_tubes(&mut tubes, (22, 21), (24, 21));
+
         let map_w = game_map.width as usize;
         let map_h = game_map.height as usize;
         let mut fog = FogOfWar::new(map_w, map_h);
@@ -161,6 +169,7 @@ impl ColonyState {
             food_units: 1400,
             units,
             buildings,
+            tubes,
             game_map,
             tech_tree: TechTree::new(),
             disasters: DisasterSimulator::new(),
@@ -206,6 +215,74 @@ impl ColonyState {
         self.fog.update_visibility(&self.units, &self.buildings);
 
         warning
+    }
+
+    /// Deploy a colonial structure kit, deducting ore costs and weaving transport tubes
+    pub fn deploy_structure(&mut self, structure_type: StructureType, tile_x: i32, tile_y: i32) -> Result<String, String> {
+        let (w, h) = structure_type.dimensions();
+        let (cost_common, cost_rare) = structure_type.ore_cost();
+
+        if self.common_ore < cost_common || self.rare_ore < cost_rare {
+            return Err(format!("Insufficient Ore: requires {} Common, {} Rare", cost_common, cost_rare));
+        }
+
+        // Check if footprint collides with existing structures or impassable lava
+        for b in &self.buildings {
+            let collides_x = tile_x < b.tile_x + b.width && tile_x + w > b.tile_x;
+            let collides_y = tile_y < b.tile_y + b.height && tile_y + h > b.tile_y;
+            if collides_x && collides_y {
+                return Err(format!("Placement conflict: space occupied by {}", b.name));
+            }
+        }
+
+        for dy in 0..h {
+            for dx in 0..w {
+                let tx = (tile_x + dx) as u32;
+                let ty = (tile_y + dy) as u32;
+                if let Some(tile) = self.game_map.get_tile(tx, ty) {
+                    if tile.is_lava {
+                        return Err("Cannot deploy structure onto active molten lava fissure!".into());
+                    }
+                }
+            }
+        }
+
+        // Deduct resources
+        self.common_ore -= cost_common;
+        self.rare_ore -= cost_rare;
+
+        let next_id = self.buildings.len() as u32 + 1;
+        let power = structure_type.power_cost();
+        let name = format!("{} #{}", structure_type.name(), next_id);
+
+        let new_b = Building {
+            id: next_id,
+            name: name.clone(),
+            tile_x,
+            tile_y,
+            width: w,
+            height: h,
+            power_cost: power,
+            is_active: true,
+        };
+
+        // Connect new structure to the nearest existing building via pressurized transport tube
+        if let Some(nearest) = self.buildings.iter().min_by_key(|b| (b.tile_x - tile_x).abs() + (b.tile_y - tile_y).abs()) {
+            let start = (tile_x + w / 2, tile_y + h / 2);
+            let end = (nearest.tile_x + nearest.width / 2, nearest.tile_y + nearest.height / 2);
+            connect_with_tubes(&mut self.tubes, start, end);
+        }
+
+        if power > 0 {
+            self.power_consumed += power as u32;
+        } else {
+            self.power_produced += (-power) as u32;
+        }
+
+        self.buildings.push(new_b);
+        self.fog.update_visibility(&self.units, &self.buildings);
+
+        Ok(format!("Deployed {} successfully", name))
     }
 
     /// Issue an 8-way movement order to all currently selected units
