@@ -27,6 +27,8 @@ use tech::TechTree;
 const EDEN_MAP_DATA: &[u8] = include_bytes!("../../assets/eden01.map");
 const PLYMOUTH_MAP_DATA: &[u8] = include_bytes!("../../assets/ply01.map");
 const TUTORIAL_MAP_DATA: &[u8] = include_bytes!("../../assets/tutorial.map");
+const EDEN02_MAP_DATA: &[u8] = include_bytes!("../../assets/eden02.map");
+const PLY02_MAP_DATA: &[u8] = include_bytes!("../../assets/ply02.map");
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Faction {
@@ -153,6 +155,8 @@ impl ColonyState {
         let (faction, map_data, mission, enemy_faction) = match scenario_id {
             1 => (Faction::Plymouth, PLYMOUTH_MAP_DATA, Mission::new_plymouth_mission_1(), Faction::Eden),
             2 => (Faction::Eden, TUTORIAL_MAP_DATA, Mission::new_tutorial_mission(), Faction::Plymouth),
+            3 => (Faction::Eden, EDEN02_MAP_DATA, Mission::new_eden_mission_2(), Faction::Plymouth),
+            4 => (Faction::Plymouth, PLY02_MAP_DATA, Mission::new_plymouth_mission_2(), Faction::Eden),
             _ => (Faction::Eden, EDEN_MAP_DATA, Mission::new_eden_mission_1(), Faction::Plymouth),
         };
 

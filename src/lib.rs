@@ -7,6 +7,7 @@ use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, KeyboardEvent, MouseE
 mod archive;
 mod audio;
 mod i18n;
+pub mod net;
 mod render;
 mod sim;
 
@@ -37,6 +38,7 @@ struct GameApp {
     hover_tile: (i32, i32),
     drag_select_start: Option<(f64, f64)>,
     drag_select_current: Option<(f64, f64)>,
+    net_session: Option<net::WebRtcSession>,
 }
 
 #[wasm_bindgen(start)]
@@ -81,6 +83,7 @@ pub fn start() -> Result<(), JsValue> {
         hover_tile: (20, 20),
         drag_select_start: None,
         drag_select_current: None,
+        net_session: None,
     }));
 
     // Mouse Controls (Pan, Box Select & Ghost Construction Placement)
@@ -741,6 +744,231 @@ pub fn start() -> Result<(), JsValue> {
             }
         }) as Box<dyn FnMut(_)>);
         btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    // Multiplayer Lobby Modal Controls
+    if let Some(btn_mp) = document.get_element_by_id("btn-multiplayer") {
+        let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            g.audio.play_ui_beep();
+            if let Some(modal) = doc_clone.get_element_by_id("multiplayer-modal") {
+                let _ = modal.set_attribute("style", "position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 55;");
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn_mp.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    if let Some(btn) = document.get_element_by_id("btn-close-multiplayer") {
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            if let Some(modal) = doc_clone.get_element_by_id("multiplayer-modal") {
+                let _ = modal.set_attribute("style", "display: none;");
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    // Host Action: Create Offer
+    if let Some(btn_host) = document.get_element_by_id("btn-net-host") {
+        let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            g.audio.play_ui_beep();
+            match net::WebRtcSession::new_host() {
+                Ok(session) => {
+                    g.net_session = Some(session.clone());
+                    let doc_c = doc_clone.clone();
+                    wasm_bindgen_futures::spawn_local(async move {
+                        if let Some(badge) = doc_c.get_element_by_id("net-status-badge") {
+                            badge.set_text_content(Some("GATHERING ICE (HOST)"));
+                            let _ = badge.set_attribute("style", "font-size: 11px; font-weight: bold; color: #facc15; background: rgba(250, 204, 21, 0.15); border: 1px solid #facc15; border-radius: 4px; padding: 3px 8px;");
+                        }
+                        match session.create_offer().await {
+                            Ok(offer_sdp) => {
+                                if let Some(textarea) = doc_c.get_element_by_id("net-offer-out") {
+                                    if let Ok(ta) = textarea.dyn_into::<web_sys::HtmlTextAreaElement>() {
+                                        ta.set_value(&offer_sdp);
+                                    }
+                                }
+                                if let Some(badge) = doc_c.get_element_by_id("net-status-badge") {
+                                    badge.set_text_content(Some("OFFER READY (SHARE)"));
+                                }
+                            }
+                            Err(e) => {
+                                web_sys::console::error_1(&e);
+                            }
+                        }
+                    });
+                }
+                Err(e) => {
+                    web_sys::console::error_1(&e);
+                }
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn_host.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    // Host Action: Accept Answer
+    if let Some(btn_acc) = document.get_element_by_id("btn-accept-answer") {
+        let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            if let Some(session) = g.net_session.clone() {
+                if let Some(ta_el) = doc_clone.get_element_by_id("net-answer-in") {
+                    if let Ok(ta) = ta_el.dyn_into::<web_sys::HtmlTextAreaElement>() {
+                        let answer_sdp = ta.value();
+                        if !answer_sdp.is_empty() {
+                            let doc_c = doc_clone.clone();
+                            wasm_bindgen_futures::spawn_local(async move {
+                                match session.accept_answer(&answer_sdp).await {
+                                    Ok(_) => {
+                                        if let Some(badge) = doc_c.get_element_by_id("net-status-badge") {
+                                            badge.set_text_content(Some("P2P LOCKED (ONLINE)"));
+                                            let _ = badge.set_attribute("style", "font-size: 11px; font-weight: bold; color: #4ade80; background: rgba(74, 222, 128, 0.15); border: 1px solid #4ade80; border-radius: 4px; padding: 3px 8px;");
+                                        }
+                                    }
+                                    Err(e) => {
+                                        web_sys::console::error_1(&e);
+                                    }
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn_acc.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    // Join Action: Accept Offer & Generate Answer
+    if let Some(btn_join) = document.get_element_by_id("btn-net-join") {
+        let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            g.audio.play_ui_beep();
+            if let Some(ta_el) = doc_clone.get_element_by_id("net-offer-in") {
+                if let Ok(ta) = ta_el.dyn_into::<web_sys::HtmlTextAreaElement>() {
+                    let offer_sdp = ta.value();
+                    if !offer_sdp.is_empty() {
+                        match net::WebRtcSession::new_guest() {
+                            Ok(session) => {
+                                g.net_session = Some(session.clone());
+                                let doc_c = doc_clone.clone();
+                                wasm_bindgen_futures::spawn_local(async move {
+                                    if let Some(badge) = doc_c.get_element_by_id("net-status-badge") {
+                                        badge.set_text_content(Some("GATHERING ICE (GUEST)"));
+                                        let _ = badge.set_attribute("style", "font-size: 11px; font-weight: bold; color: #facc15; background: rgba(250, 204, 21, 0.15); border: 1px solid #facc15; border-radius: 4px; padding: 3px 8px;");
+                                    }
+                                    match session.accept_offer_and_create_answer(&offer_sdp).await {
+                                        Ok(answer_sdp) => {
+                                            if let Some(out_el) = doc_c.get_element_by_id("net-answer-out") {
+                                                if let Ok(out_ta) = out_el.dyn_into::<web_sys::HtmlTextAreaElement>() {
+                                                    out_ta.set_value(&answer_sdp);
+                                                }
+                                            }
+                                            if let Some(badge) = doc_c.get_element_by_id("net-status-badge") {
+                                                badge.set_text_content(Some("ANSWER READY (SEND TO HOST)"));
+                                            }
+                                        }
+                                        Err(e) => {
+                                            web_sys::console::error_1(&e);
+                                        }
+                                    }
+                                });
+                            }
+                            Err(e) => {
+                                web_sys::console::error_1(&e);
+                            }
+                        }
+                    }
+                }
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn_join.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    // Copy Offer to Clipboard
+    if let Some(btn_copy) = document.get_element_by_id("btn-copy-offer") {
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            if let Some(ta_el) = doc_clone.get_element_by_id("net-offer-out") {
+                if let Ok(ta) = ta_el.dyn_into::<web_sys::HtmlTextAreaElement>() {
+                    let _ = ta.select();
+                    let val = ta.value();
+                    if let Some(win) = web_sys::window() {
+                        let _ = win.navigator().clipboard().write_text(&val);
+                    }
+                }
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn_copy.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    // Copy Answer to Clipboard
+    if let Some(btn_copy) = document.get_element_by_id("btn-copy-answer") {
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            if let Some(ta_el) = doc_clone.get_element_by_id("net-answer-out") {
+                if let Ok(ta) = ta_el.dyn_into::<web_sys::HtmlTextAreaElement>() {
+                    let _ = ta.select();
+                    let val = ta.value();
+                    if let Some(win) = web_sys::window() {
+                        let _ = win.navigator().clipboard().write_text(&val);
+                    }
+                }
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn_copy.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    // Send Tactical Chat
+    if let Some(btn_chat) = document.get_element_by_id("btn-net-send-chat") {
+        let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let g = app_clone.borrow();
+            if let Some(input_el) = doc_clone.get_element_by_id("net-chat-input") {
+                if let Ok(inp) = input_el.dyn_into::<web_sys::HtmlInputElement>() {
+                    let text = inp.value().trim().to_string();
+                    if !text.is_empty() {
+                        inp.set_value("");
+                        let sender_name = format!("{:?} Commander", g.colony.faction);
+                        let msg = net::NetMessage::ChatMessage {
+                            sender: sender_name.clone(),
+                            text: text.clone(),
+                        };
+                        if let Some(session) = &g.net_session {
+                            let _ = session.send_message(&msg);
+                        }
+                        if let Some(log_el) = doc_clone.get_element_by_id("net-chat-log") {
+                            if let Ok(chat_div) = doc_clone.create_element("div") {
+                                chat_div.set_text_content(Some(&format!("[{}] {}", sender_name, text)));
+                                let _ = chat_div.set_attribute("style", "color: #38bdf8; margin-bottom: 2px;");
+                                let _ = log_el.append_child(&chat_div);
+                            }
+                        }
+                    }
+                }
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn_chat.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
         cb.forget();
     }
 
@@ -1473,6 +1701,45 @@ pub fn start() -> Result<(), JsValue> {
             minimap_canvas.set_height(mini_h);
         }
 
+        // WebRTC P2P Multiplayer Packet Dispatch & Telemetry
+        if let Some(session) = &app_borrow.net_session {
+            if session.is_connected() {
+                if let Some(badge) = document.get_element_by_id("net-status-badge") {
+                    badge.set_text_content(Some("ONLINE (P2P LOCKED)"));
+                    let _ = badge.set_attribute("style", "font-size: 11px; font-weight: bold; color: #4ade80; background: rgba(74, 222, 128, 0.15); border: 1px solid #4ade80; border-radius: 4px; padding: 3px 8px;");
+                }
+            }
+            let net_messages = session.poll_messages();
+            for msg in net_messages {
+                match msg {
+                    net::NetMessage::UnitOrder { unit_ids, order } => {
+                        let sim_order = order.to_unit_order();
+                        for u in &mut app_borrow.colony.units {
+                            if unit_ids.contains(&u.id) {
+                                u.current_order = sim_order.clone();
+                            }
+                        }
+                    }
+                    net::NetMessage::QueueProduction { building_id, item } => {
+                        let _ = app_borrow.colony.queue_production(building_id, item);
+                    }
+                    net::NetMessage::RecycleStructure { building_id } => {
+                        let _ = app_borrow.colony.recycle_structure(building_id);
+                    }
+                    net::NetMessage::ChatMessage { sender, text } => {
+                        if let Some(log_el) = document.get_element_by_id("net-chat-log") {
+                            if let Ok(chat_div) = document.create_element("div") {
+                                chat_div.set_text_content(Some(&format!("[{}] {}", sender, text)));
+                                let _ = chat_div.set_attribute("style", "color: #facc15; margin-bottom: 2px;");
+                                let _ = log_el.append_child(&chat_div);
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+
         // Update simulation
         let sim_result = app_borrow.colony.update(dt.min(0.1));
 
@@ -1509,6 +1776,12 @@ pub fn start() -> Result<(), JsValue> {
         if sim_result.vortex_active && sim_result.notice.map(|n| n.contains("Vortex")).unwrap_or(false) {
             app_borrow.audio.play_vortex_howl();
         }
+
+        // Dynamic soundtrack update
+        let is_combat = sim_result.laser_fired || sim_result.railgun_fired || sim_result.microwave_fired || sim_result.acid_fired;
+        let is_alert = sim_result.disaster_siren;
+        app_borrow.audio.update_music(dt.min(0.1), is_combat, is_alert);
+
         if sim_result.starship_launched && app_borrow.colony.launch_anim_time < 0.5 {
             if let Some(toast) = document.get_element_by_id("research-toast") {
                 toast.set_text_content(Some("🚀 ORBITAL LAUNCH IN PROGRESS: Evacuation Starship ascending to escape velocity!"));

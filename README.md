@@ -64,7 +64,9 @@ Unlike heavyweight virtual machines or x86 emulators, this port runs natively in
 | **Planetary Hazards & Disasters** | ✅ | Creeping microbial Blight, volcanic fissures, atmospheric dust vortices, and kinetic meteor showers |
 | **Red Alert Siren & Hostile Raids**| ✅ | Command Center dual-tone disaster sirens and coordinated hostile Plymouth incursion assault waves |
 | **Scientific Research Matrix** | ✅ | 11-node tech tree with prerequisite gating (Vulcanology, Railguns, Point Defense) and passive bonuses · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
-| **Multi-Map Campaigns** | ✅ | Authentic operational theaters (Eden 1, Plymouth 1, Academy Tutorial) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
+| **P2P WebRTC Multiplayer**       | ✅ | Serverless peer-to-peer data channel networking (SDP Base64 exchange, turn-buffered lockstep orders, tactical chat) · [`docs/formats/multiplayer_protocol.md`](docs/formats/multiplayer_protocol.md) |
+| **Multi-Map Campaigns**          | ✅ | 5 authentic operational theaters (Eden 1 & 2, Plymouth 1 & 2, Academy) with extracted `.map` files · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
+| **Dynamic Atmospheric Soundtrack**| ✅ | Procedural sequencer dynamically switching between Exploration, Combat, and Red Alert emergency themes |
 | **Factory Queues & Animation** | ✅ | Production queue scheduling, welding plasma arcs, HUD progress bars |
 | **Starship Evacuation & Launch** | ✅ | 4-stage starship assembly, orbital launch animation with billowing exhaust plumes, and escape fanfare · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
 | **Mission Debriefing & Directives**| ✅ | Post-mission operational evaluation, survivor demographics, directive checklist, and campaign progression |

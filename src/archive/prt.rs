@@ -4,15 +4,48 @@
 use byteorder::{LittleEndian, ReadBytesExt};
 use std::io::{Cursor, Read};
 
-#[derive(Debug, Clone)]
-pub struct SpriteMeta {
+/// Raw 20-byte sprite header in PRT file
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PrtSpriteHeader {
+    pub scan_line_width: u32,
+    pub pixel_offset: u32,
+    pub height: u32,
+    pub width: u32,
+    pub image_type: u16,
+    pub palette_index: u16,
+}
+
+impl PrtSpriteHeader {
+    pub fn is_shadow(&self) -> bool {
+        (self.image_type & 4) != 0
+    }
+
+    pub fn to_frame(&self) -> PrtFrame {
+        PrtFrame {
+            width: self.width,
+            height: self.height,
+            scan_line_width: self.scan_line_width,
+            pixel_offset: self.pixel_offset,
+            palette_index: self.palette_index,
+            is_shadow: self.is_shadow(),
+            image_type: self.image_type,
+        }
+    }
+}
+
+/// Decoded sprite frame metadata with convenience properties
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PrtFrame {
     pub width: u32,
     pub height: u32,
     pub scan_line_width: u32,
     pub pixel_offset: u32,
     pub palette_index: u16,
     pub is_shadow: bool,
+    pub image_type: u16,
 }
+
+pub type SpriteMeta = PrtFrame;
 
 #[derive(Debug, Clone)]
 pub struct PrtFile {
@@ -77,6 +110,7 @@ impl PrtFile {
                 pixel_offset: p_off,
                 palette_index: pal_idx,
                 is_shadow,
+                image_type: img_type,
             });
         }
 

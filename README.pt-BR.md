@@ -64,7 +64,9 @@ Diferente de máquinas virtuais pesadas ou emuladores x86, este porte roda nativ
 | **Perigos Planetários & Desastres** | ✅ | Blight microbiano rastejante, fissuras vulcânicas, vórtices de poeira e chuvas de meteoros cinéticos |
 | **Sirene de Alerta Vermelho & Incursões**| ✅ | Sirene bitonal de emergência do Centro de Comando e ondas táticas coordenadas de ataque da Plymouth |
 | **Matriz Científica de Pesquisa** | ✅ | Árvore de 11 tecnologias com requisitos obrigatórios (Vulcanologia, Railguns, Defesa de Ponto) e bônus passivos · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
-| **Campanhas Multi-Mapas** | ✅ | Teatros autênticos de operação (Eden 1, Plymouth 1, Tutorial da Academia) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
+| **Multiplayer P2P via WebRTC**    | ✅ | Rede ponto-a-ponto sem servidor (troca de SDP em Base64, sincronização lockstep e chat tático) · [`docs/formats/multiplayer_protocol.md`](docs/formats/multiplayer_protocol.md) |
+| **Campanhas Multi-Mapas**         | ✅ | 5 teatros autênticos de operação (Eden 1 e 2, Plymouth 1 e 2, Academia) extraídos de `.map` · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
+| **Trilha Sonora Dinâmica**        | ✅ | Sequenciador procedural que transita entre os modos Exploração, Combate e Alerta Vermelho |
 | **Filas de Fábrica & Animação** | ✅ | Agendamento de fabricação, arcos elétricos de solda e barras de progresso no HUD |
 | **Evacuação & Lançamento de Nave**| ✅ | Montagem em 4 estágios da nave estelar, animação de ignição orbital com plumas de escape e fanfarra de vitória · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
 | **Debriefing de Missão & Diretivas**| ✅ | Avaliação operacional pós-missão, contagem de sobreviventes, checklist de diretivas e avanço de campanha |

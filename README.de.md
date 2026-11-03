@@ -69,7 +69,9 @@ Ziel ist es, den Strategieklassiker in modernen Webbrowsern mit nativer Leistung
 | **Planetare Gefahren & Katastrophen**| ✅ | Kriechende mikrobielle Pest, Vulkanspalten, Staubwirbel-Tornados und kinetische Meteorschauer |
 | **Roter Alarm Sirene & Überfälle**| ✅ | Zweiton-Notfallsirene der Kommandozentrale und koordinierte Angriffsstaffeln feindlicher Plymouth-Einheiten |
 | **Wissenschaftliche Forschungsmatrix**| ✅ | 11-Knoten-Tech-Baum mit Pflichtvoraussetzungen (Vulkanologie, Railguns, Punktverteidigung) und passiven Boni · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
-| **Multi-Karten-Kampagnen** | ✅ | Authentische Schauplätze (Eden 1, Plymouth 1, Akademie-Tutorial) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
+| **P2P WebRTC Multiplayer**        | ✅ | Serverloses Peer-to-Peer-Netzwerk (SDP-Base64-Austausch, Lockstep-Befehle und taktischer Chat) · [`docs/formats/multiplayer_protocol.md`](docs/formats/multiplayer_protocol.md) |
+| **Multi-Karten-Kampagnen**         | ✅ | 5 authentische Schauplätze (Eden 1 & 2, Plymouth 1 & 2, Akademie) mit extrahierten `.map`-Dateien · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
+| **Dynamischer Atmosphäre-Soundtrack**| ✅ | Prozeduraler Sequenzer, der zwischen Erkundung, Gefecht und Rotem Alarm wechselt |
 | **Fabrikwarteschlange & Schweißen** | ✅ | Fahrzeugbau mit Plasma-Schweißeffekt und Fortschrittsbalken |
 | **Raumschiff-Evakuierung & Start** | ✅ | Bau in 4 Phasen, orbitale Startanimation mit lodernden Abgasfahnen und Siegesfanfare · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
 | **Missions-Nachbesprechung & Ziele**| ✅ | Operative Nachbesprechung, Überlebenden-Demografie, Richtlinien-Checkliste und Kampagnenfortschritt |

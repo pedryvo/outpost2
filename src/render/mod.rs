@@ -1,6 +1,7 @@
 //! Isometric Viewport and HTML5 Canvas Renderer
 
 pub mod palette;
+pub mod sprites;
 
 use web_sys::CanvasRenderingContext2d;
 use crate::sim::{fog::FogState, ColonyState, Faction};
@@ -14,6 +15,7 @@ pub struct Viewport {
     pub tile_height: f64,
     pub map_cols: i32,
     pub map_rows: i32,
+    pub sprite_mgr: std::cell::RefCell<sprites::UnitSpriteManager>,
 }
 
 impl Viewport {
@@ -26,6 +28,7 @@ impl Viewport {
             tile_height: 32.0,
             map_cols: 64,
             map_rows: 64,
+            sprite_mgr: std::cell::RefCell::new(sprites::UnitSpriteManager::new(sprites::SpriteAtlas::new())),
         }
     }
 
@@ -529,6 +532,12 @@ impl Viewport {
             }
         }
 
+        // Update Unit Sprite & Animation Pipeline
+        let unit_ptrs: Vec<&crate::sim::Unit> = colony.units.iter().collect();
+        if let Ok(mut sprite_mgr) = self.sprite_mgr.try_borrow_mut() {
+            sprite_mgr.update(0.016, &unit_ptrs);
+        }
+
         // Render Units (Only visible when active in sensor range)
         for u in &colony.units {
             let fog = colony.fog.get(u.tile_x as usize, u.tile_y as usize);
@@ -538,62 +547,9 @@ impl Viewport {
 
             let (sx, sy) = self.tile_to_screen(u.tile_x as f64, u.tile_y as f64);
 
-            // Unit chassis: Repair is emerald green, Earthworker is amber, ConVec is yellow, Miner is slate grey, Tiger is reinforced navy/dark crimson
-            let is_tiger = u.name.contains("Tiger");
-            let is_miner = u.name.contains("Robo-Miner");
-            let chassis_radius = if is_tiger { 11.0 * self.zoom } else { 8.0 * self.zoom };
-
-            let chassis_color = if u.name.contains("Repair") {
-                "#10b981"
-            } else if u.name.contains("Earthworker") {
-                "#f59e0b"
-            } else if u.name.contains("ConVec") {
-                "#eab308"
-            } else if is_miner {
-                "#64748b"
-            } else if is_tiger {
-                if u.faction == Faction::Eden { "#0284c7" } else { "#b91c1c" }
-            } else if u.faction == Faction::Eden {
-                "#38bdf8"
-            } else {
-                "#ef4444"
-            };
-
-            // Tiger tank treads
-            if is_tiger {
-                ctx.set_fill_style_str("#1e293b");
-                ctx.fill_rect(sx - 13.0 * self.zoom, sy - 8.0 * self.zoom, 26.0 * self.zoom, 3.0 * self.zoom);
-                ctx.fill_rect(sx - 13.0 * self.zoom, sy + 5.0 * self.zoom, 26.0 * self.zoom, 3.0 * self.zoom);
-            }
-
-            ctx.set_fill_style_str(chassis_color);
-            ctx.begin_path();
-            let _ = ctx.arc(sx, sy, chassis_radius, 0.0, std::f64::consts::PI * 2.0);
-            ctx.fill();
-
-            ctx.set_stroke_style_str("#0f172a");
-            ctx.set_line_width(1.5);
-            ctx.stroke();
-
-            // Tiger Railgun elongated magnetic barrel
-            if is_tiger {
-                ctx.set_stroke_style_str("#38bdf8");
-                ctx.set_line_width(2.5 * self.zoom);
-                ctx.begin_path();
-                ctx.move_to(sx, sy);
-                ctx.line_to(sx + 15.0 * self.zoom, sy);
-                ctx.stroke();
-
-                // Railgun magnetic accelerator rings
-                ctx.set_stroke_style_str("#e0f2fe");
-                ctx.set_line_width(1.2 * self.zoom);
-                for ring_i in 1..4 {
-                    let rx = sx + (5.0 + ring_i as f64 * 3.0) * self.zoom;
-                    ctx.begin_path();
-                    ctx.move_to(rx, sy - 3.0 * self.zoom);
-                    ctx.line_to(rx, sy + 3.0 * self.zoom);
-                    ctx.stroke();
-                }
+            // Render Unit using authentic sprite blitting or directional vector rendering
+            if let Ok(mut sprite_mgr) = self.sprite_mgr.try_borrow_mut() {
+                sprite_mgr.render_unit(ctx, u, sx, sy, self.zoom);
             }
 
             if u.name.contains("Repair") {

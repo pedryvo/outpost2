@@ -1,18 +1,28 @@
-//! Procedural Sci-Fi Atmospheric Music Synthesizer
+//! Procedural Sci-Fi Atmospheric Music Synthesizer & Dynamic Soundtrack
 //!
 //! Generates evocative ambient soundscapes for Outpost 2 using Web Audio API nodes:
 //! - Sub-bass planetary resonance drone (65.4 Hz C2).
-//! - Space arpeggios pulsing with exponential release envelopes.
-//! - Resonant low-pass filtering modeling distant atmospheric winds.
+//! - Dynamic soundtrack sequencer switching between Exploration, Combat, and Red Alert modes.
+//! - Shimmering pentatonic arpeggios and rhythmic industrial pulses.
 
 use wasm_bindgen::JsValue;
 use web_sys::{AudioContext, GainNode, OscillatorNode, OscillatorType};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MusicMood {
+    Exploration,
+    Combat,
+    Emergency,
+}
 
 pub struct MusicEngine {
     ctx: Option<AudioContext>,
     master_gain: Option<GainNode>,
     drone_osc: Option<OscillatorNode>,
     is_playing: bool,
+    pub mood: MusicMood,
+    step_timer: f64,
+    step_index: usize,
 }
 
 impl MusicEngine {
@@ -22,6 +32,9 @@ impl MusicEngine {
             master_gain: None,
             drone_osc: None,
             is_playing: false,
+            mood: MusicMood::Exploration,
+            step_timer: 0.0,
+            step_index: 0,
         }
     }
 
@@ -52,6 +65,74 @@ impl MusicEngine {
             self.is_playing = true;
         }
         Ok(())
+    }
+
+    /// Update musical sequencer tick according to current tactical mood
+    pub fn update(&mut self, dt_secs: f64, is_combat: bool, is_alert: bool) {
+        if !self.is_playing {
+            return;
+        }
+
+        let target_mood = if is_alert {
+            MusicMood::Emergency
+        } else if is_combat {
+            MusicMood::Combat
+        } else {
+            MusicMood::Exploration
+        };
+        self.mood = target_mood;
+
+        let interval = match self.mood {
+            MusicMood::Combat => 0.28,
+            MusicMood::Emergency => 0.35,
+            MusicMood::Exploration => 0.85,
+        };
+
+        self.step_timer += dt_secs;
+        if self.step_timer >= interval {
+            self.step_timer = 0.0;
+            self.step_index = (self.step_index + 1) % 16;
+            self.trigger_step();
+        }
+    }
+
+    fn trigger_step(&self) {
+        if let (Some(ctx), Some(gain)) = (&self.ctx, &self.master_gain) {
+            let (freq, osc_type, dur, vol) = match self.mood {
+                MusicMood::Exploration => {
+                    // Shimmering sci-fi minor pentatonic arpeggio (C4, Eb4, F4, G4, Bb4, C5)
+                    let scale = [261.63, 311.13, 349.23, 392.00, 466.16, 523.25, 392.00, 311.13];
+                    let f = scale[self.step_index % scale.len()];
+                    (f, OscillatorType::Sine, 0.70, 0.06)
+                }
+                MusicMood::Combat => {
+                    // Driving staccato bassline (C2, C2, Eb2, G2, F2, C2)
+                    let bassline = [65.41, 65.41, 77.78, 98.00, 87.31, 65.41, 77.78, 98.00];
+                    let f = bassline[self.step_index % bassline.len()];
+                    (f, OscillatorType::Triangle, 0.22, 0.14)
+                }
+                MusicMood::Emergency => {
+                    // Tense tritone pulsing alert motifs
+                    let alert_notes = [130.81, 185.00, 130.81, 196.00]; // C3, F#3, C3, G3
+                    let f = alert_notes[self.step_index % alert_notes.len()];
+                    (f, OscillatorType::Sawtooth, 0.25, 0.10)
+                }
+            };
+
+            if let Ok(osc) = ctx.create_oscillator() {
+                if let Ok(note_gain) = ctx.create_gain() {
+                    let now = ctx.current_time();
+                    osc.set_type(osc_type);
+                    let _ = osc.frequency().set_value(freq as f32);
+                    let _ = note_gain.gain().set_value_at_time(vol, now);
+                    let _ = note_gain.gain().exponential_ramp_to_value_at_time(0.001, now + dur);
+                    let _ = osc.connect_with_audio_node(&note_gain);
+                    let _ = note_gain.connect_with_audio_node(gain);
+                    let _ = osc.start();
+                    let _ = osc.stop_with_when(now + dur);
+                }
+            }
+        }
     }
 
     /// Toggle background music playback

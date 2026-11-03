@@ -69,7 +69,9 @@ _Sierra 和 Dynamix 经典硬科幻即时战略游戏，<br>专为现代浏览�
 | **行星灾害与天体灾变** | ✅ | 蔓延性枯萎病微生物真菌、火山熔岩裂隙、大气尘暴旋风与动能陨石雨撞击 |
 | **红色警报警报声与敌军突袭**| ✅ | 指挥中心双音频道紧急红色警报警报器，普利茅斯协同战术突击波次进攻 |
 | **多学科科研矩阵** | ✅ | 11 大科技前置解锁树（火山学、电磁轨道炮、点防御）与被动增益 · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
-| **多战役战场选择器** | ✅ | 真实战役战场（伊甸 1、普利茅斯 1、学院教学） · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
+| **WebRTC 点对点联机对战**   | ✅ | 无服务器直连 P2P 架构（Base64 SDP 交换、定步长指令帧同步、战术文字通讯） · [`docs/formats/multiplayer_protocol.md`](docs/formats/multiplayer_protocol.md) |
+| **多战役战场选择器**         | ✅ | 5 大真实战役战场（伊甸 1 与 2、普利茅斯 1 与 2、学院教学）直接加载原生 `.map` · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
+| **动态气氛原声音轨**         | ✅ | 程序化音乐音序器，在探索、交火与红色警戒紧急状态间无缝切换 |
 | **工厂生产队列与焊接** | ✅ | 战车制造排队机制、等离子火花与 HUD 进度条 |
 | **星际逃逸飞船建造与点火升空** | ✅ | 四阶段飞船组装、升空轨道点火粒子尾焰动画与胜利号角 · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
 | **任务简报复盘与战后总结** | ✅ | 战后总结模态弹窗、幸存殖民者人口统计、任务指令清单核验与战役关卡推进 |

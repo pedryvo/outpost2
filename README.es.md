@@ -69,7 +69,9 @@ El objetivo es preservar y modernizar este clásico juego de estrategia en tiemp
 | **Peligros Planetarios y Desastres**| ✅ | Plaga microbiana reptante, fisuras volcánicas, vórtices de polvo y lluvias de meteoritos cinéticos |
 | **Sirena de Alerta Roja & Incursiones**| ✅ | Sirena bitonal de emergencia del Centro de Mando y asaltos coordinados de escuadrones Plymouth |
 | **Matriz Científica de Investigación** | ✅ | Árbol de 11 tecnologías con prerrequisitos obligatorios (Vulcanología, Cañón Rail, Defensas) y bonos pasivos · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
-| **Campañas Multi-Mapa** | ✅ | Teatros de operación auténticos (Eden 1, Plymouth 1, Academia) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
+| **Multijugador P2P WebRTC**        | ✅ | Red punto a punto sin servidores (intercambio SDP Base64, órdenes lockstep y chat táctico) · [`docs/formats/multiplayer_protocol.md`](docs/formats/multiplayer_protocol.md) |
+| **Campañas Multi-Mapa**            | ✅ | 5 teatros de operación auténticos (Eden 1 y 2, Plymouth 1 y 2, Academia) extraídos de `.map` · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
+| **Banda Sonora Dinámica**          | ✅ | Secuenciador procedural que alterna entre Exploración, Combate y Alerta Roja |
 | **Filas de Fábrica y Soldadura** | ✅ | Planificación de producción de vehículos con arcos de plasma y barras de progreso |
 | **Evacuación y Lanzamiento de Nave**| ✅ | Fabricación en 4 etapas, animación de ignición orbital con plumas de escape y fanfarria de victoria · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
 | **Debriefing de Misión y Directivas**| ✅ | Evaluación operativa post-misión, demografía de supervivientes, lista de directivas y progresión |

@@ -53,6 +53,13 @@ impl AudioManager {
         self.muted
     }
 
+    /// Advance dynamic procedural soundtrack sequencer
+    pub fn update_music(&mut self, dt_secs: f64, is_combat: bool, is_alert: bool) {
+        if !self.muted {
+            self.music.update(dt_secs, is_combat, is_alert);
+        }
+    }
+
     /// Play futuristic sci-fi UI confirmation beep
     pub fn play_ui_beep(&self) {
         if self.muted {
