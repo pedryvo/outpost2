@@ -673,6 +673,44 @@ impl Viewport {
             }
         }
 
+        // Blip active volcanic lava channels
+        ctx.set_fill_style_str("#f97316");
+        for &(lx, ly) in &colony.disasters.active_lava_tiles {
+            let fog = colony.fog.get(lx as usize, ly as usize);
+            if fog != FogState::Unexplored {
+                let px = (lx as f64) * scale_x;
+                let py = (ly as f64) * scale_y;
+                ctx.fill_rect(px, py, 2.0, 2.0);
+            }
+        }
+
+        // Blip creeping microbial blight
+        ctx.set_fill_style_str("#a855f7");
+        for &(bx, by) in &colony.disasters.active_blight_tiles {
+            let fog = colony.fog.get(bx as usize, by as usize);
+            if fog != FogState::Unexplored {
+                let px = (bx as f64) * scale_x;
+                let py = (by as f64) * scale_y;
+                ctx.fill_rect(px, py, 2.0, 2.0);
+            }
+        }
+
+        // Blip atmospheric vortices
+        ctx.set_fill_style_str("#fde047");
+        for v in &colony.disasters.active_vortices {
+            let px = v.x * scale_x;
+            let py = v.y * scale_y;
+            ctx.fill_rect(px - 1.0, py - 1.0, 3.0, 3.0);
+        }
+
+        // Blip incoming meteor targets
+        ctx.set_fill_style_str("#ef4444");
+        for m in &colony.disasters.pending_meteors {
+            let px = m.x * scale_x;
+            let py = m.y * scale_y;
+            ctx.fill_rect(px - 1.5, py - 1.5, 3.5, 3.5);
+        }
+
         // Blip transport tubes
         ctx.set_fill_style_str("#64748b");
         for &(tx, ty) in &colony.tubes {
