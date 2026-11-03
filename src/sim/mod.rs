@@ -126,6 +126,7 @@ pub struct SimUpdateResult {
     pub unit_destroyed: bool,
     pub building_deployed: bool,
     pub vortex_active: bool,
+    pub meteor_hit: bool,
 }
 
 impl ColonyState {
@@ -1130,6 +1131,35 @@ impl ColonyState {
             &self.tech_tree,
         );
 
+        // Process Meteor Impact Detonations
+        let mut detonations = Vec::new();
+        std::mem::swap(&mut self.disasters.detonation_queue, &mut detonations);
+        let meteor_hit = !detonations.is_empty();
+        for (mx, my, radius) in detonations {
+            self.active_explosions.push(ExplosionEffect {
+                x: mx,
+                y: my,
+                radius: 4.0,
+                max_radius: 28.0,
+                lifetime: 0.55,
+                max_lifetime: 0.55,
+            });
+            self.disasters.quake_duration = 1.8;
+
+            let m_tile_x = mx.round() as i32;
+            let m_tile_y = my.round() as i32;
+            self.tubes.remove(&(m_tile_x, m_tile_y));
+
+            // Damage units caught in blast radius
+            for u in &mut self.units {
+                let dist = ((u.tile_x as f64 - mx).powi(2) + (u.tile_y as f64 - my).powi(2)).sqrt();
+                if dist <= radius {
+                    let blast_dmg = (80.0 * (1.0 - dist / radius)) as u32;
+                    u.hp = u.hp.saturating_sub(blast_dmg.max(25));
+                }
+            }
+        }
+
         // Refresh dynamic sensor fog of war
         self.fog.update_visibility(&self.units, &self.buildings);
 
@@ -1141,6 +1171,7 @@ impl ColonyState {
             unit_destroyed,
             building_deployed,
             vortex_active,
+            meteor_hit,
         }
     }
 

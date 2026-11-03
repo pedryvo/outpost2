@@ -1272,7 +1272,7 @@ pub fn start() -> Result<(), JsValue> {
         if sim_result.laser_fired {
             app_borrow.audio.play_laser();
         }
-        if sim_result.unit_destroyed {
+        if sim_result.unit_destroyed || sim_result.meteor_hit {
             app_borrow.audio.play_explosion();
         }
         if sim_result.building_deployed {

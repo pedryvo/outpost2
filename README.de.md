@@ -61,7 +61,7 @@ Ziel ist es, den Strategieklassiker in modernen Webbrowsern mit nativer Leistung
 | **Earthworker-Pioniertechnik** | ✅ | Verstärkte Keramik-Schutzmauern, Verlegung von Feldleitungen und Biogefahren-Bereinigung |
 | **ConVec-Bausatz-Entfaltung** | ✅ | Baufahrzeuge mit vorgefertigten Gebäudekits, Vor-Ort-Entfaltung und Fundamentintegration |
 | **Wach- & Patrouillen-Taktik** | ✅ | Automatische Sektoren-Wachanker, bidirektionale Patrouillenrouten und reaktive Zielerfassung |
-| **Dynamische Pest & Staubwirbel** | ✅ | Kriechende mikrobielle Sporen-Gefahr, ätzender Hüllenschaden und wirbelnde atmosphärische Tornados |
+| **Planetare Gefahren & Katastrophen**| ✅ | Kriechende mikrobielle Pest, Vulkanspalten, Staubwirbel-Tornados und kinetische Meteorschauer |
 | **Wissenschaftliche Forschungsmatrix**| ✅ | Interaktives Tech-Modal mit Kategorien-Taxonomie und passiven Kolonie-Boni (Panzerung, Laser, Erzschmelze) · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **Multi-Karten-Kampagnen** | ✅ | Authentische Schauplätze (Eden 1, Plymouth 1, Akademie-Tutorial) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
 | **Fabrikwarteschlange & Schweißen** | ✅ | Fahrzeugbau mit Plasma-Schweißeffekt und Fortschrittsbalken |

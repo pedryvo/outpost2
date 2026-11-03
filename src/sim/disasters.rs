@@ -15,13 +15,26 @@ pub struct AtmosphericVortex {
 }
 
 #[derive(Debug, Clone)]
+pub struct MeteorImpact {
+    pub x: f64,
+    pub y: f64,
+    pub delay: f64,
+    pub max_delay: f64,
+    pub radius: f64,
+    pub has_impacted: bool,
+}
+
+#[derive(Debug, Clone)]
 pub struct DisasterSimulator {
     pub sol_timer: f64,
     pub blight_timer: f64,
     pub vortex_timer: f64,
+    pub meteor_timer: f64,
     pub active_lava_tiles: Vec<(u32, u32)>,
     pub active_blight_tiles: Vec<(u32, u32)>,
     pub active_vortices: Vec<AtmosphericVortex>,
+    pub pending_meteors: Vec<MeteorImpact>,
+    pub detonation_queue: Vec<(f64, f64, f64)>,
     pub eruption_count: u32,
     pub quake_shake_offset: (f64, f64),
     pub quake_duration: f64,
@@ -33,9 +46,12 @@ impl DisasterSimulator {
             sol_timer: 0.0,
             blight_timer: 0.0,
             vortex_timer: 0.0,
+            meteor_timer: 0.0,
             active_lava_tiles: Vec::new(),
             active_blight_tiles: Vec::new(),
             active_vortices: Vec::new(),
+            pending_meteors: Vec::new(),
+            detonation_queue: Vec::new(),
             eruption_count: 0,
             quake_shake_offset: (0.0, 0.0),
             quake_duration: 0.0,
@@ -47,6 +63,7 @@ impl DisasterSimulator {
         self.sol_timer += dt_secs;
         self.blight_timer += dt_secs;
         self.vortex_timer += dt_secs;
+        self.meteor_timer += dt_secs;
 
         // Advance active atmospheric vortices
         self.active_vortices.retain_mut(|v| {
@@ -55,6 +72,37 @@ impl DisasterSimulator {
             v.y += v.vy * dt_secs;
             v.lifetime > 0.0
         });
+
+        // Advance pending meteors and enqueue detonated impacts
+        for m in &mut self.pending_meteors {
+            if !m.has_impacted {
+                m.delay -= dt_secs;
+                if m.delay <= 0.0 {
+                    m.has_impacted = true;
+                    self.detonation_queue.push((m.x, m.y, m.radius));
+                }
+            }
+        }
+        self.pending_meteors.retain(|m| !m.has_impacted);
+
+        // Spawn meteor shower barrage every ~65 seconds
+        let mut meteor_notice = None;
+        if self.meteor_timer > 65.0 {
+            self.meteor_timer = 0.0;
+            for i in 0..4 {
+                let mx = 12.0 + ((self.eruption_count as f64 * 11.0 + i as f64 * 7.3) % 40.0);
+                let my = 10.0 + ((self.eruption_count as f64 * 8.0 + i as f64 * 5.7) % 35.0);
+                self.pending_meteors.push(MeteorImpact {
+                    x: mx,
+                    y: my,
+                    delay: 1.2 + i as f64 * 0.8,
+                    max_delay: 1.2 + i as f64 * 0.8,
+                    radius: 2.8,
+                    has_impacted: false,
+                });
+            }
+            meteor_notice = Some("ASTRONOMICAL ALERT: Meteor shower trajectory on collision course with New Terra!");
+        }
 
         // Spawn rotary dust vortex every ~50 seconds
         let mut vortex_notice = None;
@@ -115,7 +163,7 @@ impl DisasterSimulator {
             return Some("SEISMIC WARNING: Volcanic fissure erupted on New Terra! Magma is advancing.");
         }
 
-        vortex_notice
+        meteor_notice.or(vortex_notice)
     }
 
     /// Creep microbial blight to neighboring tiles

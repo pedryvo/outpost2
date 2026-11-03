@@ -61,7 +61,7 @@ El objetivo es preservar y modernizar este clásico juego de estrategia en tiemp
 | **Ingeniería con Earthworker** | ✅ | Muros defensivos de cerámica reforzada, tendido de tubos y purga de biopeligros |
 | **Despliegue de Kits con ConVec** | ✅ | Vehículos de Construcción transportando kits modulares, montaje en terreno y anclaje |
 | **Tácticas de Guardia y Patrulla** | ✅ | Puntos de anclaje de defensa, rutas bidireccionales de patrulla y combate reactivo |
-| **Plaga Dinámica y Vórtices** | ✅ | Expansión orgánica de esporas microbianas, corrosión cáustica y tornados atmosféricos giratorios |
+| **Peligros Planetarios y Desastres**| ✅ | Plaga microbiana reptante, fisuras volcánicas, vórtices de polvo y lluvias de meteoritos cinéticos |
 | **Matriz Científica de Investigación** | ✅ | Modal interactivo de tecnologías con taxonomía de ramas y bonificaciones pasivas (blindaje, láser, fundición) · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **Campañas Multi-Mapa** | ✅ | Teatros de operación auténticos (Eden 1, Plymouth 1, Academia) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
 | **Filas de Fábrica y Soldadura** | ✅ | Planificación de producción de vehículos con arcos de plasma y barras de progreso |

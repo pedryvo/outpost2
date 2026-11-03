@@ -56,7 +56,7 @@ Diferente de máquinas virtuais pesadas ou emuladores x86, este porte roda nativ
 | **Engenharia com Earthworker** | ✅ | Construção de muros cerâmicos defensivos, tubos de campo e purificação de bioameaças |
 | **Implantação de Kits via ConVec** | ✅ | Veículos de Construção transportando kits pré-fabricados, montagem em campo e fundação |
 | **Posturas de Guarda & Patrulha** | ✅ | Âncoras de guarda de setor automatizadas, rotas bidirecionais de patrulha e combate reativo |
-| **Blight Dinâmico & Vórtices** | ✅ | Contágio orgânico de esporos, corrosão cáustica de veículos e tornados atmosféricos giratórios |
+| **Perigos Planetários & Desastres** | ✅ | Blight microbiano rastejante, fissuras vulcânicas, vórtices de poeira e chuvas de meteoros cinéticos |
 | **Matriz Científica de Pesquisa** | ✅ | Modal interativo de tecnologias com taxonomia de ramos e bônus passivos (blindagem, lasers, fundição) · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **Campanhas Multi-Mapas** | ✅ | Teatros autênticos de operação (Eden 1, Plymouth 1, Tutorial da Academia) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
 | **Filas de Fábrica & Animação** | ✅ | Agendamento de fabricação, arcos elétricos de solda e barras de progresso no HUD |

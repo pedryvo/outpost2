@@ -525,6 +525,46 @@ impl Viewport {
             }
         }
 
+        // Render Incoming Meteor Fireball Streaks & Kinetic Impact Reticles
+        for m in &colony.disasters.pending_meteors {
+            let progress = (1.0 - (m.delay / m.max_delay)).clamp(0.0, 1.0);
+            let (target_sx, target_sy) = self.tile_to_screen(m.x, m.y);
+            let start_sx = target_sx + 240.0 * (1.0 - progress);
+            let start_sy = target_sy - 320.0 * (1.0 - progress);
+
+            let head_x = start_sx;
+            let head_y = start_sy;
+            let tail_x = head_x + 35.0;
+            let tail_y = head_y - 45.0;
+
+            // Fiery plasma trail
+            ctx.set_stroke_style_str("#fbbf24");
+            ctx.set_line_width(3.0 * self.zoom);
+            ctx.begin_path();
+            ctx.move_to(tail_x, tail_y);
+            ctx.line_to(head_x, head_y);
+            ctx.stroke();
+
+            // Meteorite core
+            ctx.set_fill_style_str("#ef4444");
+            ctx.begin_path();
+            let _ = ctx.arc(head_x, head_y, 5.0 * self.zoom, 0.0, std::f64::consts::TAU);
+            ctx.fill();
+
+            // Blazing white center
+            ctx.set_fill_style_str("#ffffff");
+            ctx.begin_path();
+            let _ = ctx.arc(head_x, head_y, 2.5 * self.zoom, 0.0, std::f64::consts::TAU);
+            ctx.fill();
+
+            // Ground kinetic target ring
+            ctx.set_stroke_style_str("rgba(239, 68, 68, 0.65)");
+            ctx.set_line_width(1.5);
+            ctx.begin_path();
+            let _ = ctx.arc(target_sx, target_sy, (m.radius * 6.0 * self.zoom) * (1.2 - progress * 0.4), 0.0, std::f64::consts::TAU);
+            ctx.stroke();
+        }
+
         // Render Holographic Ghost Blueprint Placement
         if let Some((st, (gx, gy), is_valid)) = ghost_placement {
             let (sx, sy) = self.tile_to_screen(gx as f64, gy as f64);
