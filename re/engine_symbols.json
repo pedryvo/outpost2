@@ -1,0 +1,2547 @@
+[
+  {
+    "ordinal": 1,
+    "rva": "0x83fb0",
+    "name": "??0BoolState@@QAE@ABV0@@Z"
+  },
+  {
+    "ordinal": 2,
+    "rva": "0x83f90",
+    "name": "??0BoolState@@QAE@I@Z"
+  },
+  {
+    "ordinal": 3,
+    "rva": "0x2350",
+    "name": "??0BuildingGroup@@QAE@XZ"
+  },
+  {
+    "ordinal": 4,
+    "rva": "0x10750",
+    "name": "??0CConfig@@QAE@PBD@Z"
+  },
+  {
+    "ordinal": 5,
+    "rva": "0x7a7b0",
+    "name": "??0ClosestEnumerator@@QAE@ABULOCATION@@@Z"
+  },
+  {
+    "ordinal": 6,
+    "rva": "0x21f0",
+    "name": "??0FightGroup@@QAE@XZ"
+  },
+  {
+    "ordinal": 7,
+    "rva": "0x83cc0",
+    "name": "??0Filter@@QAE@ABV0@@Z"
+  },
+  {
+    "ordinal": 8,
+    "rva": "0x83cb0",
+    "name": "??0Filter@@QAE@XZ"
+  },
+  {
+    "ordinal": 9,
+    "rva": "0x7a830",
+    "name": "??0GroupEnumerator@@QAE@AAVScGroup@@@Z"
+  },
+  {
+    "ordinal": 10,
+    "rva": "0x83d10",
+    "name": "??0GroupFilter@@QAE@ABV0@@Z"
+  },
+  {
+    "ordinal": 11,
+    "rva": "0x83ce0",
+    "name": "??0GroupFilter@@QAE@XZ"
+  },
+  {
+    "ordinal": 12,
+    "rva": "0x83e20",
+    "name": "??0IDlgWnd@@QAE@ABV0@@Z"
+  },
+  {
+    "ordinal": 13,
+    "rva": "0x318b0",
+    "name": "??0IDlgWnd@@QAE@XZ"
+  },
+  {
+    "ordinal": 14,
+    "rva": "0x83d90",
+    "name": "??0IWnd@@QAE@ABV0@@Z"
+  },
+  {
+    "ordinal": 15,
+    "rva": "0x31310",
+    "name": "??0IWnd@@QAE@XZ"
+  },
+  {
+    "ordinal": 16,
+    "rva": "0x7a740",
+    "name": "??0InRangeEnumerator@@QAE@ABULOCATION@@H@Z"
+  },
+  {
+    "ordinal": 17,
+    "rva": "0x7a610",
+    "name": "??0InRectEnumerator@@QAE@ABUMAP_RECT@@@Z"
+  },
+  {
+    "ordinal": 18,
+    "rva": "0x1e30",
+    "name": "??0LOCATION@@QAE@HH@Z"
+  },
+  {
+    "ordinal": 19,
+    "rva": "0x1e20",
+    "name": "??0LOCATION@@QAE@XZ"
+  },
+  {
+    "ordinal": 20,
+    "rva": "0x7a6d0",
+    "name": "??0LocationEnumerator@@QAE@ABULOCATION@@@Z"
+  },
+  {
+    "ordinal": 21,
+    "rva": "0x1ee0",
+    "name": "??0MAP_RECT@@QAE@ABULOCATION@@0@Z"
+  },
+  {
+    "ordinal": 22,
+    "rva": "0x1eb0",
+    "name": "??0MAP_RECT@@QAE@HHHH@Z"
+  },
+  {
+    "ordinal": 23,
+    "rva": "0x1ea0",
+    "name": "??0MAP_RECT@@QAE@XZ"
+  },
+  {
+    "ordinal": 24,
+    "rva": "0x83f40",
+    "name": "??0MenuState@@QAE@ABV0@@Z"
+  },
+  {
+    "ordinal": 25,
+    "rva": "0x9cd40",
+    "name": "??0MenuState@@QAE@PAUHMENU__@@I@Z"
+  },
+  {
+    "ordinal": 26,
+    "rva": "0x22a0",
+    "name": "??0MiningGroup@@QAE@XZ"
+  },
+  {
+    "ordinal": 27,
+    "rva": "0x24e0",
+    "name": "??0Pinwheel@@QAE@XZ"
+  },
+  {
+    "ordinal": 28,
+    "rva": "0x7a4e0",
+    "name": "??0PlayerBuildingEnum@@QAE@HW4map_id@@@Z"
+  },
+  {
+    "ordinal": 29,
+    "rva": "0x7a580",
+    "name": "??0PlayerUnitEnum@@QAE@H@Z"
+  },
+  {
+    "ordinal": 30,
+    "rva": "0x7a480",
+    "name": "??0PlayerVehicleEnum@@QAE@H@Z"
+  },
+  {
+    "ordinal": 31,
+    "rva": "0x2140",
+    "name": "??0ScGroup@@QAE@XZ"
+  },
+  {
+    "ordinal": 32,
+    "rva": "0x78c40",
+    "name": "??0ScStub@@QAE@XZ"
+  },
+  {
+    "ordinal": 33,
+    "rva": "0x83d60",
+    "name": "??0SubFilter@@QAE@ABV0@@Z"
+  },
+  {
+    "ordinal": 34,
+    "rva": "0x83d50",
+    "name": "??0SubFilter@@QAE@XZ"
+  },
+  {
+    "ordinal": 35,
+    "rva": "0x84090",
+    "name": "??0TFrame@@QAE@ABV0@@Z"
+  },
+  {
+    "ordinal": 36,
+    "rva": "0x84070",
+    "name": "??0TFrame@@QAE@XZ"
+  },
+  {
+    "ordinal": 37,
+    "rva": "0x2090",
+    "name": "??0Trigger@@QAE@XZ"
+  },
+  {
+    "ordinal": 38,
+    "rva": "0x83f00",
+    "name": "??0UIState@@QAE@ABV0@@Z"
+  },
+  {
+    "ordinal": 39,
+    "rva": "0x83ee0",
+    "name": "??0UIState@@QAE@I@Z"
+  },
+  {
+    "ordinal": 40,
+    "rva": "0x1f40",
+    "name": "??0Unit@@QAE@XZ"
+  },
+  {
+    "ordinal": 41,
+    "rva": "0x9d4a0",
+    "name": "??0UnitBlock@@QAE@PAUUnitRecord@@@Z"
+  },
+  {
+    "ordinal": 42,
+    "rva": "0x1f90",
+    "name": "??0_Player@@QAE@H@Z"
+  },
+  {
+    "ordinal": 43,
+    "rva": "0x2370",
+    "name": "??1BuildingGroup@@QAE@XZ"
+  },
+  {
+    "ordinal": 44,
+    "rva": "0x10820",
+    "name": "??1CConfig@@QAE@XZ"
+  },
+  {
+    "ordinal": 45,
+    "rva": "0x2210",
+    "name": "??1FightGroup@@QAE@XZ"
+  },
+  {
+    "ordinal": 46,
+    "rva": "0x318d0",
+    "name": "??1IDlgWnd@@UAE@XZ"
+  },
+  {
+    "ordinal": 47,
+    "rva": "0x31330",
+    "name": "??1IWnd@@UAE@XZ"
+  },
+  {
+    "ordinal": 48,
+    "rva": "0x22c0",
+    "name": "??1MiningGroup@@QAE@XZ"
+  },
+  {
+    "ordinal": 49,
+    "rva": "0x2500",
+    "name": "??1Pinwheel@@QAE@XZ"
+  },
+  {
+    "ordinal": 50,
+    "rva": "0x2160",
+    "name": "??1ScGroup@@QAE@XZ"
+  },
+  {
+    "ordinal": 51,
+    "rva": "0x78c50",
+    "name": "??1ScStub@@QAE@XZ"
+  },
+  {
+    "ordinal": 52,
+    "rva": "0x840f0",
+    "name": "??1TFrame@@UAE@XZ"
+  },
+  {
+    "ordinal": 53,
+    "rva": "0x20b0",
+    "name": "??1Trigger@@QAE@XZ"
+  },
+  {
+    "ordinal": 54,
+    "rva": "0x83fe0",
+    "name": "??4BoolState@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 55,
+    "rva": "0x2360",
+    "name": "??4BuildingGroup@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 56,
+    "rva": "0x10530",
+    "name": "??4CConfig@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 57,
+    "rva": "0x24b0",
+    "name": "??4ClosestEnumerator@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 58,
+    "rva": "0x2200",
+    "name": "??4FightGroup@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 59,
+    "rva": "0x83cd0",
+    "name": "??4Filter@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 60,
+    "rva": "0x1f80",
+    "name": "??4GameMap@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 61,
+    "rva": "0x24d0",
+    "name": "??4GroupEnumerator@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 62,
+    "rva": "0x83d30",
+    "name": "??4GroupFilter@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 63,
+    "rva": "0x83e70",
+    "name": "??4IDlgWnd@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 64,
+    "rva": "0x83dc0",
+    "name": "??4IWnd@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 65,
+    "rva": "0x2490",
+    "name": "??4InRangeEnumerator@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 66,
+    "rva": "0x2450",
+    "name": "??4InRectEnumerator@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 67,
+    "rva": "0x1e80",
+    "name": "??4LOCATION@@QAEAAU0@ABU0@@Z"
+  },
+  {
+    "ordinal": 68,
+    "rva": "0x2470",
+    "name": "??4LocationEnumerator@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 69,
+    "rva": "0x1f10",
+    "name": "??4MAP_RECT@@QAEAAU0@ABU0@@Z"
+  },
+  {
+    "ordinal": 70,
+    "rva": "0x83f70",
+    "name": "??4MenuState@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 71,
+    "rva": "0x22b0",
+    "name": "??4MiningGroup@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 72,
+    "rva": "0x24f0",
+    "name": "??4Pinwheel@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 73,
+    "rva": "0x2410",
+    "name": "??4PlayerBuildingEnum@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 74,
+    "rva": "0x2430",
+    "name": "??4PlayerUnitEnum@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 75,
+    "rva": "0x2400",
+    "name": "??4PlayerVehicleEnum@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 76,
+    "rva": "0x84190",
+    "name": "??4ResManager@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 77,
+    "rva": "0x2150",
+    "name": "??4ScGroup@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 78,
+    "rva": "0x2000",
+    "name": "??4ScStub@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 79,
+    "rva": "0x83d70",
+    "name": "??4SubFilter@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 80,
+    "rva": "0x1e00",
+    "name": "??4TApp@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 81,
+    "rva": "0x840c0",
+    "name": "??4TFrame@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 82,
+    "rva": "0x1fc0",
+    "name": "??4TethysGame@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 83,
+    "rva": "0x20a0",
+    "name": "??4Trigger@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 84,
+    "rva": "0x83f20",
+    "name": "??4UIState@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 85,
+    "rva": "0x1f70",
+    "name": "??4Unit@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 86,
+    "rva": "0x2590",
+    "name": "??4UnitBlock@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 87,
+    "rva": "0x1fa0",
+    "name": "??4_Player@@QAEAAV0@ABV0@@Z"
+  },
+  {
+    "ordinal": 88,
+    "rva": "0x1f50",
+    "name": "??8Unit@@QBEHABV0@@Z"
+  },
+  {
+    "ordinal": 89,
+    "rva": "0xcfc90",
+    "name": "??_7BoolState@@6B@"
+  },
+  {
+    "ordinal": 90,
+    "rva": "0xd612c",
+    "name": "??_7Filter@@6B@"
+  },
+  {
+    "ordinal": 91,
+    "rva": "0xd6130",
+    "name": "??_7GroupFilter@@6B@"
+  },
+  {
+    "ordinal": 92,
+    "rva": "0xd0138",
+    "name": "??_7IDlgWnd@@6B@"
+  },
+  {
+    "ordinal": 93,
+    "rva": "0xd0120",
+    "name": "??_7IWnd@@6B@"
+  },
+  {
+    "ordinal": 94,
+    "rva": "0xd6148",
+    "name": "??_7MenuState@@6B@"
+  },
+  {
+    "ordinal": 95,
+    "rva": "0xd6134",
+    "name": "??_7SubFilter@@6B@"
+  },
+  {
+    "ordinal": 96,
+    "rva": "0xd6158",
+    "name": "??_7TFrame@@6B@"
+  },
+  {
+    "ordinal": 97,
+    "rva": "0xd6138",
+    "name": "??_7UIState@@6B@"
+  },
+  {
+    "ordinal": 98,
+    "rva": "0x23a0",
+    "name": "??_EBuildingGroup@@QAEPAXI@Z"
+  },
+  {
+    "ordinal": 99,
+    "rva": "0x10610",
+    "name": "??_ECConfig@@QAEPAXI@Z"
+  },
+  {
+    "ordinal": 100,
+    "rva": "0x2240",
+    "name": "??_EFightGroup@@QAEPAXI@Z"
+  },
+  {
+    "ordinal": 101,
+    "rva": "0x31ed0",
+    "name": "??_EIDlgWnd@@UAEPAXI@Z"
+  },
+  {
+    "ordinal": 102,
+    "rva": "0x31e20",
+    "name": "??_EIWnd@@UAEPAXI@Z"
+  },
+  {
+    "ordinal": 103,
+    "rva": "0x22f0",
+    "name": "??_EMiningGroup@@QAEPAXI@Z"
+  },
+  {
+    "ordinal": 104,
+    "rva": "0x2530",
+    "name": "??_EPinwheel@@QAEPAXI@Z"
+  },
+  {
+    "ordinal": 105,
+    "rva": "0x2190",
+    "name": "??_EScGroup@@QAEPAXI@Z"
+  },
+  {
+    "ordinal": 106,
+    "rva": "0x2030",
+    "name": "??_EScStub@@QAEPAXI@Z"
+  },
+  {
+    "ordinal": 107,
+    "rva": "0x84120",
+    "name": "??_ETFrame@@UAEPAXI@Z"
+  },
+  {
+    "ordinal": 108,
+    "rva": "0x20e0",
+    "name": "??_ETrigger@@QAEPAXI@Z"
+  },
+  {
+    "ordinal": 109,
+    "rva": "0x84000",
+    "name": "??_FBoolState@@QAEXXZ"
+  },
+  {
+    "ordinal": 110,
+    "rva": "0x10550",
+    "name": "??_FCConfig@@QAEXXZ"
+  },
+  {
+    "ordinal": 111,
+    "rva": "0x83f30",
+    "name": "??_FUIState@@QAEXXZ"
+  },
+  {
+    "ordinal": 112,
+    "rva": "0x2380",
+    "name": "??_GBuildingGroup@@QAEPAXI@Z"
+  },
+  {
+    "ordinal": 113,
+    "rva": "0x105e0",
+    "name": "??_GCConfig@@QAEPAXI@Z"
+  },
+  {
+    "ordinal": 114,
+    "rva": "0x2220",
+    "name": "??_GFightGroup@@QAEPAXI@Z"
+  },
+  {
+    "ordinal": 115,
+    "rva": "0x83eb0",
+    "name": "??_GIDlgWnd@@UAEPAXI@Z"
+  },
+  {
+    "ordinal": 116,
+    "rva": "0x83df0",
+    "name": "??_GIWnd@@UAEPAXI@Z"
+  },
+  {
+    "ordinal": 117,
+    "rva": "0x22d0",
+    "name": "??_GMiningGroup@@QAEPAXI@Z"
+  },
+  {
+    "ordinal": 118,
+    "rva": "0x2510",
+    "name": "??_GPinwheel@@QAEPAXI@Z"
+  },
+  {
+    "ordinal": 119,
+    "rva": "0x2170",
+    "name": "??_GScGroup@@QAEPAXI@Z"
+  },
+  {
+    "ordinal": 120,
+    "rva": "0x2010",
+    "name": "??_GScStub@@QAEPAXI@Z"
+  },
+  {
+    "ordinal": 121,
+    "rva": "0x84100",
+    "name": "??_GTFrame@@UAEPAXI@Z"
+  },
+  {
+    "ordinal": 122,
+    "rva": "0x20c0",
+    "name": "??_GTrigger@@QAEPAXI@Z"
+  },
+  {
+    "ordinal": 123,
+    "rva": "0x84020",
+    "name": "?Activate@TFrame@@UAEXXZ"
+  },
+  {
+    "ordinal": 124,
+    "rva": "0x86f40",
+    "name": "?ActivateGame@TApp@@QAEHXZ"
+  },
+  {
+    "ordinal": 125,
+    "rva": "0x86db0",
+    "name": "?ActivateShell@TApp@@QAEHW4GameTermReasons@@PAUMissionResults@@@Z"
+  },
+  {
+    "ordinal": 126,
+    "rva": "0x75a30",
+    "name": "?Add@LOCATION@@QAEXABU1@@Z"
+  },
+  {
+    "ordinal": 127,
+    "rva": "0x786a0",
+    "name": "?AddGameSound@TethysGame@@SIXHH@Z"
+  },
+  {
+    "ordinal": 128,
+    "rva": "0x79e60",
+    "name": "?AddGuardedRect@FightGroup@@QAEXAAUMAP_RECT@@@Z"
+  },
+  {
+    "ordinal": 129,
+    "rva": "0x786d0",
+    "name": "?AddMapSound@TethysGame@@SIXHULOCATION@@@Z"
+  },
+  {
+    "ordinal": 130,
+    "rva": "0x78710",
+    "name": "?AddMessage@TethysGame@@SIXHHPADHH@Z"
+  },
+  {
+    "ordinal": 131,
+    "rva": "0x78740",
+    "name": "?AddMessage@TethysGame@@SIXVUnit@@PADHH@Z"
+  },
+  {
+    "ordinal": 132,
+    "rva": "0x799d0",
+    "name": "?AddUnits@ScGroup@@QAEXAAVUnitBlock@@@Z"
+  },
+  {
+    "ordinal": 133,
+    "rva": "0x774c0",
+    "name": "?AllyWith@_Player@@QAEXH@Z"
+  },
+  {
+    "ordinal": 134,
+    "rva": "0x1d60",
+    "name": "?AppActive@TApp@@QBEHXZ"
+  },
+  {
+    "ordinal": 135,
+    "rva": "0x1d70",
+    "name": "?AppPaused@TApp@@QBEHXZ"
+  },
+  {
+    "ordinal": 136,
+    "rva": "0x87150",
+    "name": "?BeginWaitCursor@TApp@@QAEXXZ"
+  },
+  {
+    "ordinal": 137,
+    "rva": "0x31740",
+    "name": "?CallFilters@IWnd@@UAEHIIJ@Z"
+  },
+  {
+    "ordinal": 138,
+    "rva": "0x77f70",
+    "name": "?CanAllowCheats@TethysGame@@SIHXZ"
+  },
+  {
+    "ordinal": 139,
+    "rva": "0x77f50",
+    "name": "?CanHaveDisasters@TethysGame@@SIHXZ"
+  },
+  {
+    "ordinal": 140,
+    "rva": "0x77130",
+    "name": "?CaptureRLV@_Player@@QAEXH@Z"
+  },
+  {
+    "ordinal": 141,
+    "rva": "0x77490",
+    "name": "?CenterViewOn@_Player@@QAEXHH@Z"
+  },
+  {
+    "ordinal": 142,
+    "rva": "0x75d50",
+    "name": "?Check@MAP_RECT@@QAEHAAULOCATION@@@Z"
+  },
+  {
+    "ordinal": 143,
+    "rva": "0x88010",
+    "name": "?ChecksumExe@TApp@@QAEIXZ"
+  },
+  {
+    "ordinal": 144,
+    "rva": "0x880f0",
+    "name": "?ChecksumShell@TApp@@QAEIXZ"
+  },
+  {
+    "ordinal": 145,
+    "rva": "0x712a0",
+    "name": "?ChecksumStream@ResManager@@QAEIPBD@Z"
+  },
+  {
+    "ordinal": 146,
+    "rva": "0x79cf0",
+    "name": "?ClearCombineFire@FightGroup@@QAEXXZ"
+  },
+  {
+    "ordinal": 147,
+    "rva": "0x79ee0",
+    "name": "?ClearGuarderdRects@FightGroup@@QAEXXZ"
+  },
+  {
+    "ordinal": 148,
+    "rva": "0x79d80",
+    "name": "?ClearPatrolMode@FightGroup@@QAEXXZ"
+  },
+  {
+    "ordinal": 149,
+    "rva": "0x75f90",
+    "name": "?ClearSpecialTarget@Unit@@QAEXXZ"
+  },
+  {
+    "ordinal": 150,
+    "rva": "0x79cb0",
+    "name": "?ClearTargCount@ScGroup@@QAEXXZ"
+  },
+  {
+    "ordinal": 151,
+    "rva": "0x75960",
+    "name": "?Clip@LOCATION@@QAEXXZ"
+  },
+  {
+    "ordinal": 152,
+    "rva": "0x75af0",
+    "name": "?ClipToMap@MAP_RECT@@QAEXXZ"
+  },
+  {
+    "ordinal": 153,
+    "rva": "0x10c40",
+    "name": "?CopyIniFile@CConfig@@QAEHPBD@Z"
+  },
+  {
+    "ordinal": 154,
+    "rva": "0x795a0",
+    "name": "?CreateAttackedTrigger@@YI?AVTrigger@@HHAAVScGroup@@PBD@Z"
+  },
+  {
+    "ordinal": 155,
+    "rva": "0x78940",
+    "name": "?CreateBeacon@TethysGame@@SIHW4map_id@@HHHHH@Z"
+  },
+  {
+    "ordinal": 156,
+    "rva": "0x793a0",
+    "name": "?CreateBuildingCountTrigger@@YI?AVTrigger@@HHHHW4compare_mode@@PBD@Z"
+  },
+  {
+    "ordinal": 157,
+    "rva": "0x7a2b0",
+    "name": "?CreateBuildingGroup@@YI?AVBuildingGroup@@V_Player@@@Z"
+  },
+  {
+    "ordinal": 158,
+    "rva": "0x79110",
+    "name": "?CreateCountTrigger@@YI?AVTrigger@@HHHW4map_id@@0HW4compare_mode@@PBD@Z"
+  },
+  {
+    "ordinal": 159,
+    "rva": "0x79640",
+    "name": "?CreateDamagedTrigger@@YI?AVTrigger@@HHAAVScGroup@@HPBD@Z"
+  },
+  {
+    "ordinal": 160,
+    "rva": "0x796e0",
+    "name": "?CreateEscapeTrigger@@YI?AVTrigger@@HHHHHHHHW4map_id@@HHPBD@Z"
+  },
+  {
+    "ordinal": 161,
+    "rva": "0x79260",
+    "name": "?CreateEvacTrigger@@YI?AVTrigger@@HHHPBD@Z"
+  },
+  {
+    "ordinal": 162,
+    "rva": "0x315d0",
+    "name": "?CreateEx@IWnd@@UAEHKPBDKHHHHPAUHWND__@@PAUHMENU__@@PAXPAUHINSTANCE__@@@Z"
+  },
+  {
+    "ordinal": 163,
+    "rva": "0x79980",
+    "name": "?CreateFailureCondition@@YI?AVTrigger@@HHAAV1@PBD@Z"
+  },
+  {
+    "ordinal": 164,
+    "rva": "0x7a0a0",
+    "name": "?CreateFightGroup@@YI?AVFightGroup@@V_Player@@@Z"
+  },
+  {
+    "ordinal": 165,
+    "rva": "0x86590",
+    "name": "?CreateFrames@TApp@@QAEHXZ"
+  },
+  {
+    "ordinal": 166,
+    "rva": "0x791c0",
+    "name": "?CreateKitTrigger@@YI?AVTrigger@@HHHW4map_id@@HPBD@Z"
+  },
+  {
+    "ordinal": 167,
+    "rva": "0x79300",
+    "name": "?CreateMidasTrigger@@YI?AVTrigger@@HHHPBD@Z"
+  },
+  {
+    "ordinal": 168,
+    "rva": "0x7a0d0",
+    "name": "?CreateMiningGroup@@YI?AVMiningGroup@@V_Player@@@Z"
+  },
+  {
+    "ordinal": 169,
+    "rva": "0x78f30",
+    "name": "?CreateOnePlayerLeftTrigger@@YI?AVTrigger@@HHPBD@Z"
+  },
+  {
+    "ordinal": 170,
+    "rva": "0x79880",
+    "name": "?CreateOperationalTrigger@@YI?AVTrigger@@HHHW4map_id@@HW4compare_mode@@PBD@Z"
+  },
+  {
+    "ordinal": 171,
+    "rva": "0x7a880",
+    "name": "?CreatePinwheel@@YI?AVPinwheel@@AAV_Player@@@Z"
+  },
+  {
+    "ordinal": 172,
+    "rva": "0x79070",
+    "name": "?CreatePointTrigger@@YI?AVTrigger@@HHHHHPBD@Z"
+  },
+  {
+    "ordinal": 173,
+    "rva": "0x78fc0",
+    "name": "?CreateRectTrigger@@YI?AVTrigger@@HHHHHHHPBD@Z"
+  },
+  {
+    "ordinal": 174,
+    "rva": "0x78e90",
+    "name": "?CreateResearchTrigger@@YI?AVTrigger@@HHHHPBD@Z"
+  },
+  {
+    "ordinal": 175,
+    "rva": "0x78de0",
+    "name": "?CreateResourceTrigger@@YI?AVTrigger@@HHW4trig_res@@HHW4compare_mode@@PBD@Z"
+  },
+  {
+    "ordinal": 176,
+    "rva": "0x794e0",
+    "name": "?CreateSetTrigger@@YA?AVTrigger@@HHHHPBDZZ"
+  },
+  {
+    "ordinal": 177,
+    "rva": "0x797a0",
+    "name": "?CreateSpecialTarget@@YI?AVTrigger@@HHAAVUnit@@W4map_id@@PBD@Z"
+  },
+  {
+    "ordinal": 178,
+    "rva": "0x71b60",
+    "name": "?CreateStream@ResManager@@QAEPAVStreamIO@@PBD@Z"
+  },
+  {
+    "ordinal": 179,
+    "rva": "0x78da0",
+    "name": "?CreateTimeTrigger@@YI?AVTrigger@@HHHHPBD@Z"
+  },
+  {
+    "ordinal": 180,
+    "rva": "0x78d00",
+    "name": "?CreateTimeTrigger@@YI?AVTrigger@@HHHPBD@Z"
+  },
+  {
+    "ordinal": 181,
+    "rva": "0x78780",
+    "name": "?CreateUnit@TethysGame@@SIHAAVUnit@@W4map_id@@ULOCATION@@H1H@Z"
+  },
+  {
+    "ordinal": 182,
+    "rva": "0x78470",
+    "name": "?CreateUnitBlock@TethysGame@@SIHAAV_Player@@PBDH@Z"
+  },
+  {
+    "ordinal": 183,
+    "rva": "0x9d5d0",
+    "name": "?CreateUnits@UnitBlock@@QBEHHH@Z"
+  },
+  {
+    "ordinal": 184,
+    "rva": "0x79440",
+    "name": "?CreateVehicleCountTrigger@@YI?AVTrigger@@HHHHW4compare_mode@@PBD@Z"
+  },
+  {
+    "ordinal": 185,
+    "rva": "0x79930",
+    "name": "?CreateVictoryCondition@@YI?AVTrigger@@HHAAV1@PBD@Z"
+  },
+  {
+    "ordinal": 186,
+    "rva": "0x78aa0",
+    "name": "?CreateWallOrTube@TethysGame@@SIHHHHW4map_id@@@Z"
+  },
+  {
+    "ordinal": 187,
+    "rva": "0x789f0",
+    "name": "?CreateWreck@TethysGame@@SIHHHW4map_id@@H@Z"
+  },
+  {
+    "ordinal": 188,
+    "rva": "0x84030",
+    "name": "?Deactivate@TFrame@@UAEXXZ"
+  },
+  {
+    "ordinal": 189,
+    "rva": "0x318a0",
+    "name": "?Destroy@IWnd@@UAEXXZ"
+  },
+  {
+    "ordinal": 190,
+    "rva": "0x78c80",
+    "name": "?Destroy@ScStub@@QAEXXZ"
+  },
+  {
+    "ordinal": 191,
+    "rva": "0x759d0",
+    "name": "?Difference@LOCATION@@SI?AU1@ABU1@0@Z"
+  },
+  {
+    "ordinal": 192,
+    "rva": "0x76fc0",
+    "name": "?Difficulty@_Player@@QBEHXZ"
+  },
+  {
+    "ordinal": 193,
+    "rva": "0x1d40",
+    "name": "?DirectDrawActive@TApp@@QBEHXZ"
+  },
+  {
+    "ordinal": 194,
+    "rva": "0x78c70",
+    "name": "?Disable@ScStub@@QAEXXZ"
+  },
+  {
+    "ordinal": 195,
+    "rva": "0x78cf0",
+    "name": "?Disable@Trigger@@QAEXXZ"
+  },
+  {
+    "ordinal": 196,
+    "rva": "0x86110",
+    "name": "?DisableModeSwitching@TApp@@QAEHXZ"
+  },
+  {
+    "ordinal": 197,
+    "rva": "0x83ed0",
+    "name": "?DlgFromHWND@IDlgWnd@@SIPAV1@PAUHWND__@@@Z"
+  },
+  {
+    "ordinal": 198,
+    "rva": "0x31db0",
+    "name": "?DlgProc@IDlgWnd@@UAEHIIJ@Z"
+  },
+  {
+    "ordinal": 199,
+    "rva": "0x766e0",
+    "name": "?DoAttack@Unit@@QAEXV1@@Z"
+  },
+  {
+    "ordinal": 200,
+    "rva": "0x7a080",
+    "name": "?DoAttackEnemy@FightGroup@@QAEXXZ"
+  },
+  {
+    "ordinal": 201,
+    "rva": "0x7a060",
+    "name": "?DoAttackUnit@FightGroup@@QAEXXZ"
+  },
+  {
+    "ordinal": 202,
+    "rva": "0x76350",
+    "name": "?DoBuild@Unit@@QAEXW4map_id@@ULOCATION@@@Z"
+  },
+  {
+    "ordinal": 203,
+    "rva": "0x769f0",
+    "name": "?DoDeath@Unit@@QAEXXZ"
+  },
+  {
+    "ordinal": 204,
+    "rva": "0x764f0",
+    "name": "?DoDevelop@Unit@@QAEXW4map_id@@@Z"
+  },
+  {
+    "ordinal": 205,
+    "rva": "0x79fe0",
+    "name": "?DoExitMap@FightGroup@@QAEXXZ"
+  },
+  {
+    "ordinal": 206,
+    "rva": "0x7a020",
+    "name": "?DoGuardGroup@FightGroup@@QAEXXZ"
+  },
+  {
+    "ordinal": 207,
+    "rva": "0x79fc0",
+    "name": "?DoGuardRect@FightGroup@@QAEXXZ"
+  },
+  {
+    "ordinal": 208,
+    "rva": "0x7a040",
+    "name": "?DoGuardUnit@FightGroup@@QAEXXZ"
+  },
+  {
+    "ordinal": 209,
+    "rva": "0x76a10",
+    "name": "?DoIdle@Unit@@QAEXXZ"
+  },
+  {
+    "ordinal": 210,
+    "rva": "0x76b90",
+    "name": "?DoInfect@Unit@@QAEXXZ"
+  },
+  {
+    "ordinal": 211,
+    "rva": "0x76580",
+    "name": "?DoLaunch@Unit@@QAEXHHH@Z"
+  },
+  {
+    "ordinal": 212,
+    "rva": "0x31a80",
+    "name": "?DoModal@IDlgWnd@@UAEHPBDPAUHINSTANCE__@@@Z"
+  },
+  {
+    "ordinal": 213,
+    "rva": "0x31bf0",
+    "name": "?DoModeless@IDlgWnd@@UAEHPBDPAUHINSTANCE__@@PAUHWND__@@@Z"
+  },
+  {
+    "ordinal": 214,
+    "rva": "0x76240",
+    "name": "?DoMove@Unit@@QAEXULOCATION@@@Z"
+  },
+  {
+    "ordinal": 215,
+    "rva": "0x87c20",
+    "name": "?DoNetGame@TApp@@QAEHHPBD@Z"
+  },
+  {
+    "ordinal": 216,
+    "rva": "0x7a000",
+    "name": "?DoPatrolOnly@FightGroup@@QAEXXZ"
+  },
+  {
+    "ordinal": 217,
+    "rva": "0x768c0",
+    "name": "?DoSelfDestruct@Unit@@QAEXXZ"
+  },
+  {
+    "ordinal": 218,
+    "rva": "0x76950",
+    "name": "?DoSetLights@Unit@@QAEXH@Z"
+  },
+  {
+    "ordinal": 219,
+    "rva": "0x767a0",
+    "name": "?DoSimpleCommand@Unit@@IAEXH@Z"
+  },
+  {
+    "ordinal": 220,
+    "rva": "0x76830",
+    "name": "?DoStop@Unit@@QAEXXZ"
+  },
+  {
+    "ordinal": 221,
+    "rva": "0x76af0",
+    "name": "?DoTransfer@Unit@@QAEXH@Z"
+  },
+  {
+    "ordinal": 222,
+    "rva": "0x76a80",
+    "name": "?DoUnIdle@Unit@@QAEXXZ"
+  },
+  {
+    "ordinal": 223,
+    "rva": "0x1c640",
+    "name": "?Enable@BoolState@@UAEXH@Z"
+  },
+  {
+    "ordinal": 224,
+    "rva": "0x9cde0",
+    "name": "?Enable@MenuState@@UAEXH@Z"
+  },
+  {
+    "ordinal": 225,
+    "rva": "0x78c60",
+    "name": "?Enable@ScStub@@QAEXXZ"
+  },
+  {
+    "ordinal": 226,
+    "rva": "0x78ce0",
+    "name": "?Enable@Trigger@@QAEXXZ"
+  },
+  {
+    "ordinal": 227,
+    "rva": "0x9cd30",
+    "name": "?Enable@UIState@@UAEXH@Z"
+  },
+  {
+    "ordinal": 228,
+    "rva": "0x86170",
+    "name": "?EnableModeSwitching@TApp@@QAEHXZ"
+  },
+  {
+    "ordinal": 229,
+    "rva": "0x87180",
+    "name": "?EndWaitCursor@TApp@@QAEXXZ"
+  },
+  {
+    "ordinal": 230,
+    "rva": "0x88420",
+    "name": "?F1DetectHook@TApp@@SGJHIJ@Z"
+  },
+  {
+    "ordinal": 231,
+    "rva": "0x10c10",
+    "name": "?FileExists@CConfig@@QAEHXZ"
+  },
+  {
+    "ordinal": 232,
+    "rva": "0x714a0",
+    "name": "?FindCDRoot@ResManager@@QAEHPAD@Z"
+  },
+  {
+    "ordinal": 233,
+    "rva": "0x78480",
+    "name": "?FindEMPMissleTarget@TethysGame@@SI?AULOCATION@@HHHHH@Z"
+  },
+  {
+    "ordinal": 234,
+    "rva": "0x314a0",
+    "name": "?FindNode@IWnd@@QAEPAVFilterNode@@PAVFilter@@H@Z"
+  },
+  {
+    "ordinal": 235,
+    "rva": "0x10c00",
+    "name": "?Flush@CConfig@@QAEXXZ"
+  },
+  {
+    "ordinal": 236,
+    "rva": "0x77020",
+    "name": "?FoodStored@_Player@@QBEHXZ"
+  },
+  {
+    "ordinal": 237,
+    "rva": "0x77380",
+    "name": "?FoodSupply@_Player@@QBE?AW4FoodStatus@@XZ"
+  },
+  {
+    "ordinal": 238,
+    "rva": "0x78030",
+    "name": "?ForceMoraleGood@TethysGame@@SIXH@Z"
+  },
+  {
+    "ordinal": 239,
+    "rva": "0x77fd0",
+    "name": "?ForceMoraleGreat@TethysGame@@SIXH@Z"
+  },
+  {
+    "ordinal": 240,
+    "rva": "0x78090",
+    "name": "?ForceMoraleOK@TethysGame@@SIXH@Z"
+  },
+  {
+    "ordinal": 241,
+    "rva": "0x780f0",
+    "name": "?ForceMoralePoor@TethysGame@@SIXH@Z"
+  },
+  {
+    "ordinal": 242,
+    "rva": "0x78150",
+    "name": "?ForceMoraleRotten@TethysGame@@SIXH@Z"
+  },
+  {
+    "ordinal": 243,
+    "rva": "0x2890",
+    "name": "?FreeModuleDesc@@YIXPAUAIModDesc@@@Z"
+  },
+  {
+    "ordinal": 244,
+    "rva": "0x781b0",
+    "name": "?FreeMoraleLevel@TethysGame@@SIXH@Z"
+  },
+  {
+    "ordinal": 245,
+    "rva": "0x83d80",
+    "name": "?FromHWND@IWnd@@SIPAV1@PAUHWND__@@@Z"
+  },
+  {
+    "ordinal": 246,
+    "rva": "0x75c10",
+    "name": "?FromPtSize@MAP_RECT@@QAEXABULOCATION@@0@Z"
+  },
+  {
+    "ordinal": 247,
+    "rva": "0x1df0",
+    "name": "?GetAccelInst@TApp@@QBEPAUHINSTANCE__@@XZ"
+  },
+  {
+    "ordinal": 248,
+    "rva": "0x87a40",
+    "name": "?GetAppDesc@TApp@@QAEXPAD@Z"
+  },
+  {
+    "ordinal": 249,
+    "rva": "0x1db0",
+    "name": "?GetBmpInst@TApp@@QBEPAUHINSTANCE__@@XZ"
+  },
+  {
+    "ordinal": 250,
+    "rva": "0x71aa0",
+    "name": "?GetCDDir@ResManager@@QAEXPAD@Z"
+  },
+  {
+    "ordinal": 251,
+    "rva": "0x31210",
+    "name": "?GetCapture@Filter@@SIPAV1@XZ"
+  },
+  {
+    "ordinal": 252,
+    "rva": "0x75f00",
+    "name": "?GetCargo@Unit@@QBE?AW4map_id@@XZ"
+  },
+  {
+    "ordinal": 253,
+    "rva": "0x76d40",
+    "name": "?GetCellType@GameMap@@SIHULOCATION@@@Z"
+  },
+  {
+    "ordinal": 254,
+    "rva": "0x1dc0",
+    "name": "?GetCurInst@TApp@@QBEPAUHINSTANCE__@@XZ"
+  },
+  {
+    "ordinal": 255,
+    "rva": "0x775c0",
+    "name": "?GetDefaultGroup@_Player@@QAE?AVScGroup@@XZ"
+  },
+  {
+    "ordinal": 256,
+    "rva": "0x1d50",
+    "name": "?GetDirectDraw@TApp@@QBEPAUIDirectDraw@@XZ"
+  },
+  {
+    "ordinal": 257,
+    "rva": "0x1da0",
+    "name": "?GetDlgInst@TApp@@QBEPAUHINSTANCE__@@XZ"
+  },
+  {
+    "ordinal": 258,
+    "rva": "0x71590",
+    "name": "?GetFilePath@ResManager@@QAEHPBDPAD@Z"
+  },
+  {
+    "ordinal": 259,
+    "rva": "0x79a20",
+    "name": "?GetFirstOfType@ScGroup@@QAEHAAVUnit@@W4UnitClassifactions@@@Z"
+  },
+  {
+    "ordinal": 260,
+    "rva": "0x79a60",
+    "name": "?GetFirstOfType@ScGroup@@QAEHAAVUnit@@W4map_id@@1@Z"
+  },
+  {
+    "ordinal": 261,
+    "rva": "0x882b0",
+    "name": "?GetHelp@TApp@@QAEXXZ"
+  },
+  {
+    "ordinal": 262,
+    "rva": "0x1de0",
+    "name": "?GetIconInst@TApp@@QBEPAUHINSTANCE__@@XZ"
+  },
+  {
+    "ordinal": 263,
+    "rva": "0x71a70",
+    "name": "?GetInstalledDir@ResManager@@QAEXPAD@Z"
+  },
+  {
+    "ordinal": 264,
+    "rva": "0x10870",
+    "name": "?GetInt@CConfig@@QAEHPBD0H@Z"
+  },
+  {
+    "ordinal": 265,
+    "rva": "0x109b0",
+    "name": "?GetInt@CConfig@@QAEHPBDH@Z"
+  },
+  {
+    "ordinal": 266,
+    "rva": "0x87430",
+    "name": "?GetLoadName@TApp@@QAEHXZ"
+  },
+  {
+    "ordinal": 267,
+    "rva": "0x1d90",
+    "name": "?GetMainInst@TApp@@QBEPAUHINSTANCE__@@XZ"
+  },
+  {
+    "ordinal": 268,
+    "rva": "0x1dd0",
+    "name": "?GetMenuInst@TApp@@QBEPAUHINSTANCE__@@XZ"
+  },
+  {
+    "ordinal": 269,
+    "rva": "0x31950",
+    "name": "?GetModalParent@IDlgWnd@@SIPAUHWND__@@XZ"
+  },
+  {
+    "ordinal": 270,
+    "rva": "0x25b0",
+    "name": "?GetModuleDesc@@YIPAUAIModDesc@@PBD@Z"
+  },
+  {
+    "ordinal": 271,
+    "rva": "0x7a7f0",
+    "name": "?GetNext@ClosestEnumerator@@QAEHAAVUnit@@AAK@Z"
+  },
+  {
+    "ordinal": 272,
+    "rva": "0x7a850",
+    "name": "?GetNext@GroupEnumerator@@QAEHAAVUnit@@@Z"
+  },
+  {
+    "ordinal": 273,
+    "rva": "0x7a780",
+    "name": "?GetNext@InRangeEnumerator@@QAEHAAVUnit@@@Z"
+  },
+  {
+    "ordinal": 274,
+    "rva": "0x7a6a0",
+    "name": "?GetNext@InRectEnumerator@@QAEHAAVUnit@@@Z"
+  },
+  {
+    "ordinal": 275,
+    "rva": "0x7a710",
+    "name": "?GetNext@LocationEnumerator@@QAEHAAVUnit@@@Z"
+  },
+  {
+    "ordinal": 276,
+    "rva": "0x7a510",
+    "name": "?GetNext@PlayerBuildingEnum@@QAEHAAVUnit@@@Z"
+  },
+  {
+    "ordinal": 277,
+    "rva": "0x7a5b0",
+    "name": "?GetNext@PlayerUnitEnum@@QAEHAAVUnit@@@Z"
+  },
+  {
+    "ordinal": 278,
+    "rva": "0x7a4b0",
+    "name": "?GetNext@PlayerVehicleEnum@@QAEHAAVUnit@@@Z"
+  },
+  {
+    "ordinal": 279,
+    "rva": "0x75f40",
+    "name": "?GetObjectOnPad@Unit@@QBE?AW4map_id@@XZ"
+  },
+  {
+    "ordinal": 280,
+    "rva": "0x77cd0",
+    "name": "?GetPlayerStrength@_Player@@QAEHAAUMAP_RECT@@@Z"
+  },
+  {
+    "ordinal": 281,
+    "rva": "0x77240",
+    "name": "?GetRLVCount@_Player@@QAEHXZ"
+  },
+  {
+    "ordinal": 282,
+    "rva": "0x77f20",
+    "name": "?GetRand@TethysGame@@SIHH@Z"
+  },
+  {
+    "ordinal": 283,
+    "rva": "0x79860",
+    "name": "?GetSpecialTargetData@@YIXAAVTrigger@@AAVUnit@@@Z"
+  },
+  {
+    "ordinal": 284,
+    "rva": "0x108b0",
+    "name": "?GetString@CConfig@@QAEHPBD0PADI0@Z"
+  },
+  {
+    "ordinal": 285,
+    "rva": "0x10b30",
+    "name": "?GetString@CConfig@@QAEHPBDPADI0@Z"
+  },
+  {
+    "ordinal": 286,
+    "rva": "0x83d00",
+    "name": "?GetSubFilter@GroupFilter@@QBEPAVSubFilter@@XZ"
+  },
+  {
+    "ordinal": 287,
+    "rva": "0x76d00",
+    "name": "?GetTile@GameMap@@SIHULOCATION@@@Z"
+  },
+  {
+    "ordinal": 288,
+    "rva": "0x77da0",
+    "name": "?GetTotalPlayerStrength@_Player@@QAEHXZ"
+  },
+  {
+    "ordinal": 289,
+    "rva": "0x75ee0",
+    "name": "?GetType@Unit@@QBE?AW4map_id@@XZ"
+  },
+  {
+    "ordinal": 290,
+    "rva": "0x75f20",
+    "name": "?GetWeapon@Unit@@QBE?AW4map_id@@XZ"
+  },
+  {
+    "ordinal": 291,
+    "rva": "0x773e0",
+    "name": "?GoAI@_Player@@QAEXXZ"
+  },
+  {
+    "ordinal": 292,
+    "rva": "0x77420",
+    "name": "?GoEden@_Player@@QAEXXZ"
+  },
+  {
+    "ordinal": 293,
+    "rva": "0x77400",
+    "name": "?GoHuman@_Player@@QAEXXZ"
+  },
+  {
+    "ordinal": 294,
+    "rva": "0x77440",
+    "name": "?GoPlymouth@_Player@@QAEXXZ"
+  },
+  {
+    "ordinal": 295,
+    "rva": "0x86810",
+    "name": "?HandleCommand@TApp@@QAEHI@Z"
+  },
+  {
+    "ordinal": 296,
+    "rva": "0x88fd0",
+    "name": "?HandleMenuInit@TFrame@@IAEXPAUHMENU__@@IH@Z"
+  },
+  {
+    "ordinal": 297,
+    "rva": "0x79ae0",
+    "name": "?HasBeenAttacked@ScGroup@@QAEHXZ"
+  },
+  {
+    "ordinal": 298,
+    "rva": "0x78cc0",
+    "name": "?HasFired@Trigger@@QAEHH@Z"
+  },
+  {
+    "ordinal": 299,
+    "rva": "0x76080",
+    "name": "?HasOccupiedBay@Unit@@QBEHXZ"
+  },
+  {
+    "ordinal": 300,
+    "rva": "0x77570",
+    "name": "?HasTechnology@_Player@@QBEHH@Z"
+  },
+  {
+    "ordinal": 301,
+    "rva": "0x75ae0",
+    "name": "?Height@MAP_RECT@@QBEHXZ"
+  },
+  {
+    "ordinal": 302,
+    "rva": "0x86190",
+    "name": "?HideDirectDraw@TApp@@QAEHPAUHWND__@@@Z"
+  },
+  {
+    "ordinal": 303,
+    "rva": "0x31550",
+    "name": "?IWndCbtFilterHook@IWnd@@SGJHIJ@Z"
+  },
+  {
+    "ordinal": 304,
+    "rva": "0x1fe0",
+    "name": "?Id@ScStub@@QBEHXZ"
+  },
+  {
+    "ordinal": 305,
+    "rva": "0x75a60",
+    "name": "?Inflate@MAP_RECT@@QAEXHH@Z"
+  },
+  {
+    "ordinal": 306,
+    "rva": "0x70f70",
+    "name": "?Init@ResManager@@QAEHXZ"
+  },
+  {
+    "ordinal": 307,
+    "rva": "0x85b20",
+    "name": "?Init@TApp@@QAEHXZ"
+  },
+  {
+    "ordinal": 308,
+    "rva": "0x719d0",
+    "name": "?InitCDDir@ResManager@@QAEHXZ"
+  },
+  {
+    "ordinal": 309,
+    "rva": "0x85ec0",
+    "name": "?InitForDirectDraw@TApp@@AAEHXZ"
+  },
+  {
+    "ordinal": 310,
+    "rva": "0x71850",
+    "name": "?InitInstalledDir@ResManager@@QAEXXZ"
+  },
+  {
+    "ordinal": 311,
+    "rva": "0x76e80",
+    "name": "?InitialSetTile@GameMap@@SIXULOCATION@@H@Z"
+  },
+  {
+    "ordinal": 312,
+    "rva": "0x77f40",
+    "name": "?InitialUnits@TethysGame@@SIHXZ"
+  },
+  {
+    "ordinal": 313,
+    "rva": "0x31a10",
+    "name": "?InsertHWNDChain@IDlgWnd@@AAEXXZ"
+  },
+  {
+    "ordinal": 314,
+    "rva": "0x31380",
+    "name": "?InstallFilter@IWnd@@QAEXPAVFilter@@HW4FilterPositions@@W4FilterOptions@@@Z"
+  },
+  {
+    "ordinal": 315,
+    "rva": "0x883b0",
+    "name": "?InstallFilterFunc@TApp@@QAGHHH@Z"
+  },
+  {
+    "ordinal": 316,
+    "rva": "0x75e80",
+    "name": "?IsBuilding@Unit@@QBEHXZ"
+  },
+  {
+    "ordinal": 317,
+    "rva": "0x75e60",
+    "name": "?IsBusy@Unit@@QBEHXZ"
+  },
+  {
+    "ordinal": 318,
+    "rva": "0x773c0",
+    "name": "?IsEden@_Player@@QAEHXZ"
+  },
+  {
+    "ordinal": 319,
+    "rva": "0x78ca0",
+    "name": "?IsEnabled@ScStub@@QAEHXZ"
+  },
+  {
+    "ordinal": 320,
+    "rva": "0x773a0",
+    "name": "?IsHuman@_Player@@QAEHXZ"
+  },
+  {
+    "ordinal": 321,
+    "rva": "0x78cb0",
+    "name": "?IsInitialized@ScStub@@QAEHXZ"
+  },
+  {
+    "ordinal": 322,
+    "rva": "0x75dd0",
+    "name": "?IsLive@Unit@@QAEHXZ"
+  },
+  {
+    "ordinal": 323,
+    "rva": "0x83e10",
+    "name": "?IsModalParentSet@IDlgWnd@@QBEHXZ"
+  },
+  {
+    "ordinal": 324,
+    "rva": "0x75ea0",
+    "name": "?IsVehicle@Unit@@QBEHXZ"
+  },
+  {
+    "ordinal": 325,
+    "rva": "0x772b0",
+    "name": "?Kids@_Player@@QBEHXZ"
+  },
+  {
+    "ordinal": 326,
+    "rva": "0x878f0",
+    "name": "?LoadGame@TApp@@QAEHPBD@Z"
+  },
+  {
+    "ordinal": 327,
+    "rva": "0x78690",
+    "name": "?LoadGame@TethysGame@@SIXPBD@Z"
+  },
+  {
+    "ordinal": 328,
+    "rva": "0x1d20",
+    "name": "?LobbyActive@TApp@@QAEHXZ"
+  },
+  {
+    "ordinal": 329,
+    "rva": "0x87f60",
+    "name": "?LobbyShutdown@TApp@@QAEXXZ"
+  },
+  {
+    "ordinal": 330,
+    "rva": "0x77f10",
+    "name": "?LocalPlayer@TethysGame@@SIHXZ"
+  },
+  {
+    "ordinal": 331,
+    "rva": "0x75e20",
+    "name": "?Location@Unit@@QBE?AULOCATION@@XZ"
+  },
+  {
+    "ordinal": 332,
+    "rva": "0x71430",
+    "name": "?LockStream@ResManager@@QAEPAXPBDPAH@Z"
+  },
+  {
+    "ordinal": 333,
+    "rva": "0x77510",
+    "name": "?MarkResearchComplete@_Player@@QAEXH@Z"
+  },
+  {
+    "ordinal": 334,
+    "rva": "0x86020",
+    "name": "?ModeSwitch@TApp@@QAEHXZ"
+  },
+  {
+    "ordinal": 335,
+    "rva": "0x77360",
+    "name": "?MoraleLevel@_Player@@QBE?AW4MoraleLevels@@XZ"
+  },
+  {
+    "ordinal": 336,
+    "rva": "0x1d10",
+    "name": "?NetActive@TApp@@QAEHXZ"
+  },
+  {
+    "ordinal": 337,
+    "rva": "0x87e30",
+    "name": "?NetShutdown@TApp@@QAEXH@Z"
+  },
+  {
+    "ordinal": 338,
+    "rva": "0x871a0",
+    "name": "?NewGame@TApp@@QAEXXZ"
+  },
+  {
+    "ordinal": 339,
+    "rva": "0x77f00",
+    "name": "?NoPlayers@TethysGame@@SIHXZ"
+  },
+  {
+    "ordinal": 340,
+    "rva": "0x1e50",
+    "name": "?Norm@LOCATION@@QAEHXZ"
+  },
+  {
+    "ordinal": 341,
+    "rva": "0x75bd0",
+    "name": "?Offset@MAP_RECT@@QAEXHH@Z"
+  },
+  {
+    "ordinal": 342,
+    "rva": "0x862f0",
+    "name": "?OnActivateApp@TApp@@QAEXH@Z"
+  },
+  {
+    "ordinal": 343,
+    "rva": "0x84040",
+    "name": "?OnIdle@TFrame@@UAEXXZ"
+  },
+  {
+    "ordinal": 344,
+    "rva": "0x874f0",
+    "name": "?OnLoadGame@TApp@@QAEHXZ"
+  },
+  {
+    "ordinal": 345,
+    "rva": "0x87590",
+    "name": "?OnLoadScript@TApp@@QAEXPAD@Z"
+  },
+  {
+    "ordinal": 346,
+    "rva": "0x87300",
+    "name": "?OnLoadSlot@TApp@@QAEHXZ"
+  },
+  {
+    "ordinal": 347,
+    "rva": "0x86330",
+    "name": "?OnPauseGame@TApp@@QAEXH@Z"
+  },
+  {
+    "ordinal": 348,
+    "rva": "0x874e0",
+    "name": "?OnSaveGame@TApp@@QAEXXZ"
+  },
+  {
+    "ordinal": 349,
+    "rva": "0x871d0",
+    "name": "?OnSaveSlot@TApp@@QAEXXZ"
+  },
+  {
+    "ordinal": 350,
+    "rva": "0x83ca0",
+    "name": "?OnUIEvent@Filter@@UAEHPAVIWnd@@IIJH@Z"
+  },
+  {
+    "ordinal": 351,
+    "rva": "0x31220",
+    "name": "?OnUIEvent@GroupFilter@@UAEHPAVIWnd@@IIJH@Z"
+  },
+  {
+    "ordinal": 352,
+    "rva": "0x83d40",
+    "name": "?OnUIEvent@SubFilter@@UAEHPAVIWnd@@IIJH@Z"
+  },
+  {
+    "ordinal": 353,
+    "rva": "0x71170",
+    "name": "?OpenStream@ResManager@@QAEPAVStreamIO@@PBD@Z"
+  },
+  {
+    "ordinal": 354,
+    "rva": "0x76fe0",
+    "name": "?Ore@_Player@@QBEHXZ"
+  },
+  {
+    "ordinal": 355,
+    "rva": "0x75ec0",
+    "name": "?OwnerID@Unit@@QBEHXZ"
+  },
+  {
+    "ordinal": 356,
+    "rva": "0x86350",
+    "name": "?ParseCommandLine@TApp@@QAEXPAD@Z"
+  },
+  {
+    "ordinal": 357,
+    "rva": "0x78bb0",
+    "name": "?PlaceMarker@TethysGame@@SIHAAVUnit@@HHH@Z"
+  },
+  {
+    "ordinal": 358,
+    "rva": "0x864a0",
+    "name": "?PlaybackCommand@TApp@@QAEHPAUCommandPacket@@H@Z"
+  },
+  {
+    "ordinal": 359,
+    "rva": "0x16c280",
+    "name": "?Player@@3PAV_Player@@A"
+  },
+  {
+    "ordinal": 360,
+    "rva": "0x84060",
+    "name": "?PostCreateDlg@TFrame@@UAEXXZ"
+  },
+  {
+    "ordinal": 361,
+    "rva": "0x89040",
+    "name": "?PostDelayedLoadMessage@TFrame@@QAEXPBD@Z"
+  },
+  {
+    "ordinal": 362,
+    "rva": "0x84050",
+    "name": "?PreCreateDlg@TFrame@@UAEXXZ"
+  },
+  {
+    "ordinal": 363,
+    "rva": "0x31dd0",
+    "name": "?PretranslateModeless@IDlgWnd@@SIHPAUtagMSG@@@Z"
+  },
+  {
+    "ordinal": 364,
+    "rva": "0x867b0",
+    "name": "?PumpMessage@TApp@@QAEHXZ"
+  },
+  {
+    "ordinal": 365,
+    "rva": "0x76160",
+    "name": "?PutInGarage@Unit@@QAEXHHH@Z"
+  },
+  {
+    "ordinal": 366,
+    "rva": "0x75cc0",
+    "name": "?RandPt@MAP_RECT@@QBE?AULOCATION@@XZ"
+  },
+  {
+    "ordinal": 367,
+    "rva": "0x77000",
+    "name": "?RareOre@_Player@@QBEHXZ"
+  },
+  {
+    "ordinal": 368,
+    "rva": "0x7a3e0",
+    "name": "?RecordBuilding@BuildingGroup@@QAEXAAULOCATION@@W4map_id@@1@Z"
+  },
+  {
+    "ordinal": 369,
+    "rva": "0x7a410",
+    "name": "?RecordBuilding@BuildingGroup@@QAEXAAULOCATION@@W4map_id@@1AAVScGroup@@@Z"
+  },
+  {
+    "ordinal": 370,
+    "rva": "0x7a390",
+    "name": "?RecordTube@BuildingGroup@@QAEXAAULOCATION@@@Z"
+  },
+  {
+    "ordinal": 371,
+    "rva": "0x7a370",
+    "name": "?RecordTubesTouching@BuildingGroup@@QAEXAAULOCATION@@@Z"
+  },
+  {
+    "ordinal": 372,
+    "rva": "0x7a330",
+    "name": "?RecordUnitBlock@BuildingGroup@@QAEXAAVUnitBlock@@@Z"
+  },
+  {
+    "ordinal": 373,
+    "rva": "0x7a350",
+    "name": "?RecordUnitBlock@BuildingGroup@@QAEXAAVUnitBlock@@AAVScGroup@@@Z"
+  },
+  {
+    "ordinal": 374,
+    "rva": "0x7a440",
+    "name": "?RecordVehReinforceGroup@BuildingGroup@@QAEXAAVScGroup@@H@Z"
+  },
+  {
+    "ordinal": 375,
+    "rva": "0x7a3b0",
+    "name": "?RecordWall@BuildingGroup@@QAEXAAULOCATION@@W4map_id@@@Z"
+  },
+  {
+    "ordinal": 376,
+    "rva": "0x314d0",
+    "name": "?RegisterClassA@IWnd@@EAEPBDXZ"
+  },
+  {
+    "ordinal": 377,
+    "rva": "0x31200",
+    "name": "?ReleaseCapture@Filter@@QAEXPAVIWnd@@@Z"
+  },
+  {
+    "ordinal": 378,
+    "rva": "0x312c0",
+    "name": "?ReleaseCapture@SubFilter@@QAEXPAVGroupFilter@@PAVIWnd@@@Z"
+  },
+  {
+    "ordinal": 379,
+    "rva": "0x713d0",
+    "name": "?ReleaseStream@ResManager@@QAEXPAVStreamIO@@@Z"
+  },
+  {
+    "ordinal": 380,
+    "rva": "0x31420",
+    "name": "?RemoveFilter@IWnd@@QAEXPAVFilter@@H@Z"
+  },
+  {
+    "ordinal": 381,
+    "rva": "0x31a50",
+    "name": "?RemoveHWNDChain@IDlgWnd@@AAEXXZ"
+  },
+  {
+    "ordinal": 382,
+    "rva": "0x79bd0",
+    "name": "?RemoveUnit@ScGroup@@QAEXVUnit@@@Z"
+  },
+  {
+    "ordinal": 383,
+    "rva": "0x86280",
+    "name": "?RestoreDirectDraw@TApp@@QAEHPAUHWND__@@@Z"
+  },
+  {
+    "ordinal": 384,
+    "rva": "0x86650",
+    "name": "?Run@TApp@@QAEXXZ"
+  },
+  {
+    "ordinal": 385,
+    "rva": "0x877e0",
+    "name": "?SaveGame@TApp@@QAEXPBDPAVTFileDialog@@@Z"
+  },
+  {
+    "ordinal": 386,
+    "rva": "0x78680",
+    "name": "?SaveGame@TethysGame@@SIXPBD@Z"
+  },
+  {
+    "ordinal": 387,
+    "rva": "0x77290",
+    "name": "?Scientists@_Player@@QBEHXZ"
+  },
+  {
+    "ordinal": 388,
+    "rva": "0x7aa40",
+    "name": "?SendWaveNow@Pinwheel@@QAEXH@Z"
+  },
+  {
+    "ordinal": 389,
+    "rva": "0x31d90",
+    "name": "?SetAsModalParent@IDlgWnd@@QAEXH@Z"
+  },
+  {
+    "ordinal": 390,
+    "rva": "0x7a9b0",
+    "name": "?SetAttackComp@Pinwheel@@QAEXHHPAUMrRec@@@Z"
+  },
+  {
+    "ordinal": 391,
+    "rva": "0x7aa60",
+    "name": "?SetAttackFraction@Pinwheel@@QAEXH@Z"
+  },
+  {
+    "ordinal": 392,
+    "rva": "0x79f60",
+    "name": "?SetAttackType@FightGroup@@QAEXW4map_id@@@Z"
+  },
+  {
+    "ordinal": 393,
+    "rva": "0x31190",
+    "name": "?SetCapture@Filter@@QAEXPAVIWnd@@H@Z"
+  },
+  {
+    "ordinal": 394,
+    "rva": "0x31250",
+    "name": "?SetCapture@SubFilter@@QAEXPAVGroupFilter@@PAVIWnd@@H@Z"
+  },
+  {
+    "ordinal": 395,
+    "rva": "0x75fd0",
+    "name": "?SetCargo@Unit@@QAEXW4map_id@@0@Z"
+  },
+  {
+    "ordinal": 396,
+    "rva": "0x76e30",
+    "name": "?SetCellType@GameMap@@SIXULOCATION@@H@Z"
+  },
+  {
+    "ordinal": 397,
+    "rva": "0x77fa0",
+    "name": "?SetCheatFastProduction@TethysGame@@SIXH@Z"
+  },
+  {
+    "ordinal": 398,
+    "rva": "0x77f90",
+    "name": "?SetCheatFastUnits@TethysGame@@SIXH@Z"
+  },
+  {
+    "ordinal": 399,
+    "rva": "0x77fc0",
+    "name": "?SetCheatProduceAll@TethysGame@@SIXH@Z"
+  },
+  {
+    "ordinal": 400,
+    "rva": "0x77fb0",
+    "name": "?SetCheatUnlimitedResources@TethysGame@@SIXH@Z"
+  },
+  {
+    "ordinal": 401,
+    "rva": "0x9cdb0",
+    "name": "?SetCheck@MenuState@@UAEXH@Z"
+  },
+  {
+    "ordinal": 402,
+    "rva": "0x9cd20",
+    "name": "?SetCheck@UIState@@UAEXH@Z"
+  },
+  {
+    "ordinal": 403,
+    "rva": "0x77460",
+    "name": "?SetColorNumber@_Player@@QAEXH@Z"
+  },
+  {
+    "ordinal": 404,
+    "rva": "0x79cc0",
+    "name": "?SetCombineFire@FightGroup@@QAEXXZ"
+  },
+  {
+    "ordinal": 405,
+    "rva": "0x7a990",
+    "name": "?SetContactDelay@Pinwheel@@QAEXH@Z"
+  },
+  {
+    "ordinal": 406,
+    "rva": "0x76200",
+    "name": "?SetDamage@Unit@@QAEXH@Z"
+  },
+  {
+    "ordinal": 407,
+    "rva": "0x78210",
+    "name": "?SetDaylightEverywhere@TethysGame@@SIXH@Z"
+  },
+  {
+    "ordinal": 408,
+    "rva": "0x78270",
+    "name": "?SetDaylightMoves@TethysGame@@SIXH@Z"
+  },
+  {
+    "ordinal": 409,
+    "rva": "0x775a0",
+    "name": "?SetDefaultGroup@_Player@@QAEXAAVScGroup@@@Z"
+  },
+  {
+    "ordinal": 410,
+    "rva": "0x79b80",
+    "name": "?SetDeleteWhenEmpty@ScGroup@@QAEXH@Z"
+  },
+  {
+    "ordinal": 411,
+    "rva": "0x78420",
+    "name": "?SetEMPMissile@TethysGame@@SIXHHHHH@Z"
+  },
+  {
+    "ordinal": 412,
+    "rva": "0x78320",
+    "name": "?SetEarthquake@TethysGame@@SIXHHH@Z"
+  },
+  {
+    "ordinal": 413,
+    "rva": "0x782e0",
+    "name": "?SetEruption@TethysGame@@SIXHHH@Z"
+  },
+  {
+    "ordinal": 414,
+    "rva": "0x76040",
+    "name": "?SetFactoryCargo@Unit@@QAEXHW4map_id@@0@Z"
+  },
+  {
+    "ordinal": 415,
+    "rva": "0x79f30",
+    "name": "?SetFollowMode@FightGroup@@QAEXH@Z"
+  },
+  {
+    "ordinal": 416,
+    "rva": "0x770a0",
+    "name": "?SetFoodStored@_Player@@QAEXH@Z"
+  },
+  {
+    "ordinal": 417,
+    "rva": "0x7a9e0",
+    "name": "?SetGuardComp@Pinwheel@@QAEXHHPAUMrRec@@@Z"
+  },
+  {
+    "ordinal": 418,
+    "rva": "0x1ff0",
+    "name": "?SetId@ScStub@@QAEXH@Z"
+  },
+  {
+    "ordinal": 419,
+    "rva": "0x75dc0",
+    "name": "?SetId@Unit@@QAEXH@Z"
+  },
+  {
+    "ordinal": 420,
+    "rva": "0x76f90",
+    "name": "?SetInitialLightLevel@GameMap@@SIXH@Z"
+  },
+  {
+    "ordinal": 421,
+    "rva": "0x10830",
+    "name": "?SetInt@CConfig@@QAEHPBD0H@Z"
+  },
+  {
+    "ordinal": 422,
+    "rva": "0x108e0",
+    "name": "?SetInt@CConfig@@QAEHPBDH@Z"
+  },
+  {
+    "ordinal": 423,
+    "rva": "0x77330",
+    "name": "?SetKids@_Player@@QAEXH@Z"
+  },
+  {
+    "ordinal": 424,
+    "rva": "0x76f20",
+    "name": "?SetLavaPossible@GameMap@@SIXULOCATION@@H@Z"
+  },
+  {
+    "ordinal": 425,
+    "rva": "0x78310",
+    "name": "?SetLavaSpeed@TethysGame@@SIXH@Z"
+  },
+  {
+    "ordinal": 426,
+    "rva": "0x783e0",
+    "name": "?SetLightning@TethysGame@@SIXHHHHH@Z"
+  },
+  {
+    "ordinal": 427,
+    "rva": "0x79b60",
+    "name": "?SetLights@ScGroup@@QAEXH@Z"
+  },
+  {
+    "ordinal": 428,
+    "rva": "0x1d30",
+    "name": "?SetLobby@TApp@@QAEXPAVTLobby@@@Z"
+  },
+  {
+    "ordinal": 429,
+    "rva": "0x1d80",
+    "name": "?SetMainInst@TApp@@QAEXPAUHINSTANCE__@@@Z"
+  },
+  {
+    "ordinal": 430,
+    "rva": "0x783b0",
+    "name": "?SetMeteor@TethysGame@@SIXHHH@Z"
+  },
+  {
+    "ordinal": 431,
+    "rva": "0x782d0",
+    "name": "?SetMicrobeSpreadSpeed@TethysGame@@SIXH@Z"
+  },
+  {
+    "ordinal": 432,
+    "rva": "0x786f0",
+    "name": "?SetMusicPlayList@TethysGame@@SIXHHPAW4SongIds@@@Z"
+  },
+  {
+    "ordinal": 433,
+    "rva": "0x7a950",
+    "name": "?SetNoRange@Pinwheel@@QAEXHH@Z"
+  },
+  {
+    "ordinal": 434,
+    "rva": "0x75f60",
+    "name": "?SetOppFiredUpon@Unit@@QAEXH@Z"
+  },
+  {
+    "ordinal": 435,
+    "rva": "0x77040",
+    "name": "?SetOre@_Player@@QAEXH@Z"
+  },
+  {
+    "ordinal": 436,
+    "rva": "0x79d20",
+    "name": "?SetPatrolMode@FightGroup@@QAEXAAUPatrolRoute@@@Z"
+  },
+  {
+    "ordinal": 437,
+    "rva": "0x7a8b0",
+    "name": "?SetPoints@Pinwheel@@QAEXPAUPWDef@@@Z"
+  },
+  {
+    "ordinal": 438,
+    "rva": "0x77070",
+    "name": "?SetRareOre@_Player@@QAEXH@Z"
+  },
+  {
+    "ordinal": 439,
+    "rva": "0x7a2e0",
+    "name": "?SetRect@BuildingGroup@@QAEXAAUMAP_RECT@@@Z"
+  },
+  {
+    "ordinal": 440,
+    "rva": "0x79da0",
+    "name": "?SetRect@FightGroup@@QAEXAAUMAP_RECT@@@Z"
+  },
+  {
+    "ordinal": 441,
+    "rva": "0x7aa10",
+    "name": "?SetSapperComp@Pinwheel@@QAEXHHPAUMrRec@@@Z"
+  },
+  {
+    "ordinal": 442,
+    "rva": "0x77300",
+    "name": "?SetScientists@_Player@@QAEXH@Z"
+  },
+  {
+    "ordinal": 443,
+    "rva": "0x77f30",
+    "name": "?SetSeed@TethysGame@@SIXI@Z"
+  },
+  {
+    "ordinal": 444,
+    "rva": "0x770d0",
+    "name": "?SetSolarSat@_Player@@QAEXH@Z"
+  },
+  {
+    "ordinal": 445,
+    "rva": "0x10890",
+    "name": "?SetString@CConfig@@QAEHPBD00@Z"
+  },
+  {
+    "ordinal": 446,
+    "rva": "0x10a70",
+    "name": "?SetString@CConfig@@QAEHPBD0@Z"
+  },
+  {
+    "ordinal": 447,
+    "rva": "0x83cf0",
+    "name": "?SetSubFilter@GroupFilter@@QAEXPAVSubFilter@@@Z"
+  },
+  {
+    "ordinal": 448,
+    "rva": "0x79c40",
+    "name": "?SetTargCount@ScGroup@@QAEXAAVUnitBlock@@@Z"
+  },
+  {
+    "ordinal": 449,
+    "rva": "0x79c70",
+    "name": "?SetTargCount@ScGroup@@QAEXW4map_id@@0H@Z"
+  },
+  {
+    "ordinal": 450,
+    "rva": "0x79f90",
+    "name": "?SetTargetGroup@FightGroup@@QAEXVScGroup@@@Z"
+  },
+  {
+    "ordinal": 451,
+    "rva": "0x79f00",
+    "name": "?SetTargetUnit@FightGroup@@QAEXVUnit@@@Z"
+  },
+  {
+    "ordinal": 452,
+    "rva": "0x77540",
+    "name": "?SetTechLevel@_Player@@QAEXH@Z"
+  },
+  {
+    "ordinal": 453,
+    "rva": "0x9cd70",
+    "name": "?SetText@MenuState@@UAEXPBD@Z"
+  },
+  {
+    "ordinal": 454,
+    "rva": "0x9cd10",
+    "name": "?SetText@UIState@@UAEXPBD@Z"
+  },
+  {
+    "ordinal": 455,
+    "rva": "0x76d80",
+    "name": "?SetTile@GameMap@@SIXULOCATION@@H@Z"
+  },
+  {
+    "ordinal": 456,
+    "rva": "0x78350",
+    "name": "?SetTornado@TethysGame@@SIXHHHHHH@Z"
+  },
+  {
+    "ordinal": 457,
+    "rva": "0x76010",
+    "name": "?SetTruckCargo@Unit@@QAEXW4Truck_Cargo@@H@Z"
+  },
+  {
+    "ordinal": 458,
+    "rva": "0x87030",
+    "name": "?SetUIState@TApp@@QAEHPAVUIState@@@Z"
+  },
+  {
+    "ordinal": 459,
+    "rva": "0x76ea0",
+    "name": "?SetVirusUL@GameMap@@SIXULOCATION@@H@Z"
+  },
+  {
+    "ordinal": 460,
+    "rva": "0x7a970",
+    "name": "?SetWavePeriod@Pinwheel@@QAEXHH@Z"
+  },
+  {
+    "ordinal": 461,
+    "rva": "0x75fb0",
+    "name": "?SetWeapon@Unit@@QAEXW4map_id@@@Z"
+  },
+  {
+    "ordinal": 462,
+    "rva": "0x772d0",
+    "name": "?SetWorkers@_Player@@QAEXH@Z"
+  },
+  {
+    "ordinal": 463,
+    "rva": "0x7a160",
+    "name": "?Setup@MiningGroup@@QAEXAAULOCATION@@0AAUMAP_RECT@@@Z"
+  },
+  {
+    "ordinal": 464,
+    "rva": "0x7a240",
+    "name": "?Setup@MiningGroup@@QAEXAAULOCATION@@0W4map_id@@1AAUMAP_RECT@@@Z"
+  },
+  {
+    "ordinal": 465,
+    "rva": "0x7a100",
+    "name": "?Setup@MiningGroup@@QAEXVUnit@@0AAUMAP_RECT@@@Z"
+  },
+  {
+    "ordinal": 466,
+    "rva": "0x71140",
+    "name": "?ShutDown@ResManager@@QAEXXZ"
+  },
+  {
+    "ordinal": 467,
+    "rva": "0x866e0",
+    "name": "?ShutDown@TApp@@QAEXXZ"
+  },
+  {
+    "ordinal": 468,
+    "rva": "0x88fc0",
+    "name": "?ShutDown@TFrame@@MAEXXZ"
+  },
+  {
+    "ordinal": 469,
+    "rva": "0x75c70",
+    "name": "?Size@MAP_RECT@@QBE?AULOCATION@@XZ"
+  },
+  {
+    "ordinal": 470,
+    "rva": "0x9d4c0",
+    "name": "?SortAndInit@UnitBlock@@AAEXPAUUnitRecord@@@Z"
+  },
+  {
+    "ordinal": 471,
+    "rva": "0x87f80",
+    "name": "?StartSingleGame@TApp@@QAEHPAUGameStartInfo@@@Z"
+  },
+  {
+    "ordinal": 472,
+    "rva": "0x76220",
+    "name": "?StoreSelf@Unit@@ABEPADAAUCommandPacket@@@Z"
+  },
+  {
+    "ordinal": 473,
+    "rva": "0x79ba0",
+    "name": "?TakeAllUnits@ScGroup@@QAEXAAV1@@Z"
+  },
+  {
+    "ordinal": 474,
+    "rva": "0x79af0",
+    "name": "?TakeUnit@ScGroup@@QAEXVUnit@@@Z"
+  },
+  {
+    "ordinal": 475,
+    "rva": "0x77ef0",
+    "name": "?Tick@TethysGame@@SIHXZ"
+  },
+  {
+    "ordinal": 476,
+    "rva": "0x77ee0",
+    "name": "?Time@TethysGame@@SIHXZ"
+  },
+  {
+    "ordinal": 477,
+    "rva": "0x79a10",
+    "name": "?TotalUnitCount@ScGroup@@QAEHXZ"
+  },
+  {
+    "ordinal": 478,
+    "rva": "0x7a460",
+    "name": "?UnRecordVehGroup@BuildingGroup@@QAEXAAVScGroup@@@Z"
+  },
+  {
+    "ordinal": 479,
+    "rva": "0x799f0",
+    "name": "?UnitCount@ScGroup@@QAEHW4UnitClassifactions@@@Z"
+  },
+  {
+    "ordinal": 480,
+    "rva": "0x71490",
+    "name": "?UnlockStream@ResManager@@QAEXPAX@Z"
+  },
+  {
+    "ordinal": 481,
+    "rva": "0x77f60",
+    "name": "?UsesDayNight@TethysGame@@SIHXZ"
+  },
+  {
+    "ordinal": 482,
+    "rva": "0x77f80",
+    "name": "?UsesMorale@TethysGame@@SIHXZ"
+  },
+  {
+    "ordinal": 483,
+    "rva": "0x71900",
+    "name": "?VerifyCD@ResManager@@QAEXXZ"
+  },
+  {
+    "ordinal": 484,
+    "rva": "0x88200",
+    "name": "?Version@TApp@@QAEKXZ"
+  },
+  {
+    "ordinal": 485,
+    "rva": "0x75aa0",
+    "name": "?Width@MAP_RECT@@QBEHXZ"
+  },
+  {
+    "ordinal": 486,
+    "rva": "0x316b0",
+    "name": "?WndProc@IWnd@@UAEJIIJ@Z"
+  },
+  {
+    "ordinal": 487,
+    "rva": "0x889e0",
+    "name": "?WndProc@TFrame@@MAEJIIJ@Z"
+  },
+  {
+    "ordinal": 488,
+    "rva": "0x77270",
+    "name": "?Workers@_Player@@QBEHXZ"
+  },
+  {
+    "ordinal": 489,
+    "rva": "0x31980",
+    "name": "?_DlgProc@IDlgWnd@@CGHPAUHWND__@@IIJ@Z"
+  },
+  {
+    "ordinal": 490,
+    "rva": "0x312d0",
+    "name": "?_WndProc@IWnd@@SGJPAUHWND__@@IIJ@Z"
+  },
+  {
+    "ordinal": 491,
+    "rva": "0x77910",
+    "name": "?canAccumulateOre@_Player@@QAEHXZ"
+  },
+  {
+    "ordinal": 492,
+    "rva": "0x77a80",
+    "name": "?canAccumulateRareOre@_Player@@QAEHXZ"
+  },
+  {
+    "ordinal": 493,
+    "rva": "0x77700",
+    "name": "?canBuildBuilding@_Player@@QAEHXZ"
+  },
+  {
+    "ordinal": 494,
+    "rva": "0x77890",
+    "name": "?canBuildSpace@_Player@@QAEHXZ"
+  },
+  {
+    "ordinal": 495,
+    "rva": "0x777f0",
+    "name": "?canBuildVehicle@_Player@@QAEHH@Z"
+  },
+  {
+    "ordinal": 496,
+    "rva": "0x77bf0",
+    "name": "?canDoResearch@_Player@@QAEHH@Z"
+  },
+  {
+    "ordinal": 497,
+    "rva": "0x147090",
+    "name": "?gConfigFile@@3VCConfig@@A"
+  },
+  {
+    "ordinal": 498,
+    "rva": "0x16e868",
+    "name": "?gTApp@@3VTApp@@A"
+  },
+  {
+    "ordinal": 499,
+    "rva": "0x16c028",
+    "name": "?g_ResManager@@3VResManager@@A"
+  },
+  {
+    "ordinal": 500,
+    "rva": "0x77e10",
+    "name": "?hasActiveCommand@_Player@@QAEHXZ"
+  },
+  {
+    "ordinal": 501,
+    "rva": "0x775e0",
+    "name": "?hasVehicle@_Player@@QAEHW4map_id@@0@Z"
+  },
+  {
+    "ordinal": 502,
+    "rva": "0x76120",
+    "name": "?isDiscovered@Unit@@QBEHXZ"
+  },
+  {
+    "ordinal": 503,
+    "rva": "0x760f0",
+    "name": "?isEMPed@Unit@@QBEHXZ"
+  },
+  {
+    "ordinal": 504,
+    "rva": "0xe0bd8",
+    "name": "?nModelessCount@IDlgWnd@@0HA"
+  },
+  {
+    "ordinal": 505,
+    "rva": "0xe0bc4",
+    "name": "?pCaptureNode@Filter@@0PAVFilterNode@@A"
+  },
+  {
+    "ordinal": 506,
+    "rva": "0xe0bd4",
+    "name": "?pFirst@IDlgWnd@@0PAV1@A"
+  },
+  {
+    "ordinal": 507,
+    "rva": "0x776e0",
+    "name": "?resetChecks@_Player@@QAEXXZ"
+  },
+  {
+    "ordinal": 508,
+    "rva": "0x77e90",
+    "name": "?sIssueOptPacket@TethysGame@@CIXHH@Z"
+  },
+  {
+    "ordinal": 509,
+    "rva": "0x75930",
+    "name": "?scr_snprintf@@YAHPADIPBDZZ"
+  }
+]

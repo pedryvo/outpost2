@@ -1,0 +1,42 @@
+# Rust and Trunk build outputs
+/target/
+/dist/
+.vercel/
+
+# Dependencies
+node_modules/
+
+# Original Windows executables, binaries and libraries
+*.exe
+*.EXE
+*.dll
+*.DLL
+*.ani
+*.ANI
+*.ini
+*.INI
+*.url
+*.URL
+ChangeLog.txt
+NetFix/
+NetHelper/
+
+# Original volume containers and raw bitmaps in root
+/*.vol
+/*.BMP
+/*.bmp
+
+# Save files and logs
+*.op2
+*.log
+*.tmp
+
+# Disassembly & reverse engineering temp files
+*.pdb
+*.idb
+*.i64
+
+# OS and Editor metadata
+.DS_Store
+.idea/
+.vscode/

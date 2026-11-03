@@ -1,0 +1,3 @@
+[tools]
+"github:thedodd/trunk" = "latest"
+rust = "stable"

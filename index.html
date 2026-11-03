@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Outpost 2: Divided Destiny — WebAssembly Port</title>
+  <link data-trunk rel="rust" data-wasm-opt="s" />
+  <style>
+    :root {
+      --op2-bg: #0c0e12;
+      --op2-panel: #161a22;
+      --op2-border: #2a3342;
+      --op2-accent-eden: #00d4ff;
+      --op2-accent-plymouth: #ff8c00;
+      --op2-text: #e2e8f0;
+      --op2-muted: #8b9bb4;
+      --op2-danger: #ef4444;
+      --op2-success: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--op2-bg);
+      color: var(--op2-text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Command Header */
+    #top-bar {
+      height: 48px;
+      background: linear-gradient(180deg, #1f2633 0%, #12161f 100%);
+      border-bottom: 2px solid var(--op2-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 10;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+
+    .telemetry-group {
+      display: flex;
+      gap: 18px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .telemetry-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .telemetry-label {
+      color: var(--op2-muted);
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 0.5px;
+    }
+
+    .telemetry-val {
+      font-family: "Courier New", Courier, monospace;
+      font-weight: bold;
+    }
+
+    .val-eden { color: var(--op2-accent-eden); }
+    .val-plymouth { color: var(--op2-accent-plymouth); }
+    .val-power { color: #facc15; }
+    .val-metal { color: #cbd5e1; }
+    .val-food { color: #4ade80; }
+
+    /* Canvas Viewport */
+    #viewport-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: #000;
+      cursor: crosshair;
+    }
+
+    #op2-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+    }
+
+    /* Bottom Tactical Console */
+    #bottom-bar {
+      height: 64px;
+      background: linear-gradient(0deg, #1a202c 0%, #11151c 100%);
+      border-top: 2px solid var(--op2-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 10;
+    }
+
+    .action-btn {
+      background: #242c3d;
+      border: 1px solid #3b475e;
+      color: var(--op2-text);
+      padding: 8px 14px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .action-btn:hover {
+      background: #323d54;
+      border-color: var(--op2-accent-eden);
+      color: #fff;
+    }
+
+    /* Radar Minimap Floating Card */
+    #minimap-card {
+      position: absolute;
+      bottom: 76px;
+      right: 16px;
+      width: 160px;
+      height: 160px;
+      background: rgba(12, 14, 18, 0.85);
+      border: 2px solid var(--op2-border);
+      border-radius: 6px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      z-index: 15;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #minimap-header {
+      height: 24px;
+      background: #1e2636;
+      font-size: 10px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 8px;
+      color: var(--op2-accent-eden);
+    }
+
+    #minimap-canvas {
+      flex: 1;
+      width: 100%;
+      height: calc(100% - 24px);
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <!-- Top Command Telemetry -->
+    <header id="top-bar">
+      <div class="telemetry-group">
+        <div class="telemetry-item">
+          <span class="telemetry-label">Faction:</span>
+          <span class="telemetry-val val-eden" id="colony-faction">EDEN</span>
+        </div>
+        <div class="telemetry-item">
+          <span class="telemetry-label">Sol:</span>
+          <span class="telemetry-val" id="colony-sol">1.04</span>
+        </div>
+        <div class="telemetry-item">
+          <span class="telemetry-label">Pop:</span>
+          <span class="telemetry-val" id="colony-pop">124 (98% Morale)</span>
+        </div>
+      </div>
+
+      <div class="telemetry-group">
+        <div class="telemetry-item">
+          <span class="telemetry-label">Power:</span>
+          <span class="telemetry-val val-power" id="colony-power">450 / 380 kW</span>
+        </div>
+        <div class="telemetry-item">
+          <span class="telemetry-label">Common Ore:</span>
+          <span class="telemetry-val val-metal" id="colony-ore">2,450 t</span>
+        </div>
+        <div class="telemetry-item">
+          <span class="telemetry-label">Rare Ore:</span>
+          <span class="telemetry-val val-metal" id="colony-rare">680 t</span>
+        </div>
+        <div class="telemetry-item">
+          <span class="telemetry-label">Food:</span>
+          <span class="telemetry-val val-food" id="colony-food">1,200</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Viewport Canvas -->
+    <main id="viewport-container">
+      <canvas id="op2-canvas"></canvas>
+
+      <!-- Tactical Radar Minimap -->
+      <aside id="minimap-card">
+        <div id="minimap-header">
+          <span>Tactical Radar</span>
+          <span id="radar-sweep" style="color: #4ade80;">ACTIVE</span>
+        </div>
+        <canvas id="minimap-canvas"></canvas>
+      </aside>
+    </main>
+
+    <!-- Bottom Command Controls -->
+    <footer id="bottom-bar">
+      <div style="display: flex; gap: 8px;">
+        <button class="action-btn" id="btn-build">🏗️ Build Base</button>
+        <button class="action-btn" id="btn-units">🚜 Units</button>
+        <button class="action-btn" id="btn-research">🔬 Research</button>
+      </div>
+
+      <div style="display: flex; gap: 8px;">
+        <button class="action-btn" id="btn-zoom-in">🔍 +</button>
+        <button class="action-btn" id="btn-zoom-out">🔍 -</button>
+        <button class="action-btn" id="btn-pause">⏸️ Pause</button>
+        <button class="action-btn" id="btn-fullscreen">⛶ Fullscreen</button>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
