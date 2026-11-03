@@ -86,9 +86,16 @@ This document provides a comprehensive technical overview of the Rust / WebAssem
 - **Progress Persistence:** `SaveGameData` captures colony metadata, ore reserves, units, buildings, transport tubes, and researched tech nodes into a JSON schema persisted directly to `window.localStorage("op2_colony_save")`.
 - **Mobile Gestures:** Full touch event support (`touchstart`, `touchmove`, `touchend`) with single-finger viewport drag panning and multi-touch pinch-to-zoom.
 
-### 8. `src/audio/mod.rs` (Web Audio Subsystem)
-- **Browser Autoplay Compliance:** Lazy-initializes the `AudioContext` upon the first user interaction (canvas click or button tap).
-- **Audio Feedback:** Synthesizes low-latency responsive sci-fi chimes and acknowledges unit selection and building placement orders.
+### 8. `src/sim/combat.rs` & `src/sim/ai.rs` (Tactical Warfare & Rival AI)
+- **Combat Simulation:** Real-time engagement mechanics for pulse lasers, microwave emitters, railguns, RPGs, EMP arcs, and acid clouds. Firing units project multi-layer glowing energy beams (`CombatBeam`) and generate fiery concussive shockwaves (`ExplosionEffect`) on target destruction.
+- **Rival Faction AI Director:** Governs hostile Plymouth outpost operations, patrol waypoints, territorial defense, and automated wave reinforcements.
+
+### 9. `src/audio/radio.rs` & `src/audio/mod.rs` (Audio & Speech Dispatch)
+- **Radio Dispatcher:** Employs the Web Speech API with pitched military cadences to speak critical alerts ("Disaster warning", "Hostile Plymouth reinforcements deployed", "Research completed").
+- **Web Audio FX:** Synthesizes low-latency responsive sci-fi chimes for selection, move acknowledgments, and building placement.
+
+### 10. `src/i18n.rs` (Live In-Game Localization)
+- Real-time language switching without page reload across English, Portuguese (BR), Spanish, German, Simplified Chinese, and Russian.
 
 ---
 
