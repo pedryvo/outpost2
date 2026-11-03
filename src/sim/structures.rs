@@ -18,6 +18,7 @@ pub enum StructureType {
     Residence,
     Agrodome,
     VehicleFactory,
+    RepairFacility,
     Spaceport,
 }
 
@@ -34,6 +35,7 @@ impl StructureType {
             Self::Residence => "Colonial Residence",
             Self::Agrodome => "Bio-Dome Hydroponics",
             Self::VehicleFactory => "Vehicle Factory",
+            Self::RepairFacility => "Vehicle Repair Depot",
             Self::Spaceport => "Starship Launch Gantry",
         }
     }
@@ -44,6 +46,7 @@ impl StructureType {
             Self::SolarArray => (2, 2),
             Self::TokamakReactor => (3, 3),
             Self::VehicleFactory => (3, 3),
+            Self::RepairFacility => (2, 2),
             Self::Spaceport => (3, 3),
             _ => (2, 2),
         }
@@ -61,6 +64,7 @@ impl StructureType {
             Self::Residence => 20,
             Self::Agrodome => 30,
             Self::VehicleFactory => 120,
+            Self::RepairFacility => 60,
             Self::Spaceport => 160,
         }
     }
@@ -78,7 +82,26 @@ impl StructureType {
             Self::Residence => (150, 0),
             Self::Agrodome => (200, 50),
             Self::VehicleFactory => (500, 150),
+            Self::RepairFacility => (250, 50),
             Self::Spaceport => (800, 350),
+        }
+    }
+
+    pub fn from_name(name: &str) -> Option<Self> {
+        match name {
+            "Command Center" => Some(Self::CommandCenter),
+            "Solar Power Array" => Some(Self::SolarArray),
+            "Tokamak Fusion Reactor" => Some(Self::TokamakReactor),
+            "Common Ore Smelter" => Some(Self::CommonOreSmelter),
+            "Rare Ore Smelter" => Some(Self::RareOreSmelter),
+            "D.I.R.T. Laboratory" => Some(Self::DirtLab),
+            "Standard Research Lab" => Some(Self::StandardLab),
+            "Colonial Residence" => Some(Self::Residence),
+            "Bio-Dome Hydroponics" => Some(Self::Agrodome),
+            "Vehicle Factory" => Some(Self::VehicleFactory),
+            "Vehicle Repair Depot" => Some(Self::RepairFacility),
+            "Starship Launch Gantry" => Some(Self::Spaceport),
+            _ => None,
         }
     }
 }

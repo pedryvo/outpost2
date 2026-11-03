@@ -169,6 +169,25 @@ impl Viewport {
                         ctx.close_path();
                         ctx.fill();
                     }
+
+                    // Atmospheric hazard particle drift: volcanic embers and blight spores
+                    if t.is_blight && fog != FogState::Unexplored {
+                        let spore_t = colony.sol * 2.0 + (c as f64 * 3.7) + (r as f64 * 5.3);
+                        let spore_dy = (spore_t % 1.0) * 16.0 * self.zoom;
+                        let spore_dx = spore_t.sin() * 6.0 * self.zoom;
+                        ctx.set_fill_style_str("rgba(216, 180, 254, 0.75)");
+                        ctx.begin_path();
+                        let _ = ctx.arc(sx + spore_dx, sy - spore_dy, 2.0 * self.zoom, 0.0, std::f64::consts::TAU);
+                        ctx.fill();
+                    } else if t.is_lava && fog != FogState::Unexplored {
+                        let ember_t = colony.sol * 4.0 + (c as f64 * 2.1) + (r as f64 * 4.7);
+                        let ember_dy = (ember_t % 1.0) * 18.0 * self.zoom;
+                        let ember_dx = ember_t.cos() * 4.0 * self.zoom;
+                        ctx.set_fill_style_str("rgba(254, 215, 170, 0.85)");
+                        ctx.begin_path();
+                        let _ = ctx.arc(sx + ember_dx, sy - ember_dy, 1.8 * self.zoom, 0.0, std::f64::consts::TAU);
+                        ctx.fill();
+                    }
                 }
             }
         }
@@ -322,6 +341,20 @@ impl Viewport {
                     let _ = ctx.fill_text(&label, bar_x, bar_y - 3.0);
                 }
             }
+
+            // Vehicle Repair Depot Diagnostic Field
+            if b.name.contains("Repair") && b.is_active && fog == FogState::Visible {
+                let repair_pulse = (colony.sol * 4.0).sin().abs();
+                ctx.set_stroke_style_str(&format!("rgba(16, 185, 129, {:.2})", 0.4 + 0.4 * repair_pulse));
+                ctx.set_line_width(1.5 * self.zoom);
+                ctx.begin_path();
+                let _ = ctx.arc(sx, sy, 22.0 * self.zoom, 0.0, std::f64::consts::TAU);
+                ctx.stroke();
+
+                ctx.set_fill_style_str("#10b981");
+                ctx.set_font(&format!("bold {}px sans-serif", (10.0 * self.zoom).max(9.0)));
+                let _ = ctx.fill_text("➕", sx - 5.0 * self.zoom, sy - b_h - 22.0 * self.zoom);
+            }
         }
 
         // Render Units (Only visible when active in sensor range)
@@ -333,8 +366,14 @@ impl Viewport {
 
             let (sx, sy) = self.tile_to_screen(u.tile_x as f64, u.tile_y as f64);
 
-            // Unit chassis: Eden is Cyan, Plymouth is Crimson Red
-            let chassis_color = if u.faction == Faction::Eden { "#38bdf8" } else { "#ef4444" };
+            // Unit chassis: Repair is emerald green, Eden is Cyan, Plymouth is Crimson Red
+            let chassis_color = if u.name.contains("Repair") {
+                "#10b981"
+            } else if u.faction == Faction::Eden {
+                "#38bdf8"
+            } else {
+                "#ef4444"
+            };
             ctx.set_fill_style_str(chassis_color);
             ctx.begin_path();
             let _ = ctx.arc(sx, sy, 8.0 * self.zoom, 0.0, std::f64::consts::PI * 2.0);
@@ -343,6 +382,12 @@ impl Viewport {
             ctx.set_stroke_style_str("#0f172a");
             ctx.set_line_width(1.5);
             ctx.stroke();
+
+            if u.name.contains("Repair") {
+                ctx.set_fill_style_str("#ecfdf5");
+                ctx.set_font(&format!("bold {}px sans-serif", (9.0 * self.zoom).max(8.0)));
+                let _ = ctx.fill_text("🔧", sx - 5.0 * self.zoom, sy - 18.0 * self.zoom);
+            }
 
             // Unit selection ring
             if u.is_selected {

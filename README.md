@@ -48,9 +48,12 @@ Unlike heavyweight virtual machines or x86 emulators, this port runs natively in
 | **Fog of War & Radar** | ✅ | 3-tier visibility sensor grid (Unexplored, Explored, Visible) · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
 | **Colony Simulation Core** | ✅ | Eden & Plymouth logistics: power flux, life support, ore, morale, disasters · [`docs/formats/disasters.md`](docs/formats/disasters.md) |
 | **Structures & Tube Network** | ✅ | Modular base kits & pressurized transport tube grid · [`docs/formats/structures_and_tubes.md`](docs/formats/structures_and_tubes.md) |
-| **Interactive Construction Yard**| ✅ | Slide-out blueprint drawer (10 buildings), holographic ghost placement & tube projections |
+| **Interactive Construction Yard**| ✅ | Slide-out blueprint drawer (11 buildings), holographic ghost placement & tube projections |
+| **Structure Recycling & Demolition**| ✅ | Salvage obsolete or damaged buildings to reclaim 50% ore investment & rebalance power grids |
 | **Unit Control & 8-Way A\*** | ✅ | A* isometric pathfinding, lava avoidance, right-click orders · [`docs/ENGINE_ARCHITECTURE.md`](docs/ENGINE_ARCHITECTURE.md) |
 | **Tactical Drag Selection** | ✅ | Multi-unit drag-box with corner bracket reticles and Shift-click grouping |
+| **Vehicle Repair & Field Triage**| ✅ | Mobile Repair Vehicles and stationary Depots projecting emerald nano-welding beams |
+| **Dynamic Blight Contagion** | ✅ | Spreading microbial spore hazard, caustic vehicle corrosion, and drifting atmospheric embers |
 | **Tech Research Tree** | ✅ | 12 primary scientific disciplines with live lab investment · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **Multi-Map Campaigns** | ✅ | Authentic operational theaters (Eden 1, Plymouth 1, Academy Tutorial) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
 | **Factory Queues & Animation** | ✅ | Production queue scheduling, welding plasma arcs, HUD progress bars |

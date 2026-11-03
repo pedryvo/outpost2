@@ -48,9 +48,12 @@ Diferente de máquinas virtuais pesadas ou emuladores x86, este porte roda nativ
 | **Névoa de Guerra & Radar** | ✅ | Grid sensorial de visibilidade em 3 níveis (Inexplorado, Explorado, Visível) · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
 | **Núcleo de Simulação da Colônia** | ✅ | Logística Eden e Plymouth: fluxo de energia, suporte à vida, minério, moral e desastres · [`docs/formats/disasters.md`](docs/formats/disasters.md) |
 | **Estruturas & Rede de Tubos** | ✅ | Kits modulares de construção e rede arterial de tubos pressurizados · [`docs/formats/structures_and_tubes.md`](docs/formats/structures_and_tubes.md) |
-| **Pátio de Construção Interativo** | ✅ | Gaveta retrátil de blueprints (10 estruturas), posicionamento holográfico fantasma e projeção de tubos |
+| **Pátio de Construção Interativo** | ✅ | Gaveta retrátil de blueprints (11 estruturas), posicionamento holográfico fantasma e projeção de tubos |
+| **Reciclagem & Demolição de Bases**| ✅ | Desmonte de estruturas com reembolso de 50% de minério e balanceamento automático da rede elétrica |
 | **Controle de Unidades & 8-Way A\*** | ✅ | Pathfinding A* isométrico em 8 direções, evasão de lava e ordens com botão direito · [`docs/ENGINE_ARCHITECTURE.md`](docs/ENGINE_ARCHITECTURE.md) |
 | **Seleção Tática por Área (Drag)** | ✅ | Caixa de seleção em arrasto com retículos angulares sci-fi e agrupamento via Shift |
+| **Reparo de Veículos & Triagem** | ✅ | Veículos de Reparo móveis e Depósitos de Manutenção com feixes de nanosolda esmeralda |
+| **Contágio Dinâmico do Blight** | ✅ | Contágio orgânico de esporos microbianos, corrosão cáustica de veículos e fagulhas atmosféricas |
 | **Árvore de Pesquisa Tecnológica** | ✅ | 12 disciplinas científicas com investimento dinâmico de laboratório · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **Campanhas Multi-Mapas** | ✅ | Teatros autênticos de operação (Eden 1, Plymouth 1, Tutorial da Academia) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
 | **Filas de Fábrica & Animação** | ✅ | Agendamento de fabricação, arcos elétricos de solda e barras de progresso no HUD |

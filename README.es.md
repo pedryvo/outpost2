@@ -53,9 +53,12 @@ El objetivo es preservar y modernizar este clásico juego de estrategia en tiemp
 | **Niebla de Guerra y Radar** | ✅ | Rejilla de sensores de 3 niveles (Inexplorado, Explorado, Visible) · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
 | **Núcleo de Simulación Colonial** | ✅ | Logística Eden y Plymouth: energía, soporte vital, minerales, moral y desastres · [`docs/formats/disasters.md`](docs/formats/disasters.md) |
 | **Estructuras y Red de Tubos** | ✅ | Kits modulares de construcción y red de tubos presurizados · [`docs/formats/structures_and_tubes.md`](docs/formats/structures_and_tubes.md) |
-| **Astillero de Construcción Interactivo**| ✅ | Cajón deslizable de planos (10 edificios), colocación fantasma holográfica y tubos proyectados |
+| **Astillero de Construcción Interactivo**| ✅ | Cajón deslizable de planos (11 edificios), colocación fantasma holográfica y tubos proyectados |
+| **Reciclaje y Demolición Colonial**| ✅ | Desmantelamiento de edificios para recuperar 50% de minerales y equilibrar la red energética |
 | **Control de Unidades y A\* 8-Vías** | ✅ | Pathfinding A* isométrico en 8 direcciones y órdenes tácticas · [`docs/ENGINE_ARCHITECTURE.md`](docs/ENGINE_ARCHITECTURE.md) |
 | **Selección Táctica por Arrastre** | ✅ | Caja de selección multi-unidad con retículas angulares sci-fi y agrupación con Shift |
+| **Reparación de Vehículos & Triage**| ✅ | Vehículos de Reparación móviles y Talleres con rayos de nanosoldadura esmeralda |
+| **Contagio Dinámico de Plaga** | ✅ | Expansión orgánica de esporas microbianas, corrosión de chasis y brasas volcánicas |
 | **Árbol de Investigación** | ✅ | 12 disciplinas científicas con inversión en laboratorios · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **Campañas Multi-Mapa** | ✅ | Teatros de operación auténticos (Eden 1, Plymouth 1, Academia) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
 | **Filas de Fábrica y Soldadura** | ✅ | Planificación de producción de vehículos con arcos de plasma y barras de progreso |

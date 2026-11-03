@@ -6,6 +6,7 @@ use crate::sim::map::GameMap;
 #[derive(Debug, Clone)]
 pub struct DisasterSimulator {
     pub sol_timer: f64,
+    pub blight_timer: f64,
     pub active_lava_tiles: Vec<(u32, u32)>,
     pub active_blight_tiles: Vec<(u32, u32)>,
     pub eruption_count: u32,
@@ -17,6 +18,7 @@ impl DisasterSimulator {
     pub fn new() -> Self {
         Self {
             sol_timer: 0.0,
+            blight_timer: 0.0,
             active_lava_tiles: Vec::new(),
             active_blight_tiles: Vec::new(),
             eruption_count: 0,
@@ -28,6 +30,7 @@ impl DisasterSimulator {
     /// Advance planetary natural disasters according to New Terra volcanic cycles
     pub fn update(&mut self, map: &mut GameMap, dt_secs: f64) -> Option<&'static str> {
         self.sol_timer += dt_secs;
+        self.blight_timer += dt_secs;
 
         // Quake camera shake dissipation
         if self.quake_duration > 0.0 {
@@ -41,6 +44,25 @@ impl DisasterSimulator {
             self.quake_shake_offset = (0.0, 0.0);
         }
 
+        // Initialize blight node if empty
+        if self.active_blight_tiles.is_empty() && self.blight_timer > 15.0 {
+            let seed_x = 38.min(map.width - 2);
+            let seed_y = 36.min(map.height - 2);
+            let idx = (seed_y * map.width + seed_x) as usize;
+            if idx < map.tiles.len() {
+                map.tiles[idx].is_blight = true;
+                self.active_blight_tiles.push((seed_x, seed_y));
+            }
+        }
+
+        // Creep Microbial Blight spores every ~35 seconds
+        if self.blight_timer > 35.0 {
+            self.blight_timer = 0.0;
+            if self.trigger_blight_creep(map) {
+                return Some("BIOHAZARD WARNING: Microbial Blight contagion detected! Creeping spores advancing.");
+            }
+        }
+
         // Trigger volcanic fissure event every ~45 seconds
         if self.sol_timer > 45.0 {
             self.sol_timer = 0.0;
@@ -51,6 +73,43 @@ impl DisasterSimulator {
         }
 
         None
+    }
+
+    /// Creep microbial blight to neighboring tiles
+    fn trigger_blight_creep(&mut self, map: &mut GameMap) -> bool {
+        if self.active_blight_tiles.is_empty() {
+            return false;
+        }
+
+        let mut new_spores = Vec::new();
+        let dirs = [(0, 1), (1, 0), (0, -1), (-1, 0), (1, 1), (-1, -1)];
+
+        for &(bx, by) in self.active_blight_tiles.iter().rev().take(6) {
+            for &(dx, dy) in &dirs {
+                let nx = bx as i32 + dx;
+                let ny = by as i32 + dy;
+                if nx >= 0 && nx < map.width as i32 && ny >= 0 && ny < map.height as i32 {
+                    let u_nx = nx as u32;
+                    let u_ny = ny as u32;
+                    let idx = (u_ny * map.width + u_nx) as usize;
+                    if idx < map.tiles.len() && !map.tiles[idx].is_lava && !map.tiles[idx].is_blight {
+                        map.tiles[idx].is_blight = true;
+                        new_spores.push((u_nx, u_ny));
+                        break;
+                    }
+                }
+            }
+            if new_spores.len() >= 3 {
+                break;
+            }
+        }
+
+        let added = !new_spores.is_empty();
+        self.active_blight_tiles.extend(new_spores);
+        if self.active_blight_tiles.len() > 100 {
+            self.active_blight_tiles.drain(0..40);
+        }
+        added
     }
 
     /// Spread magma along valid lava channels

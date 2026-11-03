@@ -53,9 +53,12 @@ Ziel ist es, den Strategieklassiker in modernen Webbrowsern mit nativer Leistung
 | **Nebel des Krieges & Radar** | ✅ | 3-stufiges Sichtbarkeitssystem (Unerforscht, Erforscht, Sichtbar) · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
 | **Kolonie-Simulationskern** | ✅ | Eden- & Plymouth-Logistik: Strom, Lebenserhaltung, Erz, Moral und Katastrophen · [`docs/formats/disasters.md`](docs/formats/disasters.md) |
 | **Gebäude & Röhrennetzwerk** | ✅ | Modulare Baukits & druckbelüftete Transportröhren · [`docs/formats/structures_and_tubes.md`](docs/formats/structures_and_tubes.md) |
-| **Interaktiver Bauhof** | ✅ | Ausziehbare Bauplan-Schublade (10 Gebäude), holografische Geister-Platzierung & Röhrenprojektion |
+| **Interaktiver Bauhof** | ✅ | Ausziehbare Bauplan-Schublade (11 Gebäude), holografische Geister-Platzierung & Röhrenprojektion |
+| **Gebäude-Recycling & Rückbau** | ✅ | Abbruch von Strukturen für 50% Erz-Rückerstattung und automatische Stromgitter-Neubalancierung |
 | **Einheitensteuerung & 8-Wege-A\*** | ✅ | A*-Pfadfindung auf isometrischem Gitter mit Rechtsklick-Befehlen · [`docs/ENGINE_ARCHITECTURE.md`](docs/ENGINE_ARCHITECTURE.md) |
 | **Taktische Rahmen-Mehrfachauswahl**| ✅ | Auswahlrahmen mit Sci-Fi-Winkelretikeln und Shift-Gruppierung |
+| **Fahrzeug-Reparatur & Felddepots** | ✅ | Mobile Reparaturfahrzeuge und Depots mit smaragdgrünen Nanoschweiß-Strahlen |
+| **Dynamische Pest-Ausbreitung** | ✅ | Kriechende mikrobielle Sporen-Gefahr, ätzender Hüllenschaden und schwebende Glutpartikel |
 | **Forschungs-Technologiebaum** | ✅ | 12 wissenschaftliche Disziplinen mit Labor-Investitionen · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **Multi-Karten-Kampagnen** | ✅ | Authentische Schauplätze (Eden 1, Plymouth 1, Akademie-Tutorial) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
 | **Fabrikwarteschlange & Schweißen** | ✅ | Fahrzeugbau mit Plasma-Schweißeffekt und Fortschrittsbalken |

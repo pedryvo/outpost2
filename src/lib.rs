@@ -122,19 +122,38 @@ pub fn start() -> Result<(), JsValue> {
 
                 let zoom = g.viewport.zoom;
                 let mut clicked_enemy = None;
+                let mut clicked_friendly_damaged = None;
                 for u in &g.colony.units {
-                    if u.faction != g.colony.faction {
-                        let (sx, sy) = g.viewport.tile_to_screen(u.tile_x as f64, u.tile_y as f64);
-                        let dist = ((click_x - sx).powi(2) + (click_y - sy).powi(2)).sqrt();
-                        if dist < 24.0 * zoom {
+                    let (sx, sy) = g.viewport.tile_to_screen(u.tile_x as f64, u.tile_y as f64);
+                    let dist = ((click_x - sx).powi(2) + (click_y - sy).powi(2)).sqrt();
+                    if dist < 24.0 * zoom {
+                        if u.faction != g.colony.faction {
                             clicked_enemy = Some(u.id);
+                            break;
+                        } else if u.hp < u.max_hp {
+                            clicked_friendly_damaged = Some(u.id);
                             break;
                         }
                     }
                 }
 
-                if let Some(enemy_id) = clicked_enemy {
-                    let player_faction = g.colony.faction;
+                let player_faction = g.colony.faction;
+                if let Some(ally_id) = clicked_friendly_damaged {
+                    let mut repaired_any = false;
+                    for u in &mut g.colony.units {
+                        if u.is_selected && u.faction == player_faction && u.name.contains("Repair") {
+                            u.current_order = sim::pathfinding::UnitOrder::Repair { target_unit_id: ally_id };
+                            repaired_any = true;
+                        }
+                    }
+                    if repaired_any {
+                        g.audio.play_build_confirm();
+                    } else {
+                        let (target_tx, target_ty) = g.viewport.screen_to_tile(click_x, click_y);
+                        g.colony.order_selected_move(target_tx, target_ty);
+                        g.audio.play_unit_ack();
+                    }
+                } else if let Some(enemy_id) = clicked_enemy {
                     for u in &mut g.colony.units {
                         if u.is_selected && u.faction == player_faction {
                             u.current_order = sim::pathfinding::UnitOrder::Attack { target_unit_id: enemy_id };
@@ -409,6 +428,7 @@ pub fn start() -> Result<(), JsValue> {
                         "Agrodome" => sim::structures::StructureType::Agrodome,
                         "Residence" => sim::structures::StructureType::Residence,
                         "VehicleFactory" => sim::structures::StructureType::VehicleFactory,
+                        "RepairFacility" => sim::structures::StructureType::RepairFacility,
                         "Spaceport" => sim::structures::StructureType::Spaceport,
                         _ => sim::structures::StructureType::SolarArray,
                     };
@@ -726,6 +746,7 @@ pub fn start() -> Result<(), JsValue> {
     setup_queue_btn("btn-queue-tank", "Panther Battle Tank", app.clone(), document.clone());
     setup_queue_btn("btn-queue-scout", "Lynx Scout", app.clone(), document.clone());
     setup_queue_btn("btn-queue-truck", "Cargo Truck", app.clone(), document.clone());
+    setup_queue_btn("btn-queue-repair", "Repair Vehicle", app.clone(), document.clone());
     setup_queue_btn("btn-queue-starship", "Starship Component", app.clone(), document.clone());
 
     if let Some(btn) = document.get_element_by_id("btn-toggle-power") {
@@ -741,6 +762,41 @@ pub fn start() -> Result<(), JsValue> {
             }
             if changed {
                 g.audio.play_ui_beep();
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    if let Some(btn) = document.get_element_by_id("btn-recycle-building") {
+        let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            let selected_id = g.colony.buildings.iter().find(|b| b.is_selected).map(|b| b.id);
+            if let Some(b_id) = selected_id {
+                match g.colony.recycle_structure(b_id) {
+                    Ok(msg) => {
+                        g.audio.play_build_confirm();
+                        if let Some(card) = doc_clone.get_element_by_id("inspector-card") {
+                            let _ = card.set_attribute("style", "display: none;");
+                        }
+                        if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                            toast.set_text_content(Some(&msg));
+                            let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #4ade80; display: block;");
+                        }
+                    }
+                    Err(err) => {
+                        g.audio.play_build_error();
+                        if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                            toast.set_text_content(Some(&err));
+                            let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #ef4444; display: block;");
+                        }
+                    }
+                }
+            } else {
+                g.audio.play_build_error();
             }
         }) as Box<dyn FnMut(_)>);
         btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;

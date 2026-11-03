@@ -671,6 +671,26 @@ impl ColonyState {
                     });
                     unit_notice = Some("FABRICATION COMPLETE: Cargo Truck deployed for ore logistics.");
                 }
+                "Repair Vehicle" => {
+                    self.units.push(Unit {
+                        id: next_id,
+                        name: format!("Repair Vehicle #{}", next_id),
+                        faction: self.faction,
+                        tile_x: spawn_x,
+                        tile_y: spawn_y,
+                        hp: 180,
+                        max_hp: 180,
+                        is_selected: false,
+                        current_order: UnitOrder::Idle,
+                        path: Vec::new(),
+                        move_cooldown: 0.0,
+                        weapon: None,
+                        attack_cooldown: 0.0,
+                        cargo: None,
+                        hauler_state: None,
+                    });
+                    unit_notice = Some("FABRICATION COMPLETE: Repair Vehicle deployed for field maintenance.");
+                }
                 "Starship Component" => {
                     self.starship_progress = (self.starship_progress + 25.0).min(100.0);
                     if self.starship_progress >= 100.0 {
@@ -680,6 +700,98 @@ impl ColonyState {
                     }
                 }
                 _ => {}
+            }
+        }
+
+        // Field Repairs & Vehicle Maintenance Depots
+        let repair_depots: Vec<(i32, i32)> = self.buildings.iter()
+            .filter(|b| b.is_active && b.name.contains("Repair"))
+            .map(|b| (b.tile_x + b.width / 2, b.tile_y + b.height / 2))
+            .collect();
+
+        // 1. Repair Depots radiate emerald nano-welding beams to nearby damaged units
+        for (dx, dy) in &repair_depots {
+            for u in &mut self.units {
+                if u.faction == self.faction && u.hp < u.max_hp {
+                    let dist = (u.tile_x - dx).abs() + (u.tile_y - dy).abs();
+                    if dist <= 5 {
+                        let heal = ((dt_secs * 30.0) as u32).max(1);
+                        u.hp = (u.hp + heal).min(u.max_hp);
+                        self.active_beams.push(CombatBeam {
+                            from_x: *dx as f64,
+                            from_y: *dy as f64,
+                            to_x: u.tile_x as f64,
+                            to_y: u.tile_y as f64,
+                            color: "#10b981".into(), // Emerald nano-repair beam
+                            lifetime: 0.15,
+                            max_lifetime: 0.15,
+                        });
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 2. Mobile Repair Vehicles heal targeted or nearby damaged allies
+        let unit_positions: Vec<(u32, Faction, i32, i32, u32, u32)> = self.units.iter()
+            .map(|u| (u.id, u.faction, u.tile_x, u.tile_y, u.hp, u.max_hp))
+            .collect();
+
+        let mut repair_beams = Vec::new();
+        for u in &mut self.units {
+            if u.name.contains("Repair") && u.faction == self.faction {
+                let mut target_id = None;
+                if let UnitOrder::Repair { target_unit_id } = u.current_order {
+                    target_id = Some(target_unit_id);
+                } else if u.current_order == UnitOrder::Idle {
+                    if let Some(target) = unit_positions.iter().find(|p| {
+                        p.1 == u.faction && p.0 != u.id && p.4 < p.5 && (p.2 - u.tile_x).abs() + (p.3 - u.tile_y).abs() <= 6
+                    }) {
+                        target_id = Some(target.0);
+                    }
+                }
+
+                if let Some(tid) = target_id {
+                    if let Some(target_pos) = unit_positions.iter().find(|p| p.0 == tid) {
+                        let dist = (target_pos.2 - u.tile_x).abs() + (target_pos.3 - u.tile_y).abs();
+                        if dist <= 3 {
+                            if target_pos.4 < target_pos.5 {
+                                repair_beams.push((u.id, tid, (u.tile_x as f64, u.tile_y as f64), (target_pos.2 as f64, target_pos.3 as f64)));
+                            } else if let UnitOrder::Repair { .. } = u.current_order {
+                                u.current_order = UnitOrder::Idle;
+                            }
+                        } else if u.path.is_empty() {
+                            if let Some(path) = PathFinder::find_path(&self.game_map, (u.tile_x, u.tile_y), (target_pos.2, target_pos.3)) {
+                                u.path = path;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        for (_rep_id, tid, from_pos, to_pos) in repair_beams {
+            self.active_beams.push(CombatBeam {
+                from_x: from_pos.0,
+                from_y: from_pos.1,
+                to_x: to_pos.0,
+                to_y: to_pos.1,
+                color: "#34d399".into(), // Bright mint repair nanites
+                lifetime: 0.15,
+                max_lifetime: 0.15,
+            });
+            if let Some(target) = self.units.iter_mut().find(|u| u.id == tid) {
+                let heal = ((dt_secs * 25.0) as u32).max(1);
+                target.hp = (target.hp + heal).min(target.max_hp);
+            }
+        }
+
+        // 3. Microbial Blight Caustic Hazard: units traversing blight tiles take acid damage
+        for u in &mut self.units {
+            let idx = (u.tile_y.clamp(0, self.game_map.height as i32 - 1) as u32 * self.game_map.width
+                + u.tile_x.clamp(0, self.game_map.width as i32 - 1) as u32) as usize;
+            if idx < self.game_map.tiles.len() && self.game_map.tiles[idx].is_blight {
+                u.hp = u.hp.saturating_sub(((dt_secs * 6.0) as u32).max(1));
             }
         }
 
@@ -798,6 +910,7 @@ impl ColonyState {
             "Panther Battle Tank" => (250, 50),
             "Lynx Scout" => (140, 0),
             "Cargo Truck" => (150, 0),
+            "Repair Vehicle" => (180, 20),
             "Starship Component" => (500, 200),
             _ => (100, 0),
         };
@@ -814,6 +927,35 @@ impl ColonyState {
         } else {
             Err("Target facility not found".into())
         }
+    }
+
+    /// Dismantle and recycle an existing colony structure, reclaiming 50% of original ore investment
+    pub fn recycle_structure(&mut self, building_id: u32) -> Result<String, String> {
+        let b_idx = self.buildings.iter().position(|b| b.id == building_id)
+            .ok_or_else(|| "Structure not found".to_string())?;
+
+        let building = self.buildings.remove(b_idx);
+        let base_name = building.name.split(" #").next().unwrap_or(&building.name);
+        let st_opt = StructureType::from_name(base_name);
+        let (refund_common, refund_rare) = match st_opt {
+            Some(st) => {
+                let (c, r) = st.ore_cost();
+                (c / 2, r / 2)
+            }
+            None => (100, 25),
+        };
+
+        if building.power_cost > 0 {
+            self.power_consumed = self.power_consumed.saturating_sub(building.power_cost as u32);
+        } else {
+            self.power_produced = self.power_produced.saturating_sub((-building.power_cost) as u32);
+        }
+
+        self.common_ore += refund_common;
+        self.rare_ore += refund_rare;
+        self.fog.update_visibility(&self.units, &self.buildings);
+
+        Ok(format!("{} dismantled. Reclaimed {} Common, {} Rare ore.", building.name, refund_common, refund_rare))
     }
 
     /// Export colony state to a JSON-serializable snapshot
