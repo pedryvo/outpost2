@@ -2,14 +2,15 @@
 
 use std::collections::{BinaryHeap, HashMap};
 use std::cmp::Ordering;
+use serde::{Deserialize, Serialize};
 use crate::sim::map::GameMap;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum UnitOrder {
     Idle,
     MoveTo { target_x: i32, target_y: i32 },
     MineOre { deposit_x: i32, deposit_y: i32 },
-    DeployStructure { kit_name: &'static str, tile_x: i32, tile_y: i32 },
+    DeployStructure { kit_name: String, tile_x: i32, tile_y: i32 },
 }
 
 #[derive(Copy, Clone, Eq, PartialEq)]

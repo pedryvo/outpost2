@@ -73,7 +73,20 @@ This document provides a comprehensive technical overview of the Rust / WebAssem
 - **Palette Shading:** Uses `MASTER_PALETTE: [[u8; 3]; 256]` extracted from `color.bmp` to render terrain, molten lava flows, and microbial blight trails.
 - **Radar Minimap:** Renders an overview radar canvas blipping active structures and mobile units in real time.
 
-### 5. `src/audio/mod.rs` (Web Audio Subsystem)
+### 5. `src/sim/disasters.rs` & `src/sim/fog.rs` (Planetary Hazards & Sensor Grid)
+- **Disaster Simulation:** Volcanic fissures erupt along geological fault lines, converting solid basalt into impassable molten lava (`is_lava = true`). Generates seismic screen tremors decaying exponentially over time.
+- **Fog of War:** 3-tier visibility model (`Unexplored`, `Explored`, `Visible`). Units radiate Euclidean sensor circles ($R = 6-8$ tiles). Unexplored tiles are shrouded in deep space black; explored tiles retain terrain topography with muted luminance (0.35×); active sensor tiles render full vitality and live mobile units.
+- **Diurnal Solar Cycle:** Planetary day/night cycle modulates ambient surface illumination (0.2× to 1.0×) and governs solar power generation from operational solar arrays.
+
+### 6. `src/sim/structures.rs` & Transport Tube Grid
+- **Colony Structures:** Defines structural footprint, common/rare ore costs, and power balances for Command Centers, Solar Power Arrays, Tokamak Reactors, Ore Smelters, DIRT Labs, Standard Labs, Bio-Domes, and Vehicle Factories.
+- **Pressurized Tubes:** Buildings are linked via automated orthogonal titanium conduits with internal glowing cyan life-support arteries.
+
+### 7. State Persistence & Mobile Touch Controls
+- **Progress Persistence:** `SaveGameData` captures colony metadata, ore reserves, units, buildings, transport tubes, and researched tech nodes into a JSON schema persisted directly to `window.localStorage("op2_colony_save")`.
+- **Mobile Gestures:** Full touch event support (`touchstart`, `touchmove`, `touchend`) with single-finger viewport drag panning and multi-touch pinch-to-zoom.
+
+### 8. `src/audio/mod.rs` (Web Audio Subsystem)
 - **Browser Autoplay Compliance:** Lazy-initializes the `AudioContext` upon the first user interaction (canvas click or button tap).
 - **Audio Feedback:** Synthesizes low-latency responsive sci-fi chimes and acknowledges unit selection and building placement orders.
 

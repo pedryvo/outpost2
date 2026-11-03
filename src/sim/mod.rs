@@ -24,7 +24,7 @@ pub enum Faction {
     Plymouth,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Unit {
     pub id: u32,
     pub name: String,
@@ -48,6 +48,24 @@ pub struct Building {
     pub height: i32,
     pub power_cost: i32,
     pub is_active: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SaveGameData {
+    pub faction: Faction,
+    pub sol: f64,
+    pub population: u32,
+    pub morale_pct: u32,
+    pub common_ore: u32,
+    pub rare_ore: u32,
+    pub power_produced: u32,
+    pub power_consumed: u32,
+    pub food_units: u32,
+    pub units: Vec<Unit>,
+    pub buildings: Vec<Building>,
+    pub tubes: Vec<(i32, i32)>,
+    pub researched_tech_ids: Vec<u32>,
+    pub day_cycle: f64,
 }
 
 #[derive(Debug, Clone)]
@@ -283,6 +301,54 @@ impl ColonyState {
         self.fog.update_visibility(&self.units, &self.buildings);
 
         Ok(format!("Deployed {} successfully", name))
+    }
+
+    /// Export colony state to a JSON-serializable snapshot
+    pub fn to_save_data(&self) -> SaveGameData {
+        let researched_tech_ids = self.tech_tree.techs.iter()
+            .filter(|t| t.is_researched)
+            .map(|t| t.id)
+            .collect();
+
+        SaveGameData {
+            faction: self.faction,
+            sol: self.sol,
+            population: self.population,
+            morale_pct: self.morale_pct,
+            common_ore: self.common_ore,
+            rare_ore: self.rare_ore,
+            power_produced: self.power_produced,
+            power_consumed: self.power_consumed,
+            food_units: self.food_units,
+            units: self.units.clone(),
+            buildings: self.buildings.clone(),
+            tubes: self.tubes.iter().copied().collect(),
+            researched_tech_ids,
+            day_cycle: self.day_cycle,
+        }
+    }
+
+    /// Restore colony state from a save data snapshot
+    pub fn apply_save_data(&mut self, data: SaveGameData) {
+        self.faction = data.faction;
+        self.sol = data.sol;
+        self.population = data.population;
+        self.morale_pct = data.morale_pct;
+        self.common_ore = data.common_ore;
+        self.rare_ore = data.rare_ore;
+        self.power_produced = data.power_produced;
+        self.power_consumed = data.power_consumed;
+        self.food_units = data.food_units;
+        self.units = data.units;
+        self.buildings = data.buildings;
+        self.tubes = data.tubes.into_iter().collect();
+        self.day_cycle = data.day_cycle;
+
+        for tech in &mut self.tech_tree.techs {
+            tech.is_researched = data.researched_tech_ids.contains(&tech.id);
+        }
+
+        self.fog.update_visibility(&self.units, &self.buildings);
     }
 
     /// Issue an 8-way movement order to all currently selected units

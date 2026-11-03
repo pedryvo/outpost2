@@ -304,6 +304,115 @@ pub fn start() -> Result<(), JsValue> {
         cb.forget();
     }
 
+    if let Some(btn_save) = document.get_element_by_id("btn-save") {
+        let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let window_clone = window.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            if let Ok(Some(storage)) = window_clone.local_storage() {
+                let save_obj = g.colony.to_save_data();
+                if let Ok(json) = serde_json::to_string(&save_obj) {
+                    let _ = storage.set_item("op2_colony_save", &json);
+                    g.audio.play_build_confirm();
+                    if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                        toast.set_text_content(Some("Colony progress saved to browser storage!"));
+                        let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #4ade80; display: block;");
+                    }
+                }
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn_save.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    if let Some(btn_load) = document.get_element_by_id("btn-load") {
+        let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let window_clone = window.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            if let Ok(Some(storage)) = window_clone.local_storage() {
+                if let Ok(Some(json)) = storage.get_item("op2_colony_save") {
+                    if let Ok(save_obj) = serde_json::from_str::<sim::SaveGameData>(&json) {
+                        g.colony.apply_save_data(save_obj);
+                        g.audio.play_unit_ack();
+                        if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                            toast.set_text_content(Some("Colony save successfully restored!"));
+                            let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #38bdf8; display: block;");
+                        }
+                        return;
+                    }
+                }
+            }
+            g.audio.play_ui_beep();
+            if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                toast.set_text_content(Some("No saved colony data found in storage."));
+                let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #ef4444; display: block;");
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn_load.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    // Mobile Touch Event Handling (Pan and Pinch-to-zoom)
+    {
+        let app_clone = app.clone();
+        let touch_start = Closure::wrap(Box::new(move |e: web_sys::TouchEvent| {
+            let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            if let Some(touch) = e.touches().item(0) {
+                g.is_dragging = true;
+                g.last_mouse_x = touch.client_x() as f64;
+                g.last_mouse_y = touch.client_y() as f64;
+            }
+        }) as Box<dyn FnMut(_)>);
+        canvas.add_event_listener_with_callback("touchstart", touch_start.as_ref().unchecked_ref())?;
+        touch_start.forget();
+    }
+
+    {
+        let app_clone = app.clone();
+        let touch_move = Closure::wrap(Box::new(move |e: web_sys::TouchEvent| {
+            let mut g = app_clone.borrow_mut();
+            if e.touches().length() == 1 && g.is_dragging {
+                if let Some(touch) = e.touches().item(0) {
+                    let cur_x = touch.client_x() as f64;
+                    let cur_y = touch.client_y() as f64;
+                    let dx = cur_x - g.last_mouse_x;
+                    let dy = cur_y - g.last_mouse_y;
+                    g.viewport.camera_x += dx;
+                    g.viewport.camera_y += dy;
+                    g.last_mouse_x = cur_x;
+                    g.last_mouse_y = cur_y;
+                }
+            } else if e.touches().length() == 2 {
+                // Pinch to zoom
+                if let (Some(t1), Some(t2)) = (e.touches().item(0), e.touches().item(1)) {
+                    let dist = ((t1.client_x() - t2.client_x()).pow(2) as f64 + (t1.client_y() - t2.client_y()).pow(2) as f64).sqrt();
+                    if dist > 50.0 {
+                        let target_zoom = (dist / 200.0).clamp(0.5, 2.5);
+                        g.viewport.zoom = g.viewport.zoom * 0.95 + target_zoom * 0.05;
+                    }
+                }
+            }
+        }) as Box<dyn FnMut(_)>);
+        canvas.add_event_listener_with_callback("touchmove", touch_move.as_ref().unchecked_ref())?;
+        touch_move.forget();
+    }
+
+    {
+        let app_clone = app.clone();
+        let touch_end = Closure::wrap(Box::new(move |_: web_sys::TouchEvent| {
+            let mut g = app_clone.borrow_mut();
+            g.is_dragging = false;
+        }) as Box<dyn FnMut(_)>);
+        canvas.add_event_listener_with_callback("touchend", touch_end.as_ref().unchecked_ref())?;
+        touch_end.forget();
+    }
+
     // Main Animation Loop
     let f = Rc::new(RefCell::new(None));
     let g = f.clone();
