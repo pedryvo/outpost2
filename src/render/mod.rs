@@ -36,6 +36,15 @@ impl Viewport {
         (sx, sy)
     }
 
+    /// Convert screen pixel coordinates (sx, sy) back to tile grid coordinates (tx, ty)
+    pub fn screen_to_tile(&self, sx: f64, sy: f64) -> (i32, i32) {
+        let rel_x = (sx - self.camera_x) / (self.tile_width * 0.5 * self.zoom);
+        let rel_y = (sy - self.camera_y) / (self.tile_height * 0.5 * self.zoom);
+        let tx = ((rel_y + rel_x) * 0.5).round() as i32;
+        let ty = ((rel_y - rel_x) * 0.5).round() as i32;
+        (tx, ty)
+    }
+
     /// Render the terrain, colony buildings, and units
     pub fn render(&self, ctx: &CanvasRenderingContext2d, colony: &ColonyState, width: f64, height: f64) {
         // Clear background (Deep space black)

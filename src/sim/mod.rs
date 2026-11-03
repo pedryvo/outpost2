@@ -1,10 +1,12 @@
 //! Outpost 2 Colony Simulation and Game State
 
 pub mod map;
+pub mod pathfinding;
 pub mod tech;
 
 use serde::{Deserialize, Serialize};
 use map::GameMap;
+use pathfinding::{PathFinder, UnitOrder};
 use tech::TechTree;
 
 const DEFAULT_MAP_DATA: &[u8] = include_bytes!("../../assets/eden01.map");
@@ -15,7 +17,7 @@ pub enum Faction {
     Plymouth,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct Unit {
     pub id: u32,
     pub name: String,
@@ -24,6 +26,9 @@ pub struct Unit {
     pub hp: u32,
     pub max_hp: u32,
     pub is_selected: bool,
+    pub current_order: UnitOrder,
+    pub path: Vec<(i32, i32)>,
+    pub move_cooldown: f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -93,6 +98,9 @@ impl ColonyState {
             hp: 200,
             max_hp: 200,
             is_selected: false,
+            current_order: UnitOrder::Idle,
+            path: Vec::new(),
+            move_cooldown: 0.0,
         });
 
         units.push(Unit {
@@ -103,6 +111,9 @@ impl ColonyState {
             hp: 150,
             max_hp: 150,
             is_selected: false,
+            current_order: UnitOrder::Idle,
+            path: Vec::new(),
+            move_cooldown: 0.0,
         });
 
         units.push(Unit {
@@ -113,6 +124,9 @@ impl ColonyState {
             hp: 180,
             max_hp: 180,
             is_selected: false,
+            current_order: UnitOrder::Idle,
+            path: Vec::new(),
+            move_cooldown: 0.0,
         });
 
         let game_map = GameMap::parse(DEFAULT_MAP_DATA)
@@ -141,5 +155,35 @@ impl ColonyState {
 
     pub fn update(&mut self, dt_secs: f64) {
         self.sol += dt_secs * 0.05; // 1 Sol every ~20 seconds
+
+        // Update units along their computed path
+        for u in &mut self.units {
+            if !u.path.is_empty() {
+                u.move_cooldown -= dt_secs;
+                if u.move_cooldown <= 0.0 {
+                    let next_step = u.path.remove(0);
+                    u.tile_x = next_step.0;
+                    u.tile_y = next_step.1;
+                    u.move_cooldown = 0.28; // ~3.5 tiles per second
+                }
+            } else if let UnitOrder::MoveTo { target_x, target_y } = u.current_order {
+                if u.tile_x == target_x && u.tile_y == target_y {
+                    u.current_order = UnitOrder::Idle;
+                }
+            }
+        }
+    }
+
+    /// Issue an 8-way movement order to all currently selected units
+    pub fn order_selected_move(&mut self, target_x: i32, target_y: i32) {
+        for u in &mut self.units {
+            if u.is_selected {
+                if let Some(path) = PathFinder::find_path(&self.game_map, (u.tile_x, u.tile_y), (target_x, target_y)) {
+                    u.path = path;
+                    u.current_order = UnitOrder::MoveTo { target_x, target_y };
+                    u.move_cooldown = 0.0;
+                }
+            }
+        }
     }
 }

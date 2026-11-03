@@ -95,7 +95,12 @@ pub fn start() -> Result<(), JsValue> {
                     g.last_mouse_x = click_x;
                     g.last_mouse_y = click_y;
                 }
-            } else if e.button() == 1 || e.button() == 2 {
+            } else if e.button() == 2 {
+                // Right Click = Tactical Move Order!
+                let (target_tx, target_ty) = g.viewport.screen_to_tile(click_x, click_y);
+                g.colony.order_selected_move(target_tx, target_ty);
+                g.audio.play_unit_ack();
+            } else if e.button() == 1 {
                 g.is_dragging = true;
                 g.last_mouse_x = click_x;
                 g.last_mouse_y = click_y;
@@ -131,6 +136,15 @@ pub fn start() -> Result<(), JsValue> {
         }) as Box<dyn FnMut(MouseEvent)>);
         window.add_event_listener_with_callback("mouseup", on_mouse_up.as_ref().unchecked_ref())?;
         on_mouse_up.forget();
+    }
+
+    // Disable context menu on canvas so right-click is exclusive to game commands
+    {
+        let on_contextmenu = Closure::wrap(Box::new(move |e: MouseEvent| {
+            e.prevent_default();
+        }) as Box<dyn FnMut(MouseEvent)>);
+        canvas.add_event_listener_with_callback("contextmenu", on_contextmenu.as_ref().unchecked_ref())?;
+        on_contextmenu.forget();
     }
 
     // Keyboard Navigation (WASD / Arrows)
@@ -218,6 +232,9 @@ pub fn start() -> Result<(), JsValue> {
                 hp: 120,
                 max_hp: 120,
                 is_selected: false,
+                current_order: sim::pathfinding::UnitOrder::Idle,
+                path: Vec::new(),
+                move_cooldown: 0.0,
             });
         }) as Box<dyn FnMut(_)>);
         btn_units.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
