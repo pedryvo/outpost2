@@ -45,7 +45,7 @@ Diferente de máquinas virtuais pesadas ou emuladores x86, este porte roda nativ
 | **Leitor de Volume `.vol`** | ✅ | Parser puro em Rust para arquivos de volume · [`docs/formats/vol_archive.md`](docs/formats/vol_archive.md) |
 | **Decodificadores de Paleta & Sprites** | ✅ | Paleta de 256 cores, 5.390 definições de sprite em `.prt` · [`docs/formats/prt_format.md`](docs/formats/prt_format.md) |
 | **Renderizador Isométrico de Tiles** | ✅ | Grade isométrica dinâmica, iluminação diurna dia/noite e culling · [`docs/formats/palette_and_tiles.md`](docs/formats/palette_and_tiles.md) |
-| **Névoa de Guerra & Radar** | ✅ | Grid sensorial de visibilidade em 3 níveis (Inexplorado, Explorado, Visível) · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
+| **Névoa de Guerra & Radar Tático** | ✅ | Grid sensorial em 3 níveis com telemetria ao vivo no radar (minas, traçadores laser/railgun, ondas de choque) · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
 | **Núcleo de Simulação da Colônia** | ✅ | Logística Eden e Plymouth: fluxo de energia, suporte à vida, minério, moral e desastres · [`docs/formats/disasters.md`](docs/formats/disasters.md) |
 | **Estruturas & Rede de Tubos** | ✅ | Kits modulares de construção e rede arterial de tubos pressurizados · [`docs/formats/structures_and_tubes.md`](docs/formats/structures_and_tubes.md) |
 | **Pátio de Construção Interativo** | ✅ | Gaveta retrátil de blueprints (12 estruturas), posicionamento holográfico fantasma e projeção de tubos |

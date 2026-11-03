@@ -983,6 +983,49 @@ impl Viewport {
             }
         }
 
+        // Blip ore deposits & subterranean mines
+        for dep in &colony.ore_deposits {
+            let fog = colony.fog.get(dep.tile_x as usize, dep.tile_y as usize);
+            if fog != FogState::Unexplored {
+                let dx = (dep.tile_x as f64) * scale_x;
+                let dy = (dep.tile_y as f64) * scale_y;
+                let color = if dep.has_miner {
+                    "#38bdf8" // Active mine (cyan)
+                } else if dep.ore_type == crate::sim::mining::OreType::Rare {
+                    "#c084fc" // Rare beacon (purple)
+                } else {
+                    "#facc15" // Common beacon (amber)
+                };
+                ctx.set_fill_style_str(color);
+                ctx.fill_rect(dx - 1.0, dy - 1.0, 2.5, 2.5);
+            }
+        }
+
+        // Blip active combat beams & explosions on radar
+        for beam in &colony.active_beams {
+            let bx1 = beam.from_x * scale_x;
+            let by1 = beam.from_y * scale_y;
+            let bx2 = beam.to_x * scale_x;
+            let by2 = beam.to_y * scale_y;
+            ctx.set_stroke_style_str(beam.color);
+            ctx.set_line_width(1.5);
+            ctx.begin_path();
+            ctx.move_to(bx1, by1);
+            ctx.line_to(bx2, by2);
+            ctx.stroke();
+        }
+
+        for exp in &colony.active_explosions {
+            let ex = exp.x * scale_x;
+            let ey = exp.y * scale_y;
+            let er = (exp.radius * 0.4).max(2.0);
+            ctx.set_stroke_style_str("#f97316");
+            ctx.set_line_width(1.2);
+            ctx.begin_path();
+            let _ = ctx.arc(ex, ey, er, 0.0, std::f64::consts::TAU);
+            ctx.stroke();
+        }
+
         // Tactical camera viewport frustum box
         let (center_tx, center_ty) = self.screen_to_tile(400.0, 300.0);
         let fx = ((center_tx as f64 - 10.0) * scale_x).clamp(0.0, w);

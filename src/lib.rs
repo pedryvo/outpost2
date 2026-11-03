@@ -1408,6 +1408,12 @@ pub fn start() -> Result<(), JsValue> {
         if sim_result.vortex_active && sim_result.notice.map(|n| n.contains("Vortex")).unwrap_or(false) {
             app_borrow.audio.play_vortex_howl();
         }
+        if sim_result.starship_launched && app_borrow.colony.launch_anim_time < 0.5 {
+            if let Some(toast) = document.get_element_by_id("research-toast") {
+                toast.set_text_content(Some("🚀 ORBITAL LAUNCH IN PROGRESS: Evacuation Starship ascending to escape velocity!"));
+                let _ = toast.set_attribute("style", "font-size: 11px; font-weight: bold; color: #c084fc; display: block;");
+            }
+        }
 
         // Mission Debriefing & Victory/Defeat Trigger
         if let Some(status) = sim_result.mission_ended {

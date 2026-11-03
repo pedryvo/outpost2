@@ -50,7 +50,7 @@ _Sierra 和 Dynamix 经典硬科幻即时战略游戏，<br>专为现代浏览�
 | **`.vol` 数据包解析器** | ✅ | 纯 Rust 实现的高性能流式容器解包器 · [`docs/formats/vol_archive.md`](docs/formats/vol_archive.md) |
 | **调色板与精灵图解码** | ✅ | 256 色主调色板与 5,390 个精灵定义 · [`docs/formats/prt_format.md`](docs/formats/prt_format.md) |
 | **等轴测渲染器** | ✅ | 动态网格、昼夜交替日照与 2.5D 悬崖光影 · [`docs/formats/palette_and_tiles.md`](docs/formats/palette_and_tiles.md) |
-| **战争迷雾与战术雷达** | ✅ | 三层视野状态（未探索、已探索、完全可见） · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
+| **战争迷雾与战术动态雷达** | ✅ | 三层视野状态与实时雷达态势感知（地下矿井、激光/轨道炮弹道光束、爆炸冲击波） · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
 | **殖民地模拟核心** | ✅ | 伊甸与普利茅斯物流：电力平衡、生命维持、采矿与地质灾害 · [`docs/formats/disasters.md`](docs/formats/disasters.md) |
 | **建筑与承压运输管道** | ✅ | 模块化建筑组装与正交加压运输管道网络 · [`docs/formats/structures_and_tubes.md`](docs/formats/structures_and_tubes.md) |
 | **交互式建造厂抽屉** | ✅ | 12 大建筑滑动蓝图抽屉、全息虚影预览与连接管道自动投射 |

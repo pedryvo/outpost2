@@ -45,7 +45,7 @@ Unlike heavyweight virtual machines or x86 emulators, this port runs natively in
 | **`.vol` Volume Reader** | ✅ | Pure Rust streaming parser for archive containers · [`docs/formats/vol_archive.md`](docs/formats/vol_archive.md) |
 | **Palette & Sprite Decoders** | ✅ | 256-color palette parser, `.prt` 5,390 sprite definitions · [`docs/formats/prt_format.md`](docs/formats/prt_format.md) |
 | **Isometric Tile Renderer** | ✅ | Dynamic isometric grid, day/night diurnal lighting, viewport culling · [`docs/formats/palette_and_tiles.md`](docs/formats/palette_and_tiles.md) |
-| **Fog of War & Radar** | ✅ | 3-tier visibility sensor grid (Unexplored, Explored, Visible) · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
+| **Fog of War & Tactical Radar** | ✅ | 3-tier sensor grid with live radar telemetry (mines, laser/railgun tracers, impact shockwaves) · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
 | **Colony Simulation Core** | ✅ | Eden & Plymouth logistics: power flux, life support, ore, morale, disasters · [`docs/formats/disasters.md`](docs/formats/disasters.md) |
 | **Structures & Tube Network** | ✅ | Modular base kits & pressurized transport tube grid · [`docs/formats/structures_and_tubes.md`](docs/formats/structures_and_tubes.md) |
 | **Interactive Construction Yard**| ✅ | Slide-out blueprint drawer (12 buildings), holographic ghost placement & tube projections |

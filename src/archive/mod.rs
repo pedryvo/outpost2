@@ -1,4 +1,5 @@
 //! Outpost 2 Volume Archive (.vol) streaming reader
+#![allow(dead_code)]
 
 pub mod prt;
 

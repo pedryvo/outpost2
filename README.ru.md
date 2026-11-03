@@ -50,7 +50,7 @@ _Шедевр научно-фантастической стратегии в р
 | **Парсер архивов `.vol`** | ✅ | Потоковый ридер томов Outpost 2 на Rust · [`docs/formats/vol_archive.md`](docs/formats/vol_archive.md) |
 | **Декодер палитры и спрайтов** | ✅ | 256-цветная палитра и 5 390 спрайтов · [`docs/formats/prt_format.md`](docs/formats/prt_format.md) |
 | **Изометрический рендерер** | ✅ | Сетка, суточный цикл освещения и 2.5D рельеф · [`docs/formats/palette_and_tiles.md`](docs/formats/palette_and_tiles.md) |
-| **Туман войны и радар** | ✅ | 3 уровня видимости (Неисследовано, Разведано, Видимо) · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
+| **Туман войны и тактический радар**| ✅ | 3 уровня видимости и радарная телеметрия в реальном времени (шахты, трассеры лазеров/рельсотронов, ударные волны) · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
 | **Симуляция колонии** | ✅ | Логистика Эдема и Плимута: энергия, руда, мораль, катастрофы · [`docs/formats/disasters.md`](docs/formats/disasters.md) |
 | **Здания и трубы** | ✅ | Модульные строительные наборы и герметичные трубы · [`docs/formats/structures_and_tubes.md`](docs/formats/structures_and_tubes.md) |
 | **Интерактивная стройплощадка** | ✅ | Выдвижная панель чертежей (12 зданий), голографические проекции и разметка труб |

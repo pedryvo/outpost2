@@ -50,7 +50,7 @@ Ziel ist es, den Strategieklassiker in modernen Webbrowsern mit nativer Leistung
 | **`.vol`-Archiv-Reader** | ✅ | Streaming-Parser für Outpost-2-Container · [`docs/formats/vol_archive.md`](docs/formats/vol_archive.md) |
 | **Farbpaletten- & Sprite-Decoder** | ✅ | 256-Farben-Palette und 5.390 Sprite-Definitionen · [`docs/formats/prt_format.md`](docs/formats/prt_format.md) |
 | **Isometrischer Renderer** | ✅ | Isometrisches Gitter, 2.5D-Klippenkanten und Tag/Nacht-Licht · [`docs/formats/palette_and_tiles.md`](docs/formats/palette_and_tiles.md) |
-| **Nebel des Krieges & Radar** | ✅ | 3-stufiges Sichtbarkeitssystem (Unerforscht, Erforscht, Sichtbar) · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
+| **Nebel des Krieges & Taktik-Radar**| ✅ | 3-stufiges Sichtbarkeitssystem mit Live-Radar (Minen, Laser-/Railgun-Leuchtspuren, Detonationswellen) · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
 | **Kolonie-Simulationskern** | ✅ | Eden- & Plymouth-Logistik: Strom, Lebenserhaltung, Erz, Moral und Katastrophen · [`docs/formats/disasters.md`](docs/formats/disasters.md) |
 | **Gebäude & Röhrennetzwerk** | ✅ | Modulare Baukits & druckbelüftete Transportröhren · [`docs/formats/structures_and_tubes.md`](docs/formats/structures_and_tubes.md) |
 | **Interaktiver Bauhof** | ✅ | Ausziehbare Bauplan-Schublade (12 Gebäude), holografische Geister-Platzierung & Röhrenprojektion |

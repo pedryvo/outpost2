@@ -1,4 +1,5 @@
 //! Outpost 2 Sprite and PRT (Palette & Resource Table) Metadata Parser
+#![allow(dead_code)]
 
 use byteorder::{LittleEndian, ReadBytesExt};
 use std::io::{Cursor, Read};

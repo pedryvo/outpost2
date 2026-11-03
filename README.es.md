@@ -50,7 +50,7 @@ El objetivo es preservar y modernizar este clásico juego de estrategia en tiemp
 | **Lector de Archivos `.vol`** | ✅ | Parser en streaming para contenedores de archivos · [`docs/formats/vol_archive.md`](docs/formats/vol_archive.md) |
 | **Decodificadores de Paleta y Sprites** | ✅ | Paleta de 256 colores y 5.390 definiciones de sprites · [`docs/formats/prt_format.md`](docs/formats/prt_format.md) |
 | **Renderizador Isométrico** | ✅ | Cuadrícula isométrica, sombreado de riscos 2.5D y ciclos solares · [`docs/formats/palette_and_tiles.md`](docs/formats/palette_and_tiles.md) |
-| **Niebla de Guerra y Radar** | ✅ | Rejilla de sensores de 3 niveles (Inexplorado, Explorado, Visible) · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
+| **Niebla de Guerra y Radar Táctico**| ✅ | Rejilla sensorial de 3 niveles con telemetría en radar (minas, trazadores láser/railgun y ondas de choque) · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
 | **Núcleo de Simulación Colonial** | ✅ | Logística Eden y Plymouth: energía, soporte vital, minerales, moral y desastres · [`docs/formats/disasters.md`](docs/formats/disasters.md) |
 | **Estructuras y Red de Tubos** | ✅ | Kits modulares de construcción y red de tubos presurizados · [`docs/formats/structures_and_tubes.md`](docs/formats/structures_and_tubes.md) |
 | **Astillero de Construcción Interactivo**| ✅ | Cajón deslizable de planos (12 edificios), colocación fantasma holográfica y tubos proyectados |

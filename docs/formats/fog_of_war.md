@@ -40,3 +40,14 @@ The planetary rotation of New Terra creates variable solar illumination:
 - **Solar Power Output:**
   $$P_{\text{solar}} = 250 \times S \text{ kW}$$
   At night ($S \approx 0.20$), solar arrays produce minimal power, necessitating auxiliary power systems (geothermal plants, tokamak reactors) or energy conservation protocols.
+
+---
+
+## 4. Tactical Radar Minimap Integration
+
+The tactical radar minimap synthesizes sensory telemetry into an interactive bird's-eye view:
+- **Exploration Footprint:** Explored terrain is rendered in slate grey (`#1e293b`), with active visible sectors highlighted in elevated tone (`#334155`).
+- **Base Infrastructure:** Buildings appear as cyan rectangular signatures (`#38bdf8`), and pressurized tubes appear as arterial conduits (`#64748b`).
+- **Mineral Logistics:** Subterranean ore beacons appear as pulsing beacons (Amber for Common, Purple for Rare), and operating mines appear as bright cyan nodes.
+- **Combat & Planetary Telemetry:** Hostile Plymouth units blip red (`#ef4444`), active combat lasers and railguns trace real-time fire lines across the radar, and detonations trigger expanding orange seismic shockwave rings (`#f97316`).
+- **Hazard Tracking:** Moving volcanic lava channels (`#f97316`), advancing microbial blight (`#a855f7`), rotary dust vortices (`#fde047`), and incoming orbital meteor trajectories (`#ef4444`) are tracked dynamically.
