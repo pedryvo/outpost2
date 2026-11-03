@@ -20,6 +20,8 @@ pub struct Translation {
     pub save: &'static str,
     pub load: &'static str,
     pub radar: &'static str,
+    pub briefing: &'static str,
+    pub music: &'static str,
 }
 
 pub fn get_translation(lang: &str) -> Translation {
@@ -39,6 +41,8 @@ pub fn get_translation(lang: &str) -> Translation {
             save: "💾 Salvar",
             load: "📂 Carregar",
             radar: "Radar Tático",
+            briefing: "📋 Diretiva",
+            music: "🎵 Música",
         },
         "es" => Translation {
             faction: "Facción:",
@@ -55,6 +59,8 @@ pub fn get_translation(lang: &str) -> Translation {
             save: "💾 Guardar",
             load: "📂 Cargar",
             radar: "Radar Táctico",
+            briefing: "📋 Directiva",
+            music: "🎵 Música",
         },
         "de" => Translation {
             faction: "Fraktion:",
@@ -71,6 +77,8 @@ pub fn get_translation(lang: &str) -> Translation {
             save: "💾 Speichern",
             load: "📂 Laden",
             radar: "Taktisches Radar",
+            briefing: "📋 Lagebericht",
+            music: "🎵 Musik",
         },
         "zh-CN" => Translation {
             faction: "阵营:",
@@ -87,6 +95,8 @@ pub fn get_translation(lang: &str) -> Translation {
             save: "💾 存档",
             load: "📂 读档",
             radar: "战术雷达",
+            briefing: "📋 任务简报",
+            music: "🎵 音乐",
         },
         "ru" => Translation {
             faction: "Фракция:",
@@ -103,6 +113,8 @@ pub fn get_translation(lang: &str) -> Translation {
             save: "💾 Сохранить",
             load: "📂 Загрузить",
             radar: "Тактический Радар",
+            briefing: "📋 Брифинг",
+            music: "🎵 Музыка",
         },
         _ => Translation {
             faction: "Faction:",
@@ -119,6 +131,8 @@ pub fn get_translation(lang: &str) -> Translation {
             save: "💾 Save",
             load: "📂 Load",
             radar: "Tactical Radar",
+            briefing: "📋 Briefing",
+            music: "🎵 Music",
         },
     }
 }
@@ -140,5 +154,7 @@ pub fn apply_language(lang: &str, doc: &Document) {
     if let Some(el) = doc.get_element_by_id("btn-research") { el.set_text_content(Some(t.research)); }
     if let Some(el) = doc.get_element_by_id("btn-save") { el.set_text_content(Some(t.save)); }
     if let Some(el) = doc.get_element_by_id("btn-load") { el.set_text_content(Some(t.load)); }
+    if let Some(el) = doc.get_element_by_id("btn-briefing") { el.set_text_content(Some(t.briefing)); }
+    if let Some(el) = doc.get_element_by_id("btn-music") { el.set_text_content(Some(t.music)); }
     if let Some(el) = doc.get_element_by_id("minimap-title") { el.set_text_content(Some(t.radar)); }
 }

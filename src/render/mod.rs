@@ -418,5 +418,16 @@ impl Viewport {
                 ctx.fill_rect(ux - 1.0, uy - 1.0, 3.0, 3.0);
             }
         }
+
+        // Tactical camera viewport frustum box
+        let (center_tx, center_ty) = self.screen_to_tile(400.0, 300.0);
+        let fx = ((center_tx as f64 - 10.0) * scale_x).clamp(0.0, w);
+        let fy = ((center_ty as f64 - 8.0) * scale_y).clamp(0.0, h);
+        let fw = (20.0 * scale_x).clamp(14.0, w);
+        let fh = (16.0 * scale_y).clamp(10.0, h);
+
+        ctx.set_stroke_style_str("#38bdf8");
+        ctx.set_line_width(1.0);
+        ctx.stroke_rect(fx, fy, fw, fh);
     }
 }

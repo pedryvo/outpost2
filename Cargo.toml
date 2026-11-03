@@ -49,6 +49,8 @@ features = [
   "RequestInit",
   "Storage",
   "HtmlSelectElement",
+  "BiquadFilterNode",
+  "BiquadFilterType",
 ]
 
 [profile.release]

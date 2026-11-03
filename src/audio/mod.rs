@@ -1,14 +1,17 @@
 //! Web Audio API sound manager for Outpost 2 sound effects
 
+pub mod music;
 pub mod radio;
 
 use wasm_bindgen::JsValue;
 use web_sys::{AudioContext, GainNode, OscillatorNode};
+use music::MusicEngine;
 
 pub struct AudioManager {
-    ctx: Option<AudioContext>,
+    pub ctx: Option<AudioContext>,
     master_gain: Option<GainNode>,
     muted: bool,
+    pub music: MusicEngine,
 }
 
 impl AudioManager {
@@ -17,6 +20,7 @@ impl AudioManager {
             ctx: None,
             master_gain: None,
             muted: false,
+            music: MusicEngine::new(),
         }
     }
 
@@ -27,6 +31,8 @@ impl AudioManager {
             let gain = ctx.create_gain()?;
             gain.gain().set_value(0.35); // 35% comfortable master volume
             gain.connect_with_audio_node(&ctx.destination())?;
+
+            let _ = self.music.init(&ctx);
 
             self.ctx = Some(ctx);
             self.master_gain = Some(gain);

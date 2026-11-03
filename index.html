@@ -279,10 +279,35 @@
       <div style="display: flex; gap: 8px;">
         <button class="action-btn" id="btn-zoom-in">🔍 +</button>
         <button class="action-btn" id="btn-zoom-out">🔍 -</button>
+        <button class="action-btn" id="btn-briefing">📋 Briefing</button>
+        <button class="action-btn" id="btn-music">🎵 Music</button>
         <button class="action-btn" id="btn-pause">⏸️ Pause</button>
         <button class="action-btn" id="btn-fullscreen">⛶ Fullscreen</button>
       </div>
     </footer>
+
+    <!-- Campaign Mission Briefing Modal -->
+    <div id="briefing-modal" style="position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 50;">
+      <div style="background: #11151c; border: 2px solid var(--op2-accent-eden); border-radius: 8px; width: 520px; max-width: 90vw; padding: 24px; box-shadow: 0 12px 36px rgba(0,0,0,0.8); display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--op2-border); padding-bottom: 10px;">
+          <h2 id="briefing-title" style="font-size: 15px; color: var(--op2-accent-eden); font-weight: bold;">Operation New Dawn — Sector Eden Prime</h2>
+          <button id="btn-close-briefing" style="background: none; border: none; color: var(--op2-muted); font-size: 18px; cursor: pointer;">✕</button>
+        </div>
+        <p id="briefing-text" style="font-size: 12px; line-height: 1.6; color: var(--op2-text); white-space: pre-line;">Colonists of the Eden Foundation: After the catastrophic failure of the Starship Conestoga, our landing site on New Terra must be secured immediately. Volcanic tremors indicate rising magma fissures nearby, and rogue Plymouth raiders have established aggressive perimeter posts.
+
+Secure colonial life support, automate freight ore hauling, commission defensive railgun armor, and advance planetary research to ensure the survival of our species.</p>
+        <div style="background: #1a202c; border: 1px solid var(--op2-border); border-radius: 6px; padding: 12px;">
+          <h3 style="font-size: 12px; color: #facc15; font-weight: bold; margin-bottom: 8px;">Primary Directives:</h3>
+          <ul id="briefing-objectives" style="font-size: 11px; line-height: 1.6; list-style-position: inside; color: #cbd5e1;">
+            <li>Stockpile 3,000t Common Ore and 600t Rare Ore</li>
+            <li>Deploy and commission at least 2 armed combat tanks</li>
+            <li>Complete scientific research in any primary discipline</li>
+            <li>Protect the colony Command Center from hostile destruction</li>
+          </ul>
+        </div>
+        <button class="action-btn" id="btn-ack-briefing" style="align-self: flex-end; padding: 8px 18px; background: var(--op2-accent-eden); color: #000; font-weight: bold;">Acknowledge Directive</button>
+      </div>
+    </div>
   </div>
 </body>
 </html>

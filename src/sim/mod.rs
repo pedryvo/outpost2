@@ -6,6 +6,7 @@ pub mod disasters;
 pub mod fog;
 pub mod map;
 pub mod mining;
+pub mod mission;
 pub mod pathfinding;
 pub mod structures;
 pub mod tech;
@@ -18,6 +19,7 @@ use disasters::DisasterSimulator;
 use fog::FogOfWar;
 use map::GameMap;
 use mining::{HaulerState, OreDeposit, OreType};
+use mission::Mission;
 use pathfinding::{PathFinder, UnitOrder};
 use structures::{connect_with_tubes, StructureType};
 use tech::TechTree;
@@ -106,6 +108,7 @@ pub struct ColonyState {
     pub active_explosions: Vec<ExplosionEffect>,
     pub ai_director: FactionAiDirector,
     pub ore_deposits: Vec<OreDeposit>,
+    pub mission: Mission,
 }
 
 impl ColonyState {
@@ -333,6 +336,7 @@ impl ColonyState {
             active_explosions: Vec::new(),
             ai_director: FactionAiDirector::new(Faction::Plymouth, 38, 30),
             ore_deposits,
+            mission: Mission::new_eden_mission_1(),
         }
     }
 
@@ -538,10 +542,19 @@ impl ColonyState {
         // Advance Rival Faction AI Director
         let ai_alert = self.ai_director.update(&mut self.units, dt_secs);
 
+        // Evaluate Campaign Mission Objectives
+        let mission_alert = self.mission.evaluate(
+            self.common_ore,
+            self.rare_ore,
+            &self.buildings,
+            &self.units,
+            &self.tech_tree,
+        );
+
         // Refresh dynamic sensor fog of war
         self.fog.update_visibility(&self.units, &self.buildings);
 
-        warning.or(ai_alert)
+        warning.or(ai_alert).or(mission_alert)
     }
 
     /// Deploy a colonial structure kit, deducting ore costs and weaving transport tubes
