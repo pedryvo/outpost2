@@ -480,6 +480,151 @@ pub fn start() -> Result<(), JsValue> {
         cb.forget();
     }
 
+    // Structure Inspector Controls
+    if let Some(btn) = document.get_element_by_id("btn-queue-tank") {
+        let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            if g.colony.common_ore >= 250 && g.colony.rare_ore >= 50 {
+                g.colony.common_ore -= 250;
+                g.colony.rare_ore -= 50;
+                let next_id = g.colony.units.len() as u32 + 1;
+                let spawn_x = g.colony.buildings.iter().find(|b| b.is_selected).map(|b| b.tile_x + 3).unwrap_or(24);
+                let spawn_y = g.colony.buildings.iter().find(|b| b.is_selected).map(|b| b.tile_y + 1).unwrap_or(24);
+                g.colony.units.push(sim::Unit {
+                    id: next_id,
+                    name: format!("Panther Battle Tank #{}", next_id),
+                    faction: sim::Faction::Eden,
+                    tile_x: spawn_x,
+                    tile_y: spawn_y,
+                    hp: 250,
+                    max_hp: 250,
+                    is_selected: false,
+                    current_order: sim::pathfinding::UnitOrder::Idle,
+                    path: Vec::new(),
+                    move_cooldown: 0.0,
+                    weapon: Some(sim::combat::WeaponType::Railgun),
+                    attack_cooldown: 0.0,
+                    cargo: None,
+                    hauler_state: None,
+                });
+                g.audio.play_build_confirm();
+                if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                    toast.set_text_content(Some("Panther Battle Tank commissioned!"));
+                    let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #4ade80; display: block;");
+                }
+            } else {
+                g.audio.play_ui_beep();
+                if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                    toast.set_text_content(Some("Insufficient resources: Requires 250 Common, 50 Rare Ore."));
+                    let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #ef4444; display: block;");
+                }
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    if let Some(btn) = document.get_element_by_id("btn-queue-scout") {
+        let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            if g.colony.common_ore >= 140 {
+                g.colony.common_ore -= 140;
+                let next_id = g.colony.units.len() as u32 + 1;
+                let spawn_x = g.colony.buildings.iter().find(|b| b.is_selected).map(|b| b.tile_x + 3).unwrap_or(24);
+                let spawn_y = g.colony.buildings.iter().find(|b| b.is_selected).map(|b| b.tile_y + 1).unwrap_or(24);
+                g.colony.units.push(sim::Unit {
+                    id: next_id,
+                    name: format!("Lynx Scout #{}", next_id),
+                    faction: sim::Faction::Eden,
+                    tile_x: spawn_x,
+                    tile_y: spawn_y,
+                    hp: 140,
+                    max_hp: 140,
+                    is_selected: false,
+                    current_order: sim::pathfinding::UnitOrder::Idle,
+                    path: Vec::new(),
+                    move_cooldown: 0.0,
+                    weapon: Some(sim::combat::WeaponType::Laser),
+                    attack_cooldown: 0.0,
+                    cargo: None,
+                    hauler_state: None,
+                });
+                g.audio.play_build_confirm();
+                if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                    toast.set_text_content(Some("Lynx Scout commissioned!"));
+                    let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #4ade80; display: block;");
+                }
+            } else {
+                g.audio.play_ui_beep();
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    if let Some(btn) = document.get_element_by_id("btn-queue-truck") {
+        let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            if g.colony.common_ore >= 150 {
+                g.colony.common_ore -= 150;
+                let next_id = g.colony.units.len() as u32 + 1;
+                let spawn_x = g.colony.buildings.iter().find(|b| b.is_selected).map(|b| b.tile_x + 3).unwrap_or(24);
+                let spawn_y = g.colony.buildings.iter().find(|b| b.is_selected).map(|b| b.tile_y + 1).unwrap_or(24);
+                g.colony.units.push(sim::Unit {
+                    id: next_id,
+                    name: format!("Cargo Truck #{}", next_id),
+                    faction: sim::Faction::Eden,
+                    tile_x: spawn_x,
+                    tile_y: spawn_y,
+                    hp: 150,
+                    max_hp: 150,
+                    is_selected: false,
+                    current_order: sim::pathfinding::UnitOrder::Idle,
+                    path: Vec::new(),
+                    move_cooldown: 0.0,
+                    weapon: None,
+                    attack_cooldown: 0.0,
+                    cargo: None,
+                    hauler_state: Some(sim::mining::HaulerState::Idle),
+                });
+                g.audio.play_build_confirm();
+                if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                    toast.set_text_content(Some("Cargo Truck commissioned for hauling routes!"));
+                    let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #4ade80; display: block;");
+                }
+            } else {
+                g.audio.play_ui_beep();
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    if let Some(btn) = document.get_element_by_id("btn-toggle-power") {
+        let app_clone = app.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let mut changed = false;
+            for b in &mut g.colony.buildings {
+                if b.is_selected {
+                    b.is_active = !b.is_active;
+                    changed = true;
+                }
+            }
+            if changed {
+                g.audio.play_ui_beep();
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
     // Main Animation Loop
     let f = Rc::new(RefCell::new(None));
     let g = f.clone();
@@ -550,6 +695,28 @@ pub fn start() -> Result<(), JsValue> {
         }
         if let Some(el) = document.get_element_by_id("colony-food") {
             el.set_text_content(Some(&format!("{}", app_borrow.colony.food_units)));
+        }
+
+        // Update Building Inspector Card
+        let selected_b = app_borrow.colony.buildings.iter().find(|b| b.is_selected);
+        if let Some(card) = document.get_element_by_id("inspector-card") {
+            if let Some(b) = selected_b {
+                let _ = card.set_attribute("style", "position: absolute; bottom: 76px; left: 16px; width: 230px; background: rgba(12, 14, 18, 0.92); border: 2px solid var(--op2-border); border-radius: 6px; backdrop-filter: blur(8px); box-shadow: 0 8px 24px rgba(0,0,0,0.6); z-index: 15; display: flex; flex-direction: column; overflow: hidden; padding: 12px; font-size: 12px;");
+                if let Some(name_el) = document.get_element_by_id("inspect-name") {
+                    name_el.set_text_content(Some(&b.name));
+                }
+                if let Some(status_el) = document.get_element_by_id("inspect-status") {
+                    let status_text = if b.is_active { "ONLINE" } else { "OFFLINE" };
+                    let status_col = if b.is_active { "#4ade80" } else { "#ef4444" };
+                    status_el.set_text_content(Some(status_text));
+                    let _ = status_el.set_attribute("style", &format!("color: {}; font-size: 10px; font-weight: bold;", status_col));
+                }
+                if let Some(power_el) = document.get_element_by_id("inspect-power") {
+                    power_el.set_text_content(Some(&format!("{} kW", b.power_cost)));
+                }
+            } else {
+                let _ = card.set_attribute("style", "display: none;");
+            }
         }
 
         // Render game viewport
