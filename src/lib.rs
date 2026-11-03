@@ -858,6 +858,24 @@ pub fn start() -> Result<(), JsValue> {
         cb.forget();
     }
 
+    // Sound Effects Mute Toggle
+    if let Some(btn) = document.get_element_by_id("btn-sfx") {
+        let app_clone = app.clone();
+        let cb = Closure::wrap(Box::new(move |e: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            let muted = g.audio.toggle_mute();
+            if let Some(target) = e.target() {
+                if let Ok(btn_el) = target.dyn_into::<web_sys::HtmlElement>() {
+                    let label = if muted { "🔇 SFX: OFF" } else { "🔊 SFX: ON" };
+                    btn_el.set_text_content(Some(label));
+                }
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
     // Main Animation Loop
     let f = Rc::new(RefCell::new(None));
     let g = f.clone();
