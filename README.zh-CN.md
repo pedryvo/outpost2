@@ -69,14 +69,15 @@ _Sierra 和 Dynamix 经典硬科幻即时战略游戏，<br>专为现代浏览�
 | **行星灾害与天体灾变** | ✅ | 蔓延性枯萎病微生物真菌、火山熔岩裂隙、大气尘暴旋风与动能陨石雨撞击 |
 | **红色警报警报声与敌军突袭**| ✅ | 指挥中心双音频道紧急红色警报警报器，普利茅斯协同战术突击波次进攻 |
 | **多学科科研矩阵** | ✅ | 11 大科技前置解锁树（火山学、电磁轨道炮、点防御）与被动增益 · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
-| **WebRTC 点对点联机对战**   | ✅ | 无服务器直连 P2P 架构（Base64 SDP 交换、定步长指令帧同步、战术文字通讯） · [`docs/formats/multiplayer_protocol.md`](docs/formats/multiplayer_protocol.md) |
-| **多战役战场选择器**         | ✅ | 5 大真实战役战场（伊甸 1 与 2、普利茅斯 1 与 2、学院教学）直接加载原生 `.map` · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
-| **动态气氛原声音轨**         | ✅ | 程序化音乐音序器，在探索、交火与红色警戒紧急状态间无缝切换 |
-| **工厂生产队列与焊接** | ✅ | 战车制造排队机制、等离子火花与 HUD 进度条 |
-| **星际逃逸飞船建造与点火升空** | ✅ | 四阶段飞船组装、升空轨道点火粒子尾焰动画与胜利号角 · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
-| **任务简报复盘与战后总结** | ✅ | 战后总结模态弹窗、幸存殖民者人口统计、任务指令清单核验与战役关卡推进 |
-| **状态持久化与触控** | ✅ | 浏览器本地极速存取档与移动端手势控制 |
-| **音频引擎与战斗音效** | ✅ | Web Audio 纯程序化音效合成（激光、爆炸、建造蜂鸣）与经典原声音频 |
+| **WebRTC P2P 联机与房间大厅**| ✅ | 无服务器直连对战（Base64 SDP 交换、定步长指令同步、战术聊天与大厅状态机） · [`docs/formats/save_games_and_lobby.md`](docs/formats/save_games_and_lobby.md) |
+| **战术 AI 与遭遇战自治系统** | ✅ | 3 大 AI 战术流派（突击狂魔、防御堡垒、经济科技流）、基地规划与战术小队协同突袭 · [`docs/formats/ai_and_personalities.md`](docs/formats/ai_and_personalities.md) |
+| **动态任务事件与脚本引擎**   | ✅ | 太阳日计时器、空间区域触发器、建筑伤亡阈值判定与行星灾变动态发生器 · [`docs/formats/dynamic_events_and_scripting.md`](docs/formats/dynamic_events_and_scripting.md) |
+| **完整战役关卡 (伊甸 1-3 & 普利茅斯 1-3)**| ✅ | 包含伊甸第 3 关（*火山飞船逃亡*）与普利茅斯第 3 关（*黑曜石峭壁突击*）在内的原生地图 · [`docs/formats/campaign_progression_and_debrief.md`](docs/formats/campaign_progression_and_debrief.md) |
+| **精灵渲染与多阶段爆炸动画** | ✅ | 八方向底盘朝向 ($45^\circ$)、炮塔独立瞄准、采矿车旋转钻头与 12 阶火球膨胀爆炸 · [`docs/formats/sprites_and_animation.md`](docs/formats/sprites_and_animation.md) |
+| **原生 SoundBank 与战术语音包**| ✅ | 252 槽位经典声音映射表、Kathy Cullis 原版战场无线电播报与零延迟 WASM 预加载 · [`docs/formats/sound_and_voices.md`](docs/formats/sound_and_voices.md) |
+| **现代 WebHUD 与雷达小地图** | ✅ | 战争迷雾雷达、行星灾害警报标点（岩浆、尘暴、陨石）、车间/科研悬浮窗与全快捷键响应 · [`docs/formats/ui_and_hud.md`](docs/formats/ui_and_hud.md) |
+| **全状态持久化与 .op2save 导出** | ✅ | `LocalStorage` 多存档位（1-5 位、F5 快存、F9 快读、100 太阳日自动存档）与独立文件导出 · [`docs/formats/save_games_and_lobby.md`](docs/formats/save_games_and_lobby.md) |
+| **WASM 打包与移动端触控优化**| ✅ | 高清晰度 Retina 缩放、手势轻触解锁 Web Audio、双指缩放/平移与极致发布编译包 · [`docs/formats/wasm_packaging_and_web_runtime.md`](docs/formats/wasm_packaging_and_web_runtime.md) |
 | **多语言本地化 (i18n)** | ✅ | 完美支持 EN, PT-BR, ES, DE, ZH-CN, RU |
 | **Vercel & WASM 构建** | ✅ | 基于 Trunk 的自动化发布优化构建 (`vercel.json`) |
 

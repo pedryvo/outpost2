@@ -64,15 +64,15 @@ Unlike heavyweight virtual machines or x86 emulators, this port runs natively in
 | **Planetary Hazards & Disasters** | ✅ | Creeping microbial Blight, volcanic fissures, atmospheric dust vortices, and kinetic meteor showers |
 | **Red Alert Siren & Hostile Raids**| ✅ | Command Center dual-tone disaster sirens and coordinated hostile Plymouth incursion assault waves |
 | **Scientific Research Matrix** | ✅ | 11-node tech tree with prerequisite gating (Vulcanology, Railguns, Point Defense) and passive bonuses · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
-| **P2P WebRTC Multiplayer**       | ✅ | Serverless peer-to-peer data channel networking (SDP Base64 exchange, turn-buffered lockstep orders, tactical chat) · [`docs/formats/multiplayer_protocol.md`](docs/formats/multiplayer_protocol.md) |
-| **Multi-Map Campaigns**          | ✅ | 5 authentic operational theaters (Eden 1 & 2, Plymouth 1 & 2, Academy) with extracted `.map` files · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
-| **Dynamic Atmospheric Soundtrack**| ✅ | Procedural sequencer dynamically switching between Exploration, Combat, and Red Alert emergency themes |
-| **Factory Queues & Animation** | ✅ | Production queue scheduling, welding plasma arcs, HUD progress bars |
-| **Starship Evacuation & Launch** | ✅ | 4-stage starship assembly, orbital launch animation with billowing exhaust plumes, and escape fanfare · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
-| **Mission Debriefing & Directives**| ✅ | Post-mission operational evaluation, survivor demographics, directive checklist, and campaign progression |
-| **State Persistence & Touch** | ✅ | Browser storage quicksave/load, mobile pinch-to-zoom & gesture controls |
-| **Audio Engine & Combat SFX** | ✅ | Web Audio procedural synthesizer (lasers, explosions, build hums) & classic audio samples |
-| **Modern Sci-Fi HUD** | ✅ | Real-time telemetry, radar minimap, build queues, and unit command console |
+| **P2P WebRTC Multiplayer & Match Lobby** | ✅ | Serverless peer-to-peer data channel networking (SDP Base64 exchange, turn-buffered lockstep orders, tactical chat, match lobby state machine) · [`docs/formats/save_games_and_lobby.md`](docs/formats/save_games_and_lobby.md) |
+| **Tactical AI & Skirmish Autonomy** | ✅ | 3 strategic AI personalities (Aggressive Rusher, Defensive Fortifier, Economic Tech Rusher), automated base planning, factory quotas, and tactical squad assaults · [`docs/formats/ai_and_personalities.md`](docs/formats/ai_and_personalities.md) |
+| **Tethys Dynamic Events & Scripting**| ✅ | Sol-timed triggers, spatial proximity ambush zones, structure casualty thresholds, dynamic reinforcement drops, and planetary disaster triggers · [`docs/formats/dynamic_events_and_scripting.md`](docs/formats/dynamic_events_and_scripting.md) |
+| **Full Campaign (Eden 1-3 & Plymouth 1-3)**| ✅ | 6 operational theaters including Eden 3 (*Escape from Mount Vulcan*) and Plymouth 3 (*Obsidian Crags Assault*) with extracted `.map` files · [`docs/formats/campaign_progression_and_debrief.md`](docs/formats/campaign_progression_and_debrief.md) |
+| **Sprite & Animation Engine**    | ✅ | 8-directional chassis orientation ($45^\circ$ steps), turret aiming, animated Robo-Miner drills, tread tracks, and 12-stage fireball detonations · [`docs/formats/sprites_and_animation.md`](docs/formats/sprites_and_animation.md) |
+| **Authentic SoundBank & Voice Dispatches**| ✅ | 252-slot legacy sound table, extracted Kathy Cullis tactical radio speech dispatches and combat SFX with zero-latency WASM preloading · [`docs/formats/sound_and_voices.md`](docs/formats/sound_and_voices.md) |
+| **Modern WebHUD & Radar Minimap**| ✅ | Fog-of-war-aware radar display with disaster blips (lava, vortices, meteors), factory/kit panels, research matrix browser, and responsive keyboard shortcuts · [`docs/formats/ui_and_hud.md`](docs/formats/ui_and_hud.md) |
+| **State Persistence & .op2save** | ✅ | Browser `LocalStorage` slots (1-5, F5 QuickSave, F9 QuickLoad, 100-Sol AutoSave), and downloadable/uploadable standalone `.op2save` file archives · [`docs/formats/save_games_and_lobby.md`](docs/formats/save_games_and_lobby.md) |
+| **WASM Packaging & Mobile Touch**| ✅ | High-DPI Retina scaling, audio context gesture unlock, pinch-to-zoom & two-finger pan touch ergonomics, and optimized release bundling · [`docs/formats/wasm_packaging_and_web_runtime.md`](docs/formats/wasm_packaging_and_web_runtime.md) |
 | **Localization (i18n)** | ✅ | Multi-language schema: EN, PT-BR, ES, DE, ZH-CN, RU |
 | **Vercel & WASM Ready** | ✅ | Trunk pipeline with release LTO optimization (`vercel.json`) |
 

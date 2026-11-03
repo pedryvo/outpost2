@@ -27,6 +27,7 @@ struct GameApp {
     colony: ColonyState,
     viewport: Viewport,
     audio: AudioManager,
+    hud: render::HudRenderer,
     is_dragging: bool,
     last_mouse_x: f64,
     last_mouse_y: f64,
@@ -39,6 +40,8 @@ struct GameApp {
     drag_select_start: Option<(f64, f64)>,
     drag_select_current: Option<(f64, f64)>,
     net_session: Option<net::WebRtcSession>,
+    last_autosave_sol: u32,
+    playtime_seconds: u32,
 }
 
 #[wasm_bindgen(start)]
@@ -72,6 +75,7 @@ pub fn start() -> Result<(), JsValue> {
         colony: ColonyState::new(Faction::Eden),
         viewport: Viewport::new(),
         audio: AudioManager::new(),
+        hud: render::HudRenderer::new(64, 64, 180.0, 180.0),
         is_dragging: false,
         last_mouse_x: 0.0,
         last_mouse_y: 0.0,
@@ -84,6 +88,8 @@ pub fn start() -> Result<(), JsValue> {
         drag_select_start: None,
         drag_select_current: None,
         net_session: None,
+        last_autosave_sol: 0,
+        playtime_seconds: 0,
     }));
 
     // Mouse Controls (Pan, Box Select & Ghost Construction Placement)
@@ -405,13 +411,19 @@ pub fn start() -> Result<(), JsValue> {
         on_contextmenu.forget();
     }
 
-    // Keyboard Navigation (WASD / Arrows)
+    // Keyboard Navigation (WASD / Arrows) & Tactical HUD Hotkey Dispatcher
     {
         let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let canvas_clone = canvas.clone();
         let on_key_down = Closure::wrap(Box::new(move |e: KeyboardEvent| {
             let mut g = app_clone.borrow_mut();
             let step = 32.0;
-            match e.key().as_str() {
+            let key = e.key();
+            let ctrl = e.ctrl_key() || e.meta_key();
+            let shift = e.shift_key();
+
+            match key.as_str() {
                 "ArrowLeft" | "a" | "A" => g.viewport.camera_x += step,
                 "ArrowRight" | "d" | "D" => g.viewport.camera_x -= step,
                 "ArrowUp" | "w" | "W" => g.viewport.camera_y += step,
@@ -421,8 +433,168 @@ pub fn start() -> Result<(), JsValue> {
                 "Escape" => {
                     g.pending_placement = None;
                     g.pending_engineering = None;
+                    g.pending_convec_deploy = false;
+                    g.pending_patrol = false;
+                    g.hud.state.factory.is_open = false;
+                    g.hud.state.research.is_open = false;
                 }
                 _ => {}
+            }
+
+            // Dispatch responsive HUD shortcuts: Space, P, 1-9, F, R, B, M
+            match g.hud.state.hotkeys.handle_key(&key, ctrl, shift) {
+                render::hud::HotkeyAction::JumpToLastAlert => {
+                    if let Some((ax, ay)) = g.hud.state.notifications.jump_to_last_alert() {
+                        let screen_w = canvas_clone.client_width() as f64;
+                        let screen_h = canvas_clone.client_height() as f64;
+                        let half_w = g.viewport.tile_width * 0.5 * g.viewport.zoom;
+                        let half_h = g.viewport.tile_height * 0.5 * g.viewport.zoom;
+                        g.viewport.camera_x = screen_w * 0.5 - (ax as f64 - ay as f64) * half_w;
+                        g.viewport.camera_y = screen_h * 0.5 - (ax as f64 + ay as f64) * half_h;
+                        g.audio.play_ui_beep();
+                    }
+                }
+                render::hud::HotkeyAction::TogglePause => {
+                    g.audio.play_ui_beep();
+                    if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                        let msg = if g.hud.state.hotkeys.is_paused {
+                            "SIMULATION PAUSED (Press 'P' to resume)"
+                        } else {
+                            "SIMULATION RESUMED"
+                        };
+                        toast.set_text_content(Some(msg));
+                        let _ = toast.set_attribute(
+                            "style",
+                            "font-size: 11px; font-weight: 500; color: #facc15; display: block;",
+                        );
+                    }
+                }
+                render::hud::HotkeyAction::AssignControlGroup(group) => {
+                    let selected_ids: Vec<u32> = g
+                        .colony
+                        .units
+                        .iter()
+                        .filter(|u| u.is_selected)
+                        .map(|u| u.id)
+                        .collect();
+                    if !selected_ids.is_empty() {
+                        g.hud.state.hotkeys.assign_group(group, selected_ids.clone());
+                        g.audio.play_ui_beep();
+                        if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                            let msg = format!("Squad Group {} assigned ({} units)", group, selected_ids.len());
+                            toast.set_text_content(Some(&msg));
+                            let _ = toast.set_attribute(
+                                "style",
+                                "font-size: 11px; font-weight: 500; color: #38bdf8; display: block;",
+                            );
+                        }
+                    }
+                }
+                render::hud::HotkeyAction::RecallControlGroup(group) => {
+                    let ids = g.hud.state.hotkeys.get_group(group).to_vec();
+                    if !ids.is_empty() {
+                        for u in &mut g.colony.units {
+                            u.is_selected = ids.contains(&u.id);
+                        }
+                        g.audio.play_ui_beep();
+                    }
+                }
+                render::hud::HotkeyAction::ToggleFactoryView => {
+                    g.hud.state.factory.is_open = !g.hud.state.factory.is_open;
+                    g.audio.play_ui_beep();
+                }
+                render::hud::HotkeyAction::ToggleResearchView => {
+                    g.hud.state.research.is_open = !g.hud.state.research.is_open;
+                    g.audio.play_ui_beep();
+                }
+                render::hud::HotkeyAction::JumpToBaseOverview => {
+                    let cc_pos = g
+                        .colony
+                        .buildings
+                        .iter()
+                        .find(|b| b.name.contains("Command Center"))
+                        .map(|b| (b.tile_x, b.tile_y));
+                    if let Some((cc_x, cc_y)) = cc_pos {
+                        let screen_w = canvas_clone.client_width() as f64;
+                        let screen_h = canvas_clone.client_height() as f64;
+                        let half_w = g.viewport.tile_width * 0.5 * g.viewport.zoom;
+                        let half_h = g.viewport.tile_height * 0.5 * g.viewport.zoom;
+                        g.viewport.camera_x =
+                            screen_w * 0.5 - (cc_x as f64 - cc_y as f64) * half_w;
+                        g.viewport.camera_y =
+                            screen_h * 0.5 - (cc_x as f64 + cc_y as f64) * half_h;
+                        g.audio.play_ui_beep();
+                    }
+                }
+                render::hud::HotkeyAction::ToggleMinimapDetail => {
+                    let d = g.hud.state.radar.toggle_detail();
+                    g.audio.play_ui_beep();
+                    if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                        let msg = if d {
+                            "TACTICAL RADAR DETAIL: ON"
+                        } else {
+                            "TACTICAL RADAR DETAIL: OFF"
+                        };
+                        toast.set_text_content(Some(msg));
+                        let _ = toast.set_attribute(
+                            "style",
+                            "font-size: 11px; font-weight: 500; color: #38bdf8; display: block;",
+                        );
+                    }
+                }
+                render::hud::HotkeyAction::QuickSave => {
+                    let play_secs = g.playtime_seconds;
+                    match sim::execute_quicksave(&g.colony, play_secs) {
+                        Ok(_) => {
+                            g.audio.play_build_confirm();
+                            if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                                toast.set_text_content(Some("QUICKSAVE (F5): Colony progress saved to storage!"));
+                                let _ = toast.set_attribute(
+                                    "style",
+                                    "font-size: 11px; font-weight: 500; color: #4ade80; display: block;",
+                                );
+                            }
+                        }
+                        Err(e) => {
+                            g.audio.play_ui_beep();
+                            if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                                let msg = format!("Quicksave failed: {}", e);
+                                toast.set_text_content(Some(&msg));
+                                let _ = toast.set_attribute(
+                                    "style",
+                                    "font-size: 11px; font-weight: 500; color: #ef4444; display: block;",
+                                );
+                            }
+                        }
+                    }
+                }
+                render::hud::HotkeyAction::QuickLoad => {
+                    match sim::execute_quickload(&mut g.colony) {
+                        Ok(meta) => {
+                            g.audio.play_unit_ack();
+                            if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                                let msg = format!("QUICKLOAD (F9): Restored '{}' (Sol {})", meta.name, meta.sol);
+                                toast.set_text_content(Some(&msg));
+                                let _ = toast.set_attribute(
+                                    "style",
+                                    "font-size: 11px; font-weight: 500; color: #38bdf8; display: block;",
+                                );
+                            }
+                        }
+                        Err(e) => {
+                            g.audio.play_ui_beep();
+                            if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                                let msg = format!("Quickload failed: {}", e);
+                                toast.set_text_content(Some(&msg));
+                                let _ = toast.set_attribute(
+                                    "style",
+                                    "font-size: 11px; font-weight: 500; color: #ef4444; display: block;",
+                                );
+                            }
+                        }
+                    }
+                }
+                render::hud::HotkeyAction::None => {}
             }
         }) as Box<dyn FnMut(KeyboardEvent)>);
         window.add_event_listener_with_callback("keydown", on_key_down.as_ref().unchecked_ref())?;
@@ -441,22 +613,25 @@ pub fn start() -> Result<(), JsValue> {
 
             let rect_w = (mini_clone.client_width() as f64).max(1.0);
             let rect_h = (mini_clone.client_height() as f64).max(1.0);
-
-            let norm_x = (click_x / rect_w).clamp(0.0, 1.0);
-            let norm_y = (click_y / rect_h).clamp(0.0, 1.0);
-
-            let target_tx = norm_x * (g.viewport.map_cols as f64);
-            let target_ty = norm_y * (g.viewport.map_rows as f64);
-
             let screen_w = canvas_clone.client_width() as f64;
             let screen_h = canvas_clone.client_height() as f64;
 
-            let half_w = g.viewport.tile_width * 0.5 * g.viewport.zoom;
-            let half_h = g.viewport.tile_height * 0.5 * g.viewport.zoom;
+            let (cam_x, cam_y) = render::hud::RadarProjection::calculate_camera_pan(
+                click_x,
+                click_y,
+                rect_w,
+                rect_h,
+                screen_w,
+                screen_h,
+                g.viewport.tile_width,
+                g.viewport.tile_height,
+                g.viewport.zoom,
+                g.viewport.map_cols,
+                g.viewport.map_rows,
+            );
 
-            g.viewport.camera_x = screen_w * 0.5 - (target_tx - target_ty) * half_w;
-            g.viewport.camera_y = screen_h * 0.5 - (target_tx + target_ty) * half_h;
-
+            g.viewport.camera_x = cam_x;
+            g.viewport.camera_y = cam_y;
             g.audio.play_ui_beep();
         }) as Box<dyn FnMut(MouseEvent)>);
         minimap_canvas.add_event_listener_with_callback("mousedown", on_mini_click.as_ref().unchecked_ref())?;
@@ -473,21 +648,25 @@ pub fn start() -> Result<(), JsValue> {
 
                 let rect_w = (mini_drag.client_width() as f64).max(1.0);
                 let rect_h = (mini_drag.client_height() as f64).max(1.0);
-
-                let norm_x = (click_x / rect_w).clamp(0.0, 1.0);
-                let norm_y = (click_y / rect_h).clamp(0.0, 1.0);
-
-                let target_tx = norm_x * (g.viewport.map_cols as f64);
-                let target_ty = norm_y * (g.viewport.map_rows as f64);
-
                 let screen_w = canvas_drag.client_width() as f64;
                 let screen_h = canvas_drag.client_height() as f64;
 
-                let half_w = g.viewport.tile_width * 0.5 * g.viewport.zoom;
-                let half_h = g.viewport.tile_height * 0.5 * g.viewport.zoom;
+                let (cam_x, cam_y) = render::hud::RadarProjection::calculate_camera_pan(
+                    click_x,
+                    click_y,
+                    rect_w,
+                    rect_h,
+                    screen_w,
+                    screen_h,
+                    g.viewport.tile_width,
+                    g.viewport.tile_height,
+                    g.viewport.zoom,
+                    g.viewport.map_cols,
+                    g.viewport.map_rows,
+                );
 
-                g.viewport.camera_x = screen_w * 0.5 - (target_tx - target_ty) * half_w;
-                g.viewport.camera_y = screen_h * 0.5 - (target_tx + target_ty) * half_h;
+                g.viewport.camera_x = cam_x;
+                g.viewport.camera_y = cam_y;
             }
         }) as Box<dyn FnMut(MouseEvent)>);
         minimap_canvas.add_event_listener_with_callback("mousemove", on_mini_drag.as_ref().unchecked_ref())?;
@@ -979,17 +1158,24 @@ pub fn start() -> Result<(), JsValue> {
         let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
             let mut g = app_clone.borrow_mut();
             let _ = g.audio.init();
+            let play_secs = g.playtime_seconds;
+            let save_state = sim::SaveGameState::from_colony(&g.colony, 1, "Slot 1 Colony Save", play_secs);
             if let Ok(Some(storage)) = window_clone.local_storage() {
-                let save_obj = g.colony.to_save_data();
-                if let Ok(json) = serde_json::to_string(&save_obj) {
+                if let Ok(json) = save_state.to_json() {
+                    let _ = storage.set_item("op2_save_slot_1", &json);
                     let _ = storage.set_item("op2_colony_save", &json);
+                    if let Ok(meta_json) = serde_json::to_string(&save_state.metadata) {
+                        let _ = storage.set_item("op2_save_slot_1_meta", &meta_json);
+                    }
                     g.audio.play_build_confirm();
                     if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
-                        toast.set_text_content(Some("Colony progress saved to browser storage!"));
+                        toast.set_text_content(Some("Colony progress saved to browser storage (Slot 1)!"));
                         let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #4ade80; display: block;");
                     }
+                    return;
                 }
             }
+            g.audio.play_ui_beep();
         }) as Box<dyn FnMut(_)>);
         btn_save.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
         cb.forget();
@@ -1003,9 +1189,19 @@ pub fn start() -> Result<(), JsValue> {
             let mut g = app_clone.borrow_mut();
             let _ = g.audio.init();
             if let Ok(Some(storage)) = window_clone.local_storage() {
-                if let Ok(Some(json)) = storage.get_item("op2_colony_save") {
-                    if let Ok(save_obj) = serde_json::from_str::<sim::SaveGameData>(&json) {
-                        g.colony.apply_save_data(save_obj);
+                let save_str = storage.get_item("op2_save_slot_1").ok().flatten()
+                    .or_else(|| storage.get_item("op2_colony_save").ok().flatten());
+                if let Some(json) = save_str {
+                    if let Ok(save_obj) = sim::SaveGameState::from_json(&json) {
+                        save_obj.apply_to_colony(&mut g.colony);
+                        g.audio.play_unit_ack();
+                        if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                            toast.set_text_content(Some("Colony save successfully restored!"));
+                            let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #38bdf8; display: block;");
+                        }
+                        return;
+                    } else if let Ok(legacy_obj) = serde_json::from_str::<sim::SaveGameData>(&json) {
+                        g.colony.apply_save_data(legacy_obj);
                         g.audio.play_unit_ack();
                         if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
                             toast.set_text_content(Some("Colony save successfully restored!"));
@@ -1727,6 +1923,13 @@ pub fn start() -> Result<(), JsValue> {
                         let _ = app_borrow.colony.recycle_structure(building_id);
                     }
                     net::NetMessage::ChatMessage { sender, text } => {
+                        let cur_sol = app_borrow.colony.sol;
+                        app_borrow.hud.state.notifications.push_chat(
+                            &sender,
+                            "[Radio]",
+                            &text,
+                            cur_sol,
+                        );
                         if let Some(log_el) = document.get_element_by_id("net-chat-log") {
                             if let Ok(chat_div) = document.create_element("div") {
                                 chat_div.set_text_content(Some(&format!("[{}] {}", sender, text)));
@@ -1740,16 +1943,43 @@ pub fn start() -> Result<(), JsValue> {
             }
         }
 
-        // Update simulation
-        let sim_result = app_borrow.colony.update(dt.min(0.1));
+        // Update simulation (respecting pause state from 'P' hotkey)
+        let effective_dt = if app_borrow.hud.state.hotkeys.is_paused {
+            0.0
+        } else {
+            dt.min(0.1)
+        };
+        let sim_result = app_borrow.colony.update(effective_dt);
+        {
+            let g = &mut *app_borrow;
+            g.hud.update(effective_dt, &mut g.colony);
+        }
 
+        let cur_sol = app_borrow.colony.sol;
         if let Some(warning) = sim_result.notice {
+            app_borrow.hud.state.notifications.push_alert(
+                "TACTICAL TRANSMISSION",
+                warning,
+                render::hud::AlertPriority::High,
+                None,
+                cur_sol,
+            );
             if !app_borrow.audio.is_muted() {
                 audio::radio::RadioDispatcher::announce(warning);
             }
             if let Some(toast) = document.get_element_by_id("research-toast") {
                 toast.set_text_content(Some(warning));
                 let _ = toast.set_attribute("style", "font-size: 11px; font-weight: bold; color: #f97316; display: block;");
+            }
+        }
+        if sim_result.vortex_active {
+            if let Some(v) = app_borrow.colony.disasters.active_vortices.first() {
+                app_borrow.hud.state.notifications.last_alert_location = Some((v.x as i32, v.y as i32));
+            }
+        }
+        if sim_result.meteor_hit {
+            if let Some(m) = app_borrow.colony.disasters.pending_meteors.first() {
+                app_borrow.hud.state.notifications.last_alert_location = Some((m.x as i32, m.y as i32));
             }
         }
         if sim_result.laser_fired {
@@ -1781,6 +2011,27 @@ pub fn start() -> Result<(), JsValue> {
         let is_combat = sim_result.laser_fired || sim_result.railgun_fired || sim_result.microwave_fired || sim_result.acid_fired;
         let is_alert = sim_result.disaster_siren;
         app_borrow.audio.update_music(dt.min(0.1), is_combat, is_alert);
+
+        // Milestone autosave execution (every 100 Sols)
+        let cur_sol_int = cur_sol.max(0.0) as u32;
+        if sim::is_autosave_due(cur_sol_int, app_borrow.last_autosave_sol) {
+            app_borrow.last_autosave_sol = cur_sol_int;
+            let play_secs = app_borrow.playtime_seconds;
+            if let Ok(state) = sim::execute_autosave(&app_borrow.colony, play_secs) {
+                app_borrow.hud.state.notifications.push_alert(
+                    "AUTOMATED ARCHIVE SNAPSHOT",
+                    &format!("Milestone Autosave: Colony state captured at Sol {}!", state.metadata.sol),
+                    render::hud::AlertPriority::Medium,
+                    None,
+                    cur_sol,
+                );
+                if let Some(toast) = document.get_element_by_id("research-toast") {
+                    let msg = format!("💾 AUTOSAVE: Milestone recorded at Sol {}", state.metadata.sol);
+                    toast.set_text_content(Some(&msg));
+                    let _ = toast.set_attribute("style", "font-size: 11px; font-weight: bold; color: #38bdf8; display: block;");
+                }
+            }
+        }
 
         if sim_result.starship_launched && app_borrow.colony.launch_anim_time < 0.5 {
             if let Some(toast) = document.get_element_by_id("research-toast") {
@@ -2080,10 +2331,25 @@ pub fn start() -> Result<(), JsValue> {
             drag_box,
         );
 
+        // Render modern tactical HUD overlays (Command bar, alerts/chat, factory, research)
+        let canvas_w = canvas.width() as f64;
+        let canvas_h = canvas.height() as f64;
+        app_borrow.hud.render_command_bar(&ctx, &app_borrow.colony, canvas_w);
+        app_borrow.hud.render_alerts_and_chat(&ctx, canvas_w, canvas_h);
+        app_borrow.hud.render_factory_panel(&ctx, &app_borrow.colony, canvas_w, canvas_h);
+        app_borrow.hud.render_research_browser(&ctx, &app_borrow.colony, canvas_w, canvas_h);
+
         // Render tactical radar
-        app_borrow.viewport.render_minimap(
+        app_borrow.hud.render_radar(
             &minimap_ctx,
             &app_borrow.colony,
+            app_borrow.viewport.camera_x,
+            app_borrow.viewport.camera_y,
+            canvas_w,
+            canvas_h,
+            app_borrow.viewport.tile_width,
+            app_borrow.viewport.tile_height,
+            app_borrow.viewport.zoom,
             minimap_canvas.width() as f64,
             minimap_canvas.height() as f64,
         );

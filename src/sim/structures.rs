@@ -22,6 +22,7 @@ pub enum StructureType {
     GuardPost,
     GeothermalPlant,
     Spaceport,
+    Terraformer,
 }
 
 impl StructureType {
@@ -41,6 +42,7 @@ impl StructureType {
             Self::RepairFacility => "Vehicle Repair Depot",
             Self::GuardPost => "Guard Post Turret",
             Self::Spaceport => "Starship Launch Gantry",
+            Self::Terraformer => "Atmospheric Terraformer",
         }
     }
 
@@ -54,6 +56,7 @@ impl StructureType {
             Self::RepairFacility => (2, 2),
             Self::GuardPost => (2, 2),
             Self::Spaceport => (3, 3),
+            Self::Terraformer => (3, 3),
             _ => (2, 2),
         }
     }
@@ -74,6 +77,7 @@ impl StructureType {
             Self::RepairFacility => 60,
             Self::GuardPost => 50,
             Self::Spaceport => 160,
+            Self::Terraformer => 100,
         }
     }
 
@@ -94,6 +98,28 @@ impl StructureType {
             Self::RepairFacility => (250, 50),
             Self::GuardPost => (250, 50),
             Self::Spaceport => (800, 350),
+            Self::Terraformer => (600, 250),
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn default_max_hp(&self) -> u32 {
+        match self {
+            Self::CommandCenter => 1000,
+            Self::SolarArray => 400,
+            Self::TokamakReactor => 800,
+            Self::GeothermalPlant => 600,
+            Self::CommonOreSmelter => 500,
+            Self::RareOreSmelter => 550,
+            Self::DirtLab => 450,
+            Self::StandardLab => 500,
+            Self::Residence => 350,
+            Self::Agrodome => 400,
+            Self::VehicleFactory => 700,
+            Self::RepairFacility => 450,
+            Self::GuardPost => 600,
+            Self::Spaceport => 1200,
+            Self::Terraformer => 1000,
         }
     }
 
@@ -113,6 +139,7 @@ impl StructureType {
             "Vehicle Repair Depot" => Some(Self::RepairFacility),
             "Guard Post Turret" | "Guard Post" => Some(Self::GuardPost),
             "Starship Launch Gantry" => Some(Self::Spaceport),
+            "Atmospheric Terraformer" | "Terraformer" => Some(Self::Terraformer),
             _ => None,
         }
     }

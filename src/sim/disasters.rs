@@ -1,9 +1,10 @@
 //! Outpost 2 Natural Disasters & Dynamic Hazard Simulator
 //! Simulates volcanic magma expansion, seismic tremors, and Microbial Blight contagion.
 
+use serde::{Deserialize, Serialize};
 use crate::sim::map::GameMap;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct AtmosphericVortex {
     pub x: f64,
     pub y: f64,
@@ -14,7 +15,7 @@ pub struct AtmosphericVortex {
     pub max_lifetime: f64,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MeteorImpact {
     pub x: f64,
     pub y: f64,
@@ -24,7 +25,7 @@ pub struct MeteorImpact {
     pub has_impacted: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct DisasterSimulator {
     pub sol_timer: f64,
     pub blight_timer: f64,

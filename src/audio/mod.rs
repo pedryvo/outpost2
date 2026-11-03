@@ -1,17 +1,20 @@
 //! Web Audio API sound manager for Outpost 2 sound effects
 
+pub mod bank;
 pub mod music;
 pub mod radio;
 
 use wasm_bindgen::JsValue;
 use web_sys::{AudioContext, GainNode, OscillatorNode};
 use music::MusicEngine;
+use bank::SoundBank;
 
 pub struct AudioManager {
     pub ctx: Option<AudioContext>,
     master_gain: Option<GainNode>,
     muted: bool,
     pub music: MusicEngine,
+    pub bank: SoundBank,
 }
 
 impl AudioManager {
@@ -21,6 +24,7 @@ impl AudioManager {
             master_gain: None,
             muted: false,
             music: MusicEngine::new(),
+            bank: SoundBank::new(),
         }
     }
 
@@ -33,6 +37,7 @@ impl AudioManager {
             gain.connect_with_audio_node(&ctx.destination())?;
 
             let _ = self.music.init(&ctx);
+            self.bank.init(&ctx, &gain);
 
             self.ctx = Some(ctx);
             self.master_gain = Some(gain);
@@ -60,9 +65,40 @@ impl AudioManager {
         }
     }
 
+    /// Play arbitrary PCM sample by name from the sound bank
+    #[allow(dead_code)]
+    pub fn play_sample(&self, name: &str) {
+        if self.muted {
+            return;
+        }
+        self.bank.play_sample(name);
+    }
+
+    /// Play arbitrary PCM sample by name with explicit volume attenuation
+    #[allow(dead_code)]
+    pub fn play_sample_with_volume(&self, name: &str, volume: f32) {
+        if self.muted {
+            return;
+        }
+        self.bank.play_sample_with_volume(name, volume);
+    }
+
+    /// Play tactical voice dispatch event by legacy ID (0..=251)
+    #[allow(dead_code)]
+    pub fn play_voice_event(&self, event_id: u32) {
+        if self.muted {
+            return;
+        }
+        self.bank.play_voice_event(event_id);
+    }
+
     /// Play futuristic sci-fi UI confirmation beep
     pub fn play_ui_beep(&self) {
         if self.muted {
+            return;
+        }
+        if self.bank.is_sample_loaded("beep2.wav") {
+            self.bank.play_sample("beep2.wav");
             return;
         }
         if let (Some(ctx), Some(gain)) = (&self.ctx, &self.master_gain) {
@@ -75,6 +111,10 @@ impl AudioManager {
         if self.muted {
             return;
         }
+        if self.bank.is_sample_loaded("truk_sel.wav") {
+            self.bank.play_sample("truk_sel.wav");
+            return;
+        }
         if let (Some(ctx), Some(gain)) = (&self.ctx, &self.master_gain) {
             let _ = self.play_tone(ctx, gain, 587.33, 0.06); // D5
         }
@@ -85,6 +125,10 @@ impl AudioManager {
         if self.muted {
             return;
         }
+        if self.bank.is_sample_loaded("bld_make.wav") {
+            self.bank.play_sample("bld_make.wav");
+            return;
+        }
         if let (Some(ctx), Some(gain)) = (&self.ctx, &self.master_gain) {
             let _ = self.play_tone(ctx, gain, 440.0, 0.08); // A4
         }
@@ -93,6 +137,10 @@ impl AudioManager {
     /// Play high-energy laser beam discharge sound
     pub fn play_laser(&self) {
         if self.muted {
+            return;
+        }
+        if self.bank.is_sample_loaded("laser.wav") {
+            self.bank.play_sample("laser.wav");
             return;
         }
         if let (Some(ctx), Some(gain)) = (&self.ctx, &self.master_gain) {
@@ -187,6 +235,10 @@ impl AudioManager {
         if self.muted {
             return;
         }
+        if self.bank.is_sample_loaded("bigexp1.wav") {
+            self.bank.play_sample("bigexp1.wav");
+            return;
+        }
         if let (Some(ctx), Some(gain)) = (&self.ctx, &self.master_gain) {
             if let Ok(osc) = ctx.create_oscillator() {
                 if let Ok(note_gain) = ctx.create_gain() {
@@ -210,6 +262,7 @@ impl AudioManager {
         if self.muted {
             return;
         }
+        self.play_sample("uni_grad.wav");
         if let (Some(ctx), Some(gain)) = (&self.ctx, &self.master_gain) {
             let notes = [
                 (523.25, 0.00, 0.12), // C5
@@ -242,6 +295,7 @@ impl AudioManager {
         if self.muted {
             return;
         }
+        self.play_voice_event(227);
         if let (Some(ctx), Some(gain)) = (&self.ctx, &self.master_gain) {
             let notes = [220.0, 196.0, 174.61, 146.83]; // A3, G3, F3, D3
             for (i, &freq) in notes.iter().enumerate() {
@@ -265,6 +319,10 @@ impl AudioManager {
     /// Play triumphant structure commissioning / ConVec kit deployment arpeggio
     pub fn play_construction_deploy(&self) {
         if self.muted {
+            return;
+        }
+        if self.bank.is_sample_loaded("bld_make.wav") {
+            self.bank.play_sample("bld_make.wav");
             return;
         }
         if let (Some(ctx), Some(gain)) = (&self.ctx, &self.master_gain) {
@@ -342,6 +400,10 @@ impl AudioManager {
     /// Play building placement error / obstructed buzzer
     pub fn play_build_error(&self) {
         if self.muted {
+            return;
+        }
+        if self.bank.is_sample_loaded("bld_not.wav") {
+            self.bank.play_sample("bld_not.wav");
             return;
         }
         if let (Some(ctx), Some(gain)) = (&self.ctx, &self.master_gain) {

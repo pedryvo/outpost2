@@ -1,7 +1,17 @@
 //! Isometric Viewport and HTML5 Canvas Renderer
 
+pub mod hud;
 pub mod palette;
 pub mod sprites;
+pub mod touch;
+
+#[allow(unused_imports)]
+pub use hud::{HudRenderer, HudState};
+#[allow(unused_imports)]
+pub use touch::{
+    compute_high_dpi_canvas_dimensions, snap_to_pixel_boundary, HighDpiDimensions,
+    TouchGestureEvent, TouchGestureTracker,
+};
 
 use web_sys::CanvasRenderingContext2d;
 use crate::sim::{fog::FogState, ColonyState, Faction};
@@ -565,11 +575,11 @@ impl Viewport {
                 ctx.set_font(&format!("bold {}px sans-serif", (9.0 * self.zoom).max(8.0)));
                 let icon = if u.cargo_kit.is_some() { "📦" } else { "🚛" };
                 let _ = ctx.fill_text(icon, sx - 5.0 * self.zoom, sy - 18.0 * self.zoom);
-            } else if is_tiger {
+            } else if u.name.contains("Tiger") {
                 ctx.set_fill_style_str("#e0f2fe");
                 ctx.set_font(&format!("bold {}px sans-serif", (9.0 * self.zoom).max(8.0)));
                 let _ = ctx.fill_text("🐅", sx - 5.0 * self.zoom, sy - 18.0 * self.zoom);
-            } else if is_miner {
+            } else if u.name.contains("Robo-Miner") {
                 ctx.set_fill_style_str("#fef08a");
                 ctx.set_font(&format!("bold {}px sans-serif", (9.0 * self.zoom).max(8.0)));
                 let _ = ctx.fill_text("⛏️", sx - 5.0 * self.zoom, sy - 18.0 * self.zoom);
@@ -659,6 +669,11 @@ impl Viewport {
             ctx.set_stroke_style_str("#ef4444");
             ctx.set_line_width(2.0);
             ctx.stroke();
+        }
+
+        // Render Multi-Stage Sprite Fireball Detonations
+        if let Ok(mut sprite_mgr) = self.sprite_mgr.try_borrow_mut() {
+            sprite_mgr.render_explosions(ctx, |tx, ty| self.tile_to_screen(tx, ty), self.zoom);
         }
 
         // Render Atmospheric Vortices (Dust Devils & Tornadoes)
@@ -875,154 +890,21 @@ impl Viewport {
     }
 
     /// Render mini-radar overview with authentic Fog of War mask
+    #[allow(dead_code)]
     pub fn render_minimap(&self, ctx: &CanvasRenderingContext2d, colony: &ColonyState, w: f64, h: f64) {
-        ctx.set_fill_style_str("#030712");
-        ctx.fill_rect(0.0, 0.0, w, h);
-
-        let scale_x = w / (self.map_cols as f64);
-        let scale_y = h / (self.map_rows as f64);
-
-        // Render explored and visible terrain footprint
-        for y in 0..self.map_rows {
-            for x in 0..self.map_cols {
-                let fog = colony.fog.get(x as usize, y as usize);
-                if fog == FogState::Unexplored {
-                    continue;
-                }
-                let color = if fog == FogState::Visible {
-                    "#334155"
-                } else {
-                    "#1e293b"
-                };
-                ctx.set_fill_style_str(color);
-                ctx.fill_rect((x as f64) * scale_x, (y as f64) * scale_y, scale_x + 0.5, scale_y + 0.5);
-            }
-        }
-
-        // Blip active volcanic lava channels
-        ctx.set_fill_style_str("#f97316");
-        for &(lx, ly) in &colony.disasters.active_lava_tiles {
-            let fog = colony.fog.get(lx as usize, ly as usize);
-            if fog != FogState::Unexplored {
-                let px = (lx as f64) * scale_x;
-                let py = (ly as f64) * scale_y;
-                ctx.fill_rect(px, py, 2.0, 2.0);
-            }
-        }
-
-        // Blip creeping microbial blight
-        ctx.set_fill_style_str("#a855f7");
-        for &(bx, by) in &colony.disasters.active_blight_tiles {
-            let fog = colony.fog.get(bx as usize, by as usize);
-            if fog != FogState::Unexplored {
-                let px = (bx as f64) * scale_x;
-                let py = (by as f64) * scale_y;
-                ctx.fill_rect(px, py, 2.0, 2.0);
-            }
-        }
-
-        // Blip atmospheric vortices
-        ctx.set_fill_style_str("#fde047");
-        for v in &colony.disasters.active_vortices {
-            let px = v.x * scale_x;
-            let py = v.y * scale_y;
-            ctx.fill_rect(px - 1.0, py - 1.0, 3.0, 3.0);
-        }
-
-        // Blip incoming meteor targets
-        ctx.set_fill_style_str("#ef4444");
-        for m in &colony.disasters.pending_meteors {
-            let px = m.x * scale_x;
-            let py = m.y * scale_y;
-            ctx.fill_rect(px - 1.5, py - 1.5, 3.5, 3.5);
-        }
-
-        // Blip transport tubes
-        ctx.set_fill_style_str("#64748b");
-        for &(tx, ty) in &colony.tubes {
-            let fog = colony.fog.get(tx as usize, ty as usize);
-            if fog != FogState::Unexplored {
-                let px = (tx as f64) * scale_x;
-                let py = (ty as f64) * scale_y;
-                ctx.fill_rect(px, py, 1.5, 1.5);
-            }
-        }
-
-        // Blip buildings if explored or visible
-        ctx.set_fill_style_str("#38bdf8");
-        for b in &colony.buildings {
-            let fog = colony.fog.get(b.tile_x as usize, b.tile_y as usize);
-            if fog != FogState::Unexplored {
-                let bx = (b.tile_x as f64) * scale_x;
-                let by = (b.tile_y as f64) * scale_y;
-                ctx.fill_rect(bx, by, (b.width as f64) * scale_x + 1.0, (b.height as f64) * scale_y + 1.0);
-            }
-        }
-
-        // Blip units (friendly Eden in green, hostile Plymouth in red)
-        for u in &colony.units {
-            let fog = colony.fog.get(u.tile_x as usize, u.tile_y as usize);
-            if fog == FogState::Visible {
-                let color = if u.faction == Faction::Eden { "#4ade80" } else { "#ef4444" };
-                ctx.set_fill_style_str(color);
-                let ux = (u.tile_x as f64) * scale_x;
-                let uy = (u.tile_y as f64) * scale_y;
-                ctx.fill_rect(ux - 1.0, uy - 1.0, 3.0, 3.0);
-            }
-        }
-
-        // Blip ore deposits & subterranean mines
-        for dep in &colony.ore_deposits {
-            let fog = colony.fog.get(dep.tile_x as usize, dep.tile_y as usize);
-            if fog != FogState::Unexplored {
-                let dx = (dep.tile_x as f64) * scale_x;
-                let dy = (dep.tile_y as f64) * scale_y;
-                let color = if dep.has_miner {
-                    "#38bdf8" // Active mine (cyan)
-                } else if dep.ore_type == crate::sim::mining::OreType::Rare {
-                    "#c084fc" // Rare beacon (purple)
-                } else {
-                    "#facc15" // Common beacon (amber)
-                };
-                ctx.set_fill_style_str(color);
-                ctx.fill_rect(dx - 1.0, dy - 1.0, 2.5, 2.5);
-            }
-        }
-
-        // Blip active combat beams & explosions on radar
-        for beam in &colony.active_beams {
-            let bx1 = beam.from_x * scale_x;
-            let by1 = beam.from_y * scale_y;
-            let bx2 = beam.to_x * scale_x;
-            let by2 = beam.to_y * scale_y;
-            ctx.set_stroke_style_str(beam.color);
-            ctx.set_line_width(1.5);
-            ctx.begin_path();
-            ctx.move_to(bx1, by1);
-            ctx.line_to(bx2, by2);
-            ctx.stroke();
-        }
-
-        for exp in &colony.active_explosions {
-            let ex = exp.x * scale_x;
-            let ey = exp.y * scale_y;
-            let er = (exp.radius * 0.4).max(2.0);
-            ctx.set_stroke_style_str("#f97316");
-            ctx.set_line_width(1.2);
-            ctx.begin_path();
-            let _ = ctx.arc(ex, ey, er, 0.0, std::f64::consts::TAU);
-            ctx.stroke();
-        }
-
-        // Tactical camera viewport frustum box
-        let (center_tx, center_ty) = self.screen_to_tile(400.0, 300.0);
-        let fx = ((center_tx as f64 - 10.0) * scale_x).clamp(0.0, w);
-        let fy = ((center_ty as f64 - 8.0) * scale_y).clamp(0.0, h);
-        let fw = (20.0 * scale_x).clamp(14.0, w);
-        let fh = (16.0 * scale_y).clamp(10.0, h);
-
-        ctx.set_stroke_style_str("#38bdf8");
-        ctx.set_line_width(1.0);
-        ctx.stroke_rect(fx, fy, fw, fh);
+        let hud = hud::HudRenderer::new(self.map_cols, self.map_rows, w, h);
+        hud.render_radar(
+            ctx,
+            colony,
+            self.camera_x,
+            self.camera_y,
+            800.0,
+            600.0,
+            self.tile_width,
+            self.tile_height,
+            self.zoom,
+            w,
+            h,
+        );
     }
 }

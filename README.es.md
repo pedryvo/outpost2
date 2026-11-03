@@ -69,14 +69,15 @@ El objetivo es preservar y modernizar este clásico juego de estrategia en tiemp
 | **Peligros Planetarios y Desastres**| ✅ | Plaga microbiana reptante, fisuras volcánicas, vórtices de polvo y lluvias de meteoritos cinéticos |
 | **Sirena de Alerta Roja & Incursiones**| ✅ | Sirena bitonal de emergencia del Centro de Mando y asaltos coordinados de escuadrones Plymouth |
 | **Matriz Científica de Investigación** | ✅ | Árbol de 11 tecnologías con prerrequisitos obligatorios (Vulcanología, Cañón Rail, Defensas) y bonos pasivos · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
-| **Multijugador P2P WebRTC**        | ✅ | Red punto a punto sin servidores (intercambio SDP Base64, órdenes lockstep y chat táctico) · [`docs/formats/multiplayer_protocol.md`](docs/formats/multiplayer_protocol.md) |
-| **Campañas Multi-Mapa**            | ✅ | 5 teatros de operación auténticos (Eden 1 y 2, Plymouth 1 y 2, Academia) extraídos de `.map` · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
-| **Banda Sonora Dinámica**          | ✅ | Secuenciador procedural que alterna entre Exploración, Combate y Alerta Roja |
-| **Filas de Fábrica y Soldadura** | ✅ | Planificación de producción de vehículos con arcos de plasma y barras de progreso |
-| **Evacuación y Lanzamiento de Nave**| ✅ | Fabricación en 4 etapas, animación de ignición orbital con plumas de escape y fanfarria de victoria · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
-| **Debriefing de Misión y Directivas**| ✅ | Evaluación operativa post-misión, demografía de supervivientes, lista de directivas y progresión |
-| **Persistencia y Control Táctil** | ✅ | Guardado/carga rápida en navegador y gestos táctiles |
-| **Motor de Audio & SFX de Combate** | ✅ | Sintetizador Web Audio API (láseres, explosiones, pitidos) y muestras de audio clásicas |
+| **Multijugador P2P y Lobby WebRTC**| ✅ | Red punto a punto sin servidores (intercambio SDP Base64, órdenes lockstep, chat táctico y máquina de estados de lobby) · [`docs/formats/save_games_and_lobby.md`](docs/formats/save_games_and_lobby.md) |
+| **IA Táctica y Autonomía Skirmish** | ✅ | 3 doctrinas estratégicas de IA (Rusher Agresivo, Fortificador Defensivo, Rusher Tecnológico), planificación de base y asaltos coordinados · [`docs/formats/ai_and_personalities.md`](docs/formats/ai_and_personalities.md) |
+| **Eventos Dinámicos y Scripting**   | ✅ | Disparadores por Sols, emboscadas por proximidad espacial, refuerzos dinámicos y desastres planetarios · [`docs/formats/dynamic_events_and_scripting.md`](docs/formats/dynamic_events_and_scripting.md) |
+| **Campaña Completa (Eden 1-3 & Plymouth 1-3)**| ✅ | 6 teatros de operación incluyendo Eden 3 (*Escape del Monte Vulcan*) y Plymouth 3 (*Asalto a los Riscos de Obsidiana*) con mapas `.map` · [`docs/formats/campaign_progression_and_debrief.md`](docs/formats/campaign_progression_and_debrief.md) |
+| **Motor de Sprites y Animación**    | ✅ | Orientación de chasis en 8 direcciones ($45^\circ$), torretas, taladros rotatorios del Robo-Miner y detonaciones de fuego en 12 fases · [`docs/formats/sprites_and_animation.md`](docs/formats/sprites_and_animation.md) |
+| **SoundBank Auténtico y Voces**     | ✅ | Tabla clásica de 252 registros, transmisiones de radio tácticas de Kathy Cullis y SFX precargados en WASM con cero latencia · [`docs/formats/sound_and_voices.md`](docs/formats/sound_and_voices.md) |
+| **WebHUD Moderno y Radar Minimapa** | ✅ | Minimapa con niebla de guerra, alertas de desastres (lava, vórtices, meteoros), paneles de fábrica/tecnología y atajos de teclado · [`docs/formats/ui_and_hud.md`](docs/formats/ui_and_hud.md) |
+| **Persistencia y Archivos .op2save** | ✅ | Ranuras en `LocalStorage` (1-5, F5 QuickSave, F9 QuickLoad, AutoSave a 100 Sols) y exportación/importación de `.op2save` · [`docs/formats/save_games_and_lobby.md`](docs/formats/save_games_and_lobby.md) |
+| **Empaquetado WASM y Táctil Móvil** | ✅ | Escalado Retina High-DPI, desbloqueo de audio por interacción, gestos táctiles (zoom por pellizco y arrastre) y paquete optimizado · [`docs/formats/wasm_packaging_and_web_runtime.md`](docs/formats/wasm_packaging_and_web_runtime.md) |
 | **Localización (i18n)** | ✅ | Soporte multilíngue para EN, PT-BR, ES, DE, ZH-CN, RU |
 | **Despliegue Vercel & WASM** | ✅ | Pipeline de Trunk con optimización LTO release (`vercel.json`) |
 

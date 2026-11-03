@@ -126,6 +126,11 @@ impl TechTree {
         self.techs.iter().any(|t| t.id == id && t.is_researched)
     }
 
+    #[allow(dead_code)]
+    pub fn researched_count(&self) -> usize {
+        self.techs.iter().filter(|t| t.is_researched).count()
+    }
+
     pub fn category_name(cat: u32) -> &'static str {
         match cat {
             0 => "Core Science",

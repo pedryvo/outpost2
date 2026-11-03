@@ -64,15 +64,15 @@ Diferente de máquinas virtuais pesadas ou emuladores x86, este porte roda nativ
 | **Perigos Planetários & Desastres** | ✅ | Blight microbiano rastejante, fissuras vulcânicas, vórtices de poeira e chuvas de meteoros cinéticos |
 | **Sirene de Alerta Vermelho & Incursões**| ✅ | Sirene bitonal de emergência do Centro de Comando e ondas táticas coordenadas de ataque da Plymouth |
 | **Matriz Científica de Pesquisa** | ✅ | Árvore de 11 tecnologias com requisitos obrigatórios (Vulcanologia, Railguns, Defesa de Ponto) e bônus passivos · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
-| **Multiplayer P2P via WebRTC**    | ✅ | Rede ponto-a-ponto sem servidor (troca de SDP em Base64, sincronização lockstep e chat tático) · [`docs/formats/multiplayer_protocol.md`](docs/formats/multiplayer_protocol.md) |
-| **Campanhas Multi-Mapas**         | ✅ | 5 teatros autênticos de operação (Eden 1 e 2, Plymouth 1 e 2, Academia) extraídos de `.map` · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
-| **Trilha Sonora Dinâmica**        | ✅ | Sequenciador procedural que transita entre os modos Exploração, Combate e Alerta Vermelho |
-| **Filas de Fábrica & Animação** | ✅ | Agendamento de fabricação, arcos elétricos de solda e barras de progresso no HUD |
-| **Evacuação & Lançamento de Nave**| ✅ | Montagem em 4 estágios da nave estelar, animação de ignição orbital com plumas de escape e fanfarra de vitória · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
-| **Debriefing de Missão & Diretivas**| ✅ | Avaliação operacional pós-missão, contagem de sobreviventes, checklist de diretivas e avanço de campanha |
-| **Persistência de Estado & Touch** | ✅ | Salvamento/carregamento rápido no navegador, gestos touch e pinch-to-zoom |
-| **Engine de Áudio & SFX de Combate** | ✅ | Sintetizador procedural Web Audio (lasers, explosões, zumbidos) e samples clássicos |
-| **HUD Tático Sci-Fi** | ✅ | Telemetria em tempo real, minimapa de radar, filas de produção e console de unidades |
+| **Multiplayer P2P & Lobby WebRTC**| ✅ | Rede ponto a ponto serverless (troca SDP Base64, ordens lockstep, chat tático e máquina de estados de lobby) · [`docs/formats/save_games_and_lobby.md`](docs/formats/save_games_and_lobby.md) |
+| **IA Tática & Autonomia Skirmish** | ✅ | 3 personalidades estratégicas (Rusher Agressivo, Fortificador Defensivo, Rusher Tecnológico), planejamento de base e assaltos táticos · [`docs/formats/ai_and_personalities.md`](docs/formats/ai_and_personalities.md) |
+| **Eventos Dinâmicos & Scripting**  | ✅ | Gatilhos de Sol, zonas de emboscada por proximidade, reforços dinâmicos e disparos de desastres planetários · [`docs/formats/dynamic_events_and_scripting.md`](docs/formats/dynamic_events_and_scripting.md) |
+| **Campanha Completa (Eden 1-3 & Plymouth 1-3)**| ✅ | 6 teatros de operação incluindo Eden 3 (*Fuga do Monte Vulcan*) e Plymouth 3 (*Assalto aos Penhascos de Obsidiana*) com mapas `.map` · [`docs/formats/campaign_progression_and_debrief.md`](docs/formats/campaign_progression_and_debrief.md) |
+| **Motor de Sprites & Animação**   | ✅ | Orientação de chassi em 8 direções ($45^\circ$), mira de torres, brocas giratórias do Robo-Miner e detonações em 12 estágios · [`docs/formats/sprites_and_animation.md`](docs/formats/sprites_and_animation.md) |
+| **SoundBank Autêntico & Vozes**   | ✅ | Tabela legada de 252 slots, despachos táticos de rádio de Kathy Cullis e SFX de combate com pré-carregamento WASM com latência zero · [`docs/formats/sound_and_voices.md`](docs/formats/sound_and_voices.md) |
+| **WebHUD Moderno & Minimapa Radar**| ✅ | Display de radar com névoa de guerra e alertas de desastres (lava, vórtices, meteoros), painéis de fábrica/pesquisa e atalhos de teclado · [`docs/formats/ui_and_hud.md`](docs/formats/ui_and_hud.md) |
+| **Persistência de Estado & .op2save** | ✅ | Slots no `LocalStorage` (1-5, QuickSave F5, QuickLoad F9, AutoSave a cada 100 Sols) e exportação/importação de arquivos `.op2save` · [`docs/formats/save_games_and_lobby.md`](docs/formats/save_games_and_lobby.md) |
+| **Pacote WASM & Touch Mobile**    | ✅ | Escala High-DPI Retina, desbloqueio de áudio por gesto, ergonomia de toque (pinça para zoom e arrasto duplo) e pacote otimizado · [`docs/formats/wasm_packaging_and_web_runtime.md`](docs/formats/wasm_packaging_and_web_runtime.md) |
 | **Localização (i18n)** | ✅ | Esquema multilíngue: EN, PT-BR, ES, DE, ZH-CN, RU |
 | **Pronto para Vercel & WASM** | ✅ | Pipeline do Trunk com otimização LTO em modo release (`vercel.json`) |
 

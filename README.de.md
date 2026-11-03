@@ -69,14 +69,15 @@ Ziel ist es, den Strategieklassiker in modernen Webbrowsern mit nativer Leistung
 | **Planetare Gefahren & Katastrophen**| ✅ | Kriechende mikrobielle Pest, Vulkanspalten, Staubwirbel-Tornados und kinetische Meteorschauer |
 | **Roter Alarm Sirene & Überfälle**| ✅ | Zweiton-Notfallsirene der Kommandozentrale und koordinierte Angriffsstaffeln feindlicher Plymouth-Einheiten |
 | **Wissenschaftliche Forschungsmatrix**| ✅ | 11-Knoten-Tech-Baum mit Pflichtvoraussetzungen (Vulkanologie, Railguns, Punktverteidigung) und passiven Boni · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
-| **P2P WebRTC Multiplayer**        | ✅ | Serverloses Peer-to-Peer-Netzwerk (SDP-Base64-Austausch, Lockstep-Befehle und taktischer Chat) · [`docs/formats/multiplayer_protocol.md`](docs/formats/multiplayer_protocol.md) |
-| **Multi-Karten-Kampagnen**         | ✅ | 5 authentische Schauplätze (Eden 1 & 2, Plymouth 1 & 2, Akademie) mit extrahierten `.map`-Dateien · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
-| **Dynamischer Atmosphäre-Soundtrack**| ✅ | Prozeduraler Sequenzer, der zwischen Erkundung, Gefecht und Rotem Alarm wechselt |
-| **Fabrikwarteschlange & Schweißen** | ✅ | Fahrzeugbau mit Plasma-Schweißeffekt und Fortschrittsbalken |
-| **Raumschiff-Evakuierung & Start** | ✅ | Bau in 4 Phasen, orbitale Startanimation mit lodernden Abgasfahnen und Siegesfanfare · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |
-| **Missions-Nachbesprechung & Ziele**| ✅ | Operative Nachbesprechung, Überlebenden-Demografie, Richtlinien-Checkliste und Kampagnenfortschritt |
-| **Persistenz & Touch-Gesten** | ✅ | Quicksave/Load im Browserspeicher und mobile Gestensteuerung |
-| **Audio-Engine & Kampf-SFX** | ✅ | Web Audio Synthesizer (Laser, Explosionen, Signaltöne) und klassische Audio-Samples |
+| **P2P-WebRTC-Multiplayer & Lobby** | ✅ | Serverloses Peer-to-Peer-Netzwerk (SDP-Base64-Austausch, Lockstep-Befehle, Chat und Lobby-Zustandsautomat) · [`docs/formats/save_games_and_lobby.md`](docs/formats/save_games_and_lobby.md) |
+| **Taktische KI & Scharmützel-Autonomie**| ✅ | 3 strategische KI-Doktrinen (Aggressiver Rusher, Defensiver Festungsbauer, Tech-Rusher), Basisplanung und koordinierte Angriffe · [`docs/formats/ai_and_personalities.md`](docs/formats/ai_and_personalities.md) |
+| **Dynamische Ereignisse & Skripte** | ✅ | Sol-Timer-Trigger, räumliche Hinterhalte, dynamische Verstärkungen und Auslöser für Naturkatastrophen · [`docs/formats/dynamic_events_and_scripting.md`](docs/formats/dynamic_events_and_scripting.md) |
+| **Vollständige Kampagne (Eden 1-3 & Plymouth 1-3)**| ✅ | 6 Schauplätze einschließlich Eden 3 (*Flucht vom Mount Vulcan*) und Plymouth 3 (*Sturm auf die Obsidian-Klippen*) mit extrahierten Karten · [`docs/formats/campaign_progression_and_debrief.md`](docs/formats/campaign_progression_and_debrief.md) |
+| **Sprite- & Animations-Engine**     | ✅ | 8-Wege-Fahrgestellorientierung ($45^\circ$), Geschütztürme, rotierende Minenbohrer und 12-stufige Feuerbälle · [`docs/formats/sprites_and_animation.md`](docs/formats/sprites_and_animation.md) |
+| **Authentische SoundBank & Funksprüche**| ✅ | 252-Slot-Legendentabelle, Kathy Cullis Taktik-Funksprüche und verzögerungsfreie WASM-Vorladung von Kampf-SFX · [`docs/formats/sound_and_voices.md`](docs/formats/sound_and_voices.md) |
+| **Modernes WebHUD & Radar-Minimap** | ✅ | Radar mit Kriegsnebel, Katastrophen-Warnpunkten (Lava, Tornados, Meteore), Fabrik-/Technik-Panels und Tastatur-Shortcuts · [`docs/formats/ui_and_hud.md`](docs/formats/ui_and_hud.md) |
+| **Spielstand-Persistenz & .op2save**| ✅ | `LocalStorage`-Slots (1-5, F5 Quicksave, F9 Quickload, 100-Sol Autosave) sowie Export/Import von `.op2save`-Dateien · [`docs/formats/save_games_and_lobby.md`](docs/formats/save_games_and_lobby.md) |
+| **WASM-Paket & Mobile Touch-Gesten**| ✅ | High-DPI-Retina-Skalierung, Audio-Freischaltung per Touch, 2-Finger-Pinch/Pan und optimiertes Release-Paket · [`docs/formats/wasm_packaging_and_web_runtime.md`](docs/formats/wasm_packaging_and_web_runtime.md) |
 | **Lokalisierung (i18n)** | ✅ | Mehrsprachig: EN, PT-BR, ES, DE, ZH-CN, RU |
 | **Vercel & WASM-Deployment** | ✅ | Trunk-Build-Pipeline mit Release-LTO-Optimierung (`vercel.json`) |
 
