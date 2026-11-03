@@ -366,11 +366,13 @@ impl Viewport {
 
             let (sx, sy) = self.tile_to_screen(u.tile_x as f64, u.tile_y as f64);
 
-            // Unit chassis: Repair is emerald green, Earthworker is amber, Eden is Cyan, Plymouth is Crimson Red
+            // Unit chassis: Repair is emerald green, Earthworker is amber, ConVec is construction yellow, Eden is Cyan, Plymouth is Crimson Red
             let chassis_color = if u.name.contains("Repair") {
                 "#10b981"
             } else if u.name.contains("Earthworker") {
                 "#f59e0b"
+            } else if u.name.contains("ConVec") {
+                "#eab308"
             } else if u.faction == Faction::Eden {
                 "#38bdf8"
             } else {
@@ -393,6 +395,24 @@ impl Viewport {
                 ctx.set_fill_style_str("#fef3c7");
                 ctx.set_font(&format!("bold {}px sans-serif", (9.0 * self.zoom).max(8.0)));
                 let _ = ctx.fill_text("🏗️", sx - 5.0 * self.zoom, sy - 18.0 * self.zoom);
+            } else if u.name.contains("ConVec") {
+                ctx.set_fill_style_str("#fef08a");
+                ctx.set_font(&format!("bold {}px sans-serif", (9.0 * self.zoom).max(8.0)));
+                let icon = if u.cargo_kit.is_some() { "📦" } else { "🚛" };
+                let _ = ctx.fill_text(icon, sx - 5.0 * self.zoom, sy - 18.0 * self.zoom);
+            }
+
+            // Stance badge (Guard or Patrol)
+            match u.current_order {
+                crate::sim::pathfinding::UnitOrder::Guard { .. } => {
+                    ctx.set_font(&format!("bold {}px sans-serif", (8.0 * self.zoom).max(7.0)));
+                    let _ = ctx.fill_text("🛡️", sx + 6.0 * self.zoom, sy - 10.0 * self.zoom);
+                }
+                crate::sim::pathfinding::UnitOrder::Patrol { .. } => {
+                    ctx.set_font(&format!("bold {}px sans-serif", (8.0 * self.zoom).max(7.0)));
+                    let _ = ctx.fill_text("🔄", sx + 6.0 * self.zoom, sy - 10.0 * self.zoom);
+                }
+                _ => {}
             }
 
             // Unit selection ring

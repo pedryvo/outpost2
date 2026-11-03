@@ -266,6 +266,9 @@
           <button class="action-btn" id="btn-queue-truck" style="justify-content: center;">🚚 Build Cargo Truck</button>
           <button class="action-btn" id="btn-queue-repair" style="justify-content: center;">🔧 Build Repair Vehicle</button>
           <button class="action-btn" id="btn-queue-earthworker" style="justify-content: center;">🏗️ Build Earthworker</button>
+          <button class="action-btn" id="btn-queue-convec" style="justify-content: center; background: #713f12; border-color: #eab308;">🚛 Build ConVec (150 C)</button>
+          <button class="action-btn" id="btn-queue-convec-smelter" style="justify-content: center; background: #713f12; border-color: #eab308;">🔥 ConVec + Smelter Kit</button>
+          <button class="action-btn" id="btn-queue-convec-solar" style="justify-content: center; background: #713f12; border-color: #eab308;">☀️ ConVec + Solar Kit</button>
           <button class="action-btn" id="btn-queue-starship" style="justify-content: center; background: #3b0764; border-color: #a855f7;">🚀 Assemble Starship Module</button>
         </div>
         <button class="action-btn" id="btn-toggle-power" style="margin-top: 8px; justify-content: center; background: #334155;">⚡ Toggle Power Grid</button>
@@ -273,16 +276,36 @@
       </aside>
 
       <!-- Unit Command & Engineering Inspector -->
-      <aside id="unit-card" style="position: absolute; bottom: 76px; left: 16px; width: 230px; background: rgba(12, 14, 18, 0.92); border: 2px solid #f59e0b; border-radius: 6px; backdrop-filter: blur(8px); box-shadow: 0 8px 24px rgba(0,0,0,0.6); z-index: 15; display: none; flex-direction: column; overflow: hidden; padding: 12px; font-size: 12px;">
+      <aside id="unit-card" style="position: absolute; bottom: 76px; left: 16px; width: 240px; background: rgba(12, 14, 18, 0.94); border: 2px solid #f59e0b; border-radius: 6px; backdrop-filter: blur(8px); box-shadow: 0 8px 24px rgba(0,0,0,0.6); z-index: 15; display: none; flex-direction: column; overflow: hidden; padding: 12px; font-size: 12px;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--op2-border); padding-bottom: 6px; margin-bottom: 8px;">
-          <span id="unit-inspect-name" style="font-weight: bold; color: #facc15;">Earthworker</span>
-          <span id="unit-inspect-hp" style="color: #4ade80; font-size: 10px; font-weight: bold;">200/200 HP</span>
+          <span id="unit-inspect-name" style="font-weight: bold; color: #facc15;">Unit Inspector</span>
+          <span id="unit-inspect-hp" style="color: #4ade80; font-size: 10px; font-weight: bold;">100/100 HP</span>
         </div>
-        <div id="earthworker-actions" style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
+        <div id="unit-inspect-cargo" style="font-size: 11px; color: #38bdf8; margin-bottom: 4px; display: none;"></div>
+        <div id="unit-inspect-order" style="font-size: 10px; color: var(--op2-muted); margin-bottom: 6px;"></div>
+
+        <!-- Earthworker Engineering -->
+        <div id="earthworker-actions" style="display: none; flex-direction: column; gap: 6px; margin-top: 4px;">
           <span style="font-size: 10px; color: var(--op2-muted); text-transform: uppercase;">Engineering Orders:</span>
           <button class="action-btn" id="btn-order-wall" style="justify-content: center; background: #78350f; border-color: #f59e0b;">🧱 Fortified Wall (15 C)</button>
           <button class="action-btn" id="btn-order-tube" style="justify-content: center; background: #1e3a8a; border-color: #3b82f6;">🚇 Lay Conduit Tube (5 C)</button>
           <button class="action-btn" id="btn-order-clear" style="justify-content: center; background: #581c87; border-color: #a855f7;">🧹 Purge Blight Hazard</button>
+        </div>
+
+        <!-- ConVec Kit Deployment -->
+        <div id="convec-actions" style="display: none; flex-direction: column; gap: 6px; margin-top: 4px;">
+          <span style="font-size: 10px; color: var(--op2-muted); text-transform: uppercase;">ConVec Operations:</span>
+          <button class="action-btn" id="btn-convec-deploy" style="justify-content: center; background: #854d0e; border-color: #facc15;">🏗️ Deploy Loaded Kit</button>
+          <button class="action-btn" id="btn-convec-load-smelter" style="justify-content: center; background: #1e293b;">🔥 Load Smelter Kit (350 C)</button>
+          <button class="action-btn" id="btn-convec-load-solar" style="justify-content: center; background: #1e293b;">☀️ Load Solar Kit (200 C)</button>
+        </div>
+
+        <!-- Combat Stance & Tactical Patrol -->
+        <div id="combat-actions" style="display: none; flex-direction: column; gap: 6px; margin-top: 4px;">
+          <span style="font-size: 10px; color: var(--op2-muted); text-transform: uppercase;">Tactical Stance:</span>
+          <button class="action-btn" id="btn-order-guard" style="justify-content: center; background: #1e3a8a; border-color: #60a5fa;">🛡️ Set Guard Anchor</button>
+          <button class="action-btn" id="btn-order-patrol" style="justify-content: center; background: #1e293b; border-color: #94a3b8;">🔄 Assign Patrol Route</button>
+          <button class="action-btn" id="btn-order-halt" style="justify-content: center; background: #7f1d1d; border-color: #ef4444;">🛑 Halt / Hold Position</button>
         </div>
       </aside>
 

@@ -59,6 +59,8 @@ El objetivo es preservar y modernizar este clásico juego de estrategia en tiemp
 | **Selección Táctica por Arrastre** | ✅ | Caja de selección multi-unidad con retículas angulares sci-fi y agrupación con Shift |
 | **Reparación de Vehículos & Triage**| ✅ | Vehículos de Reparación móviles y Talleres con rayos de nanosoldadura esmeralda |
 | **Ingeniería con Earthworker** | ✅ | Muros defensivos de cerámica reforzada, tendido de tubos y purga de biopeligros |
+| **Despliegue de Kits con ConVec** | ✅ | Vehículos de Construcción transportando kits modulares, montaje en terreno y anclaje |
+| **Tácticas de Guardia y Patrulla** | ✅ | Puntos de anclaje de defensa, rutas bidireccionales de patrulla y combate reactivo |
 | **Plaga Dinámica y Vórtices** | ✅ | Expansión orgánica de esporas microbianas, corrosión cáustica y tornados atmosféricos giratorios |
 | **Matriz Científica de Investigación** | ✅ | Modal interactivo de tecnologías con taxonomía de ramas y bonificaciones pasivas (blindaje, láser, fundición) · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **Campañas Multi-Mapa** | ✅ | Teatros de operación auténticos (Eden 1, Plymouth 1, Academia) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |

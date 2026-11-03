@@ -54,6 +54,8 @@ Unlike heavyweight virtual machines or x86 emulators, this port runs natively in
 | **Tactical Drag Selection** | ✅ | Multi-unit drag-box with corner bracket reticles and Shift-click grouping |
 | **Vehicle Repair & Field Triage**| ✅ | Mobile Repair Vehicles and stationary Depots projecting emerald nano-welding beams |
 | **Earthworker Engineering** | ✅ | Fortified ceramic defense walls, field conduit laying, and bio-cleansing hazard purging |
+| **ConVec Modular Kit Deployment** | ✅ | Construction Vehicles hauling pre-fabricated kits, unfolding installations, and foundation lockdown |
+| **Tactical Guard & Patrol Stances** | ✅ | Automated sector guard anchors, bidirectional patrol lanes, and reactive target acquisition |
 | **Dynamic Blight & Dust Vortices**| ✅ | Spreading microbial spore hazard, caustic vehicle corrosion, and whirling atmospheric tornadoes |
 | **Scientific Research Matrix** | ✅ | Interactive tech modal with category taxonomy and passive colony bonuses (armor, laser, smelting) · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **Multi-Map Campaigns** | ✅ | Authentic operational theaters (Eden 1, Plymouth 1, Academy Tutorial) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |

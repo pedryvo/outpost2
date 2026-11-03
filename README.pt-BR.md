@@ -54,6 +54,8 @@ Diferente de máquinas virtuais pesadas ou emuladores x86, este porte roda nativ
 | **Seleção Tática por Área (Drag)** | ✅ | Caixa de seleção em arrasto com retículos angulares sci-fi e agrupamento via Shift |
 | **Reparo de Veículos & Triagem** | ✅ | Veículos de Reparo móveis e Depósitos de Manutenção com feixes de nanosolda esmeralda |
 | **Engenharia com Earthworker** | ✅ | Construção de muros cerâmicos defensivos, tubos de campo e purificação de bioameaças |
+| **Implantação de Kits via ConVec** | ✅ | Veículos de Construção transportando kits pré-fabricados, montagem em campo e fundação |
+| **Posturas de Guarda & Patrulha** | ✅ | Âncoras de guarda de setor automatizadas, rotas bidirecionais de patrulha e combate reativo |
 | **Blight Dinâmico & Vórtices** | ✅ | Contágio orgânico de esporos, corrosão cáustica de veículos e tornados atmosféricos giratórios |
 | **Matriz Científica de Pesquisa** | ✅ | Modal interativo de tecnologias com taxonomia de ramos e bônus passivos (blindagem, lasers, fundição) · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **Campanhas Multi-Mapas** | ✅ | Teatros autênticos de operação (Eden 1, Plymouth 1, Tutorial da Academia) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |

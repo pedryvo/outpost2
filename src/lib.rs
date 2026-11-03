@@ -31,6 +31,8 @@ struct GameApp {
     last_frame_time: f64,
     pending_placement: Option<sim::structures::StructureType>,
     pending_engineering: Option<EngineeringMode>,
+    pending_convec_deploy: bool,
+    pending_patrol: bool,
     hover_tile: (i32, i32),
     drag_select_start: Option<(f64, f64)>,
     drag_select_current: Option<(f64, f64)>,
@@ -73,6 +75,8 @@ pub fn start() -> Result<(), JsValue> {
         last_frame_time: 0.0,
         pending_placement: None,
         pending_engineering: None,
+        pending_convec_deploy: false,
+        pending_patrol: false,
         hover_tile: (20, 20),
         drag_select_start: None,
         drag_select_current: None,
@@ -140,6 +144,64 @@ pub fn start() -> Result<(), JsValue> {
                     return;
                 }
 
+                // If in ConVec deployment mode:
+                if g.pending_convec_deploy {
+                    let (tx, ty) = g.viewport.screen_to_tile(click_x, click_y);
+                    let mut deployed = false;
+                    for u in &mut g.colony.units {
+                        if u.is_selected && u.name.contains("ConVec") && u.cargo_kit.is_some() {
+                            let kit = u.cargo_kit.as_ref().unwrap().clone();
+                            u.current_order = sim::pathfinding::UnitOrder::DeployStructure {
+                                kit_name: kit,
+                                tile_x: tx,
+                                tile_y: ty,
+                            };
+                            deployed = true;
+                        }
+                    }
+                    g.pending_convec_deploy = false;
+                    if deployed {
+                        g.audio.play_build_confirm();
+                        if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                            toast.set_text_content(Some("Deployment site designated for ConVec."));
+                            let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #4ade80; display: block;");
+                        }
+                    } else {
+                        g.audio.play_build_error();
+                    }
+                    return;
+                }
+
+                // If in tactical patrol mode:
+                if g.pending_patrol {
+                    let (tx, ty) = g.viewport.screen_to_tile(click_x, click_y);
+                    let mut patrolled = false;
+                    let player_faction = g.colony.faction;
+                    for u in &mut g.colony.units {
+                        if u.is_selected && u.faction == player_faction {
+                            u.current_order = sim::pathfinding::UnitOrder::Patrol {
+                                start_x: u.tile_x,
+                                start_y: u.tile_y,
+                                end_x: tx,
+                                end_y: ty,
+                                heading_to_end: true,
+                            };
+                            patrolled = true;
+                        }
+                    }
+                    g.pending_patrol = false;
+                    if patrolled {
+                        g.audio.play_unit_ack();
+                        if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                            toast.set_text_content(Some("Patrol route assigned."));
+                            let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #4ade80; display: block;");
+                        }
+                    } else {
+                        g.audio.play_build_error();
+                    }
+                    return;
+                }
+
                 g.drag_select_start = Some((click_x, click_y));
                 g.drag_select_current = Some((click_x, click_y));
                 g.last_mouse_x = click_x;
@@ -147,9 +209,11 @@ pub fn start() -> Result<(), JsValue> {
                 g.is_dragging = true;
             } else if e.button() == 2 {
                 // Right Click = Cancel Placement/Engineering or issue Tactical Command
-                if g.pending_placement.is_some() || g.pending_engineering.is_some() {
+                if g.pending_placement.is_some() || g.pending_engineering.is_some() || g.pending_convec_deploy || g.pending_patrol {
                     g.pending_placement = None;
                     g.pending_engineering = None;
+                    g.pending_convec_deploy = false;
+                    g.pending_patrol = false;
                     g.audio.play_ui_beep();
                     if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
                         let _ = toast.set_attribute("style", "display: none;");
@@ -521,6 +585,7 @@ pub fn start() -> Result<(), JsValue> {
                 attack_cooldown: 0.0,
                 cargo: None,
                 hauler_state: None,
+                cargo_kit: None,
             });
         }) as Box<dyn FnMut(_)>);
         btn_units.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
@@ -835,6 +900,9 @@ pub fn start() -> Result<(), JsValue> {
     setup_queue_btn("btn-queue-truck", "Cargo Truck", app.clone(), document.clone());
     setup_queue_btn("btn-queue-repair", "Repair Vehicle", app.clone(), document.clone());
     setup_queue_btn("btn-queue-earthworker", "Earthworker", app.clone(), document.clone());
+    setup_queue_btn("btn-queue-convec", "ConVec", app.clone(), document.clone());
+    setup_queue_btn("btn-queue-convec-smelter", "ConVec (Smelter)", app.clone(), document.clone());
+    setup_queue_btn("btn-queue-convec-solar", "ConVec (Solar)", app.clone(), document.clone());
     setup_queue_btn("btn-queue-starship", "Starship Component", app.clone(), document.clone());
 
     if let Some(btn) = document.get_element_by_id("btn-toggle-power") {
@@ -937,6 +1005,151 @@ pub fn start() -> Result<(), JsValue> {
             if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
                 toast.set_text_content(Some("Engineering Hazard Purge: Click target terrain to neutralize Blight spores."));
                 let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #a855f7; display: block;");
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    // ConVec Kit Deployment & Loading Orders
+    if let Some(btn) = document.get_element_by_id("btn-convec-deploy") {
+        let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            g.pending_convec_deploy = true;
+            g.audio.play_build_confirm();
+            if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                toast.set_text_content(Some("ConVec Deployment: Click target map tile to unfold and deploy structure kit."));
+                let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #facc15; display: block;");
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    if let Some(btn) = document.get_element_by_id("btn-convec-load-smelter") {
+        let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            let selected_u_id = g.colony.units.iter().find(|u| u.is_selected && u.faction == g.colony.faction).map(|u| u.id);
+            if let Some(uid) = selected_u_id {
+                match g.colony.load_convec_kit(uid, "Common Ore Smelter".to_string()) {
+                    Ok(msg) => {
+                        g.audio.play_build_confirm();
+                        if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                            toast.set_text_content(Some(&msg));
+                            let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #4ade80; display: block;");
+                        }
+                    }
+                    Err(err) => {
+                        g.audio.play_build_error();
+                        if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                            toast.set_text_content(Some(&err));
+                            let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #ef4444; display: block;");
+                        }
+                    }
+                }
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    if let Some(btn) = document.get_element_by_id("btn-convec-load-solar") {
+        let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            let selected_u_id = g.colony.units.iter().find(|u| u.is_selected && u.faction == g.colony.faction).map(|u| u.id);
+            if let Some(uid) = selected_u_id {
+                match g.colony.load_convec_kit(uid, "Solar Power Array".to_string()) {
+                    Ok(msg) => {
+                        g.audio.play_build_confirm();
+                        if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                            toast.set_text_content(Some(&msg));
+                            let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #4ade80; display: block;");
+                        }
+                    }
+                    Err(err) => {
+                        g.audio.play_build_error();
+                        if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                            toast.set_text_content(Some(&err));
+                            let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #ef4444; display: block;");
+                        }
+                    }
+                }
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    // Tactical Stance Orders (Guard, Patrol, Halt)
+    if let Some(btn) = document.get_element_by_id("btn-order-guard") {
+        let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            let mut ordered = false;
+            let player_faction = g.colony.faction;
+            for u in &mut g.colony.units {
+                if u.is_selected && u.faction == player_faction {
+                    u.current_order = sim::pathfinding::UnitOrder::Guard { anchor_x: u.tile_x, anchor_y: u.tile_y };
+                    ordered = true;
+                }
+            }
+            if ordered {
+                g.audio.play_unit_ack();
+                if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                    toast.set_text_content(Some("Guard anchor established at current sector."));
+                    let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #60a5fa; display: block;");
+                }
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    if let Some(btn) = document.get_element_by_id("btn-order-patrol") {
+        let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            g.pending_patrol = true;
+            g.audio.play_ui_beep();
+            if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                toast.set_text_content(Some("Patrol Route: Click target destination on map to designate patrol lane."));
+                let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #38bdf8; display: block;");
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    if let Some(btn) = document.get_element_by_id("btn-order-halt") {
+        let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            let player_faction = g.colony.faction;
+            for u in &mut g.colony.units {
+                if u.is_selected && u.faction == player_faction {
+                    u.current_order = sim::pathfinding::UnitOrder::Idle;
+                    u.path.clear();
+                }
+            }
+            g.audio.play_ui_beep();
+            if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                toast.set_text_content(Some("All orders halted. Units holding position."));
+                let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #ef4444; display: block;");
             }
         }) as Box<dyn FnMut(_)>);
         btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
@@ -1062,6 +1275,12 @@ pub fn start() -> Result<(), JsValue> {
         if sim_result.unit_destroyed {
             app_borrow.audio.play_explosion();
         }
+        if sim_result.building_deployed {
+            app_borrow.audio.play_construction_deploy();
+        }
+        if sim_result.vortex_active && sim_result.notice.map(|n| n.contains("Vortex")).unwrap_or(false) {
+            app_borrow.audio.play_vortex_howl();
+        }
 
         // Update HUD DOM telemetry values
         if let Some(el) = document.get_element_by_id("colony-sol") {
@@ -1132,20 +1351,77 @@ pub fn start() -> Result<(), JsValue> {
             }
         }
 
-        // Update Unit Command & Engineering Inspector Card
+        // Update Unit Command & Engineering / ConVec / Combat Inspector Card
         let selected_u = app_borrow.colony.units.iter().find(|u| u.is_selected && u.faction == app_borrow.colony.faction);
         if let Some(card) = document.get_element_by_id("unit-card") {
             if let Some(u) = selected_u {
-                let _ = card.set_attribute("style", "position: absolute; bottom: 76px; left: 16px; width: 230px; background: rgba(12, 14, 18, 0.92); border: 2px solid #f59e0b; border-radius: 6px; backdrop-filter: blur(8px); box-shadow: 0 8px 24px rgba(0,0,0,0.6); z-index: 15; display: flex; flex-direction: column; overflow: hidden; padding: 12px; font-size: 12px;");
+                let border_color = if u.name.contains("Earthworker") {
+                    "#f59e0b"
+                } else if u.name.contains("ConVec") {
+                    "#eab308"
+                } else if u.weapon.is_some() {
+                    "#38bdf8"
+                } else {
+                    "#10b981"
+                };
+                let style = format!("position: absolute; bottom: 76px; left: 16px; width: 240px; background: rgba(12, 14, 18, 0.94); border: 2px solid {}; border-radius: 6px; backdrop-filter: blur(8px); box-shadow: 0 8px 24px rgba(0,0,0,0.6); z-index: 15; display: flex; flex-direction: column; overflow: hidden; padding: 12px; font-size: 12px;", border_color);
+                let _ = card.set_attribute("style", &style);
+
                 if let Some(name_el) = document.get_element_by_id("unit-inspect-name") {
                     name_el.set_text_content(Some(&u.name));
                 }
                 if let Some(hp_el) = document.get_element_by_id("unit-inspect-hp") {
                     hp_el.set_text_content(Some(&format!("{}/{} HP", u.hp, u.max_hp)));
                 }
+
+                if let Some(cargo_el) = document.get_element_by_id("unit-inspect-cargo") {
+                    if let Some(kit) = &u.cargo_kit {
+                        cargo_el.set_text_content(Some(&format!("📦 Loaded Kit: {}", kit)));
+                        let _ = cargo_el.set_attribute("style", "font-size: 11px; color: #facc15; font-weight: bold; margin-bottom: 4px; display: block;");
+                    } else if let Some((ore_type, amt)) = &u.cargo {
+                        cargo_el.set_text_content(Some(&format!("⛏️ Cargo: {} units of {:?}", amt, ore_type)));
+                        let _ = cargo_el.set_attribute("style", "font-size: 11px; color: #38bdf8; margin-bottom: 4px; display: block;");
+                    } else {
+                        let _ = cargo_el.set_attribute("style", "display: none;");
+                    }
+                }
+
+                if let Some(order_el) = document.get_element_by_id("unit-inspect-order") {
+                    let order_str = match &u.current_order {
+                        sim::pathfinding::UnitOrder::Idle => "Status: Idle (Awaiting orders)".to_string(),
+                        sim::pathfinding::UnitOrder::MoveTo { target_x, target_y } => format!("Status: En Route to ({}, {})", target_x, target_y),
+                        sim::pathfinding::UnitOrder::Attack { target_unit_id } => format!("Status: Engaging Target #{}", target_unit_id),
+                        sim::pathfinding::UnitOrder::Repair { target_unit_id } => format!("Status: Repairing Ally #{}", target_unit_id),
+                        sim::pathfinding::UnitOrder::MineOre { deposit_x, deposit_y } => format!("Status: Mining Ore at ({}, {})", deposit_x, deposit_y),
+                        sim::pathfinding::UnitOrder::DeployStructure { kit_name, tile_x, tile_y } => format!("Status: Deploying {} at ({}, {})", kit_name, tile_x, tile_y),
+                        sim::pathfinding::UnitOrder::BuildWall { target_x, target_y } => format!("Status: Building Wall at ({}, {})", target_x, target_y),
+                        sim::pathfinding::UnitOrder::BuildTube { target_x, target_y } => format!("Status: Laying Conduit at ({}, {})", target_x, target_y),
+                        sim::pathfinding::UnitOrder::ClearHazard { target_x, target_y } => format!("Status: Purging Hazard at ({}, {})", target_x, target_y),
+                        sim::pathfinding::UnitOrder::Guard { anchor_x, anchor_y } => format!("Status: Guarding Sector ({}, {})", anchor_x, anchor_y),
+                        sim::pathfinding::UnitOrder::Patrol { start_x, start_y, end_x, end_y, .. } => format!("Status: Patrol ({},{}) ↔ ({},{})", start_x, start_y, end_x, end_y),
+                    };
+                    order_el.set_text_content(Some(&order_str));
+                }
+
                 if let Some(actions) = document.get_element_by_id("earthworker-actions") {
                     if u.name.contains("Earthworker") {
-                        let _ = actions.set_attribute("style", "display: flex; flex-direction: column; gap: 6px; margin-top: 6px;");
+                        let _ = actions.set_attribute("style", "display: flex; flex-direction: column; gap: 6px; margin-top: 4px;");
+                    } else {
+                        let _ = actions.set_attribute("style", "display: none;");
+                    }
+                }
+
+                if let Some(actions) = document.get_element_by_id("convec-actions") {
+                    if u.name.contains("ConVec") {
+                        let _ = actions.set_attribute("style", "display: flex; flex-direction: column; gap: 6px; margin-top: 4px;");
+                    } else {
+                        let _ = actions.set_attribute("style", "display: none;");
+                    }
+                }
+
+                if let Some(actions) = document.get_element_by_id("combat-actions") {
+                    if u.weapon.is_some() {
+                        let _ = actions.set_attribute("style", "display: flex; flex-direction: column; gap: 6px; margin-top: 4px;");
                     } else {
                         let _ = actions.set_attribute("style", "display: none;");
                     }

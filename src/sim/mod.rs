@@ -51,6 +51,8 @@ pub struct Unit {
     pub attack_cooldown: f64,
     pub cargo: Option<(OreType, u32)>,
     pub hauler_state: Option<HaulerState>,
+    #[serde(default)]
+    pub cargo_kit: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -122,6 +124,8 @@ pub struct SimUpdateResult {
     pub notice: Option<&'static str>,
     pub laser_fired: bool,
     pub unit_destroyed: bool,
+    pub building_deployed: bool,
+    pub vortex_active: bool,
 }
 
 impl ColonyState {
@@ -222,6 +226,7 @@ impl ColonyState {
             attack_cooldown: 0.0,
             cargo: None,
             hauler_state: None,
+            cargo_kit: Some("Common Ore Smelter".to_string()),
         });
 
         units.push(Unit {
@@ -240,6 +245,7 @@ impl ColonyState {
             attack_cooldown: 0.0,
             cargo: None,
             hauler_state: Some(HaulerState::Idle),
+            cargo_kit: None,
         });
 
         units.push(Unit {
@@ -258,6 +264,7 @@ impl ColonyState {
             attack_cooldown: 0.0,
             cargo: None,
             hauler_state: None,
+            cargo_kit: None,
         });
 
         units.push(Unit {
@@ -276,6 +283,7 @@ impl ColonyState {
             attack_cooldown: 0.0,
             cargo: None,
             hauler_state: None,
+            cargo_kit: None,
         });
 
         if scenario_id == 0 {
@@ -296,6 +304,7 @@ impl ColonyState {
                 attack_cooldown: 0.0,
                 cargo: None,
                 hauler_state: None,
+                cargo_kit: None,
             });
         }
 
@@ -317,6 +326,7 @@ impl ColonyState {
                 attack_cooldown: 0.0,
                 cargo: None,
                 hauler_state: None,
+                cargo_kit: None,
             });
 
             units.push(Unit {
@@ -335,6 +345,7 @@ impl ColonyState {
                 attack_cooldown: 0.0,
                 cargo: None,
                 hauler_state: None,
+                cargo_kit: None,
             });
         }
 
@@ -634,6 +645,7 @@ impl ColonyState {
                         attack_cooldown: 0.0,
                         cargo: None,
                         hauler_state: None,
+                        cargo_kit: None,
                     });
                     unit_notice = Some("FABRICATION COMPLETE: Panther Battle Tank rolled out of production bay.");
                 }
@@ -655,6 +667,7 @@ impl ColonyState {
                         attack_cooldown: 0.0,
                         cargo: None,
                         hauler_state: None,
+                        cargo_kit: None,
                     });
                     unit_notice = Some("FABRICATION COMPLETE: Lynx Scout commissioned for reconnaissance.");
                 }
@@ -675,6 +688,7 @@ impl ColonyState {
                         attack_cooldown: 0.0,
                         cargo: None,
                         hauler_state: Some(HaulerState::Idle),
+                        cargo_kit: None,
                     });
                     unit_notice = Some("FABRICATION COMPLETE: Cargo Truck deployed for ore logistics.");
                 }
@@ -695,6 +709,7 @@ impl ColonyState {
                         attack_cooldown: 0.0,
                         cargo: None,
                         hauler_state: None,
+                        cargo_kit: None,
                     });
                     unit_notice = Some("FABRICATION COMPLETE: Repair Vehicle deployed for field maintenance.");
                 }
@@ -715,8 +730,93 @@ impl ColonyState {
                         attack_cooldown: 0.0,
                         cargo: None,
                         hauler_state: None,
+                        cargo_kit: None,
                     });
                     unit_notice = Some("FABRICATION COMPLETE: Earthworker commissioned for engineering and terrain fortification.");
+                }
+                "ConVec" => {
+                    self.units.push(Unit {
+                        id: next_id,
+                        name: format!("ConVec #{}", next_id),
+                        faction: self.faction,
+                        tile_x: spawn_x,
+                        tile_y: spawn_y,
+                        hp: 180,
+                        max_hp: 180,
+                        is_selected: false,
+                        current_order: UnitOrder::Idle,
+                        path: Vec::new(),
+                        move_cooldown: 0.0,
+                        weapon: None,
+                        attack_cooldown: 0.0,
+                        cargo: None,
+                        hauler_state: None,
+                        cargo_kit: None,
+                    });
+                    unit_notice = Some("FABRICATION COMPLETE: ConVec deployed for modular kit transport.");
+                }
+                "ConVec (Smelter)" => {
+                    self.units.push(Unit {
+                        id: next_id,
+                        name: format!("ConVec #{}", next_id),
+                        faction: self.faction,
+                        tile_x: spawn_x,
+                        tile_y: spawn_y,
+                        hp: 180,
+                        max_hp: 180,
+                        is_selected: false,
+                        current_order: UnitOrder::Idle,
+                        path: Vec::new(),
+                        move_cooldown: 0.0,
+                        weapon: None,
+                        attack_cooldown: 0.0,
+                        cargo: None,
+                        hauler_state: None,
+                        cargo_kit: Some("Common Ore Smelter".to_string()),
+                    });
+                    unit_notice = Some("FABRICATION COMPLETE: ConVec pre-loaded with Common Smelter Kit.");
+                }
+                "ConVec (Solar)" => {
+                    self.units.push(Unit {
+                        id: next_id,
+                        name: format!("ConVec #{}", next_id),
+                        faction: self.faction,
+                        tile_x: spawn_x,
+                        tile_y: spawn_y,
+                        hp: 180,
+                        max_hp: 180,
+                        is_selected: false,
+                        current_order: UnitOrder::Idle,
+                        path: Vec::new(),
+                        move_cooldown: 0.0,
+                        weapon: None,
+                        attack_cooldown: 0.0,
+                        cargo: None,
+                        hauler_state: None,
+                        cargo_kit: Some("Solar Power Array".to_string()),
+                    });
+                    unit_notice = Some("FABRICATION COMPLETE: ConVec pre-loaded with Solar Array Kit.");
+                }
+                "ConVec (Agridome)" => {
+                    self.units.push(Unit {
+                        id: next_id,
+                        name: format!("ConVec #{}", next_id),
+                        faction: self.faction,
+                        tile_x: spawn_x,
+                        tile_y: spawn_y,
+                        hp: 180,
+                        max_hp: 180,
+                        is_selected: false,
+                        current_order: UnitOrder::Idle,
+                        path: Vec::new(),
+                        move_cooldown: 0.0,
+                        weapon: None,
+                        attack_cooldown: 0.0,
+                        cargo: None,
+                        hauler_state: None,
+                        cargo_kit: Some("Bio-Dome Hydroponics".to_string()),
+                    });
+                    unit_notice = Some("FABRICATION COMPLETE: ConVec pre-loaded with Hydroponics Kit.");
                 }
                 "Starship Component" => {
                     self.starship_progress = (self.starship_progress + 25.0).min(100.0);
@@ -905,7 +1005,82 @@ impl ColonyState {
             }
         }
 
-        // 5. Atmospheric Vortices: sever conduits and buffet units
+        // 5. ConVec Structure Deployment Orders
+        let mut building_deployed = false;
+        let mut convec_deploy_events = Vec::new();
+        for u in &mut self.units {
+            if u.faction == self.faction {
+                if let UnitOrder::DeployStructure { ref kit_name, tile_x, tile_y } = u.current_order {
+                    let dist = (u.tile_x - tile_x).abs() + (u.tile_y - tile_y).abs();
+                    if dist <= 1 {
+                        convec_deploy_events.push((u.id, kit_name.clone(), tile_x, tile_y));
+                        u.current_order = UnitOrder::Idle;
+                    } else if u.path.is_empty() {
+                        if let Some(path) = PathFinder::find_path(&self.game_map, (u.tile_x, u.tile_y), (tile_x, tile_y)) {
+                            u.path = path;
+                        }
+                    }
+                }
+            }
+        }
+
+        for (uid, _kit_name, tx, ty) in convec_deploy_events {
+            if let Ok(_msg) = self.deploy_convec_kit(uid, tx, ty) {
+                building_deployed = true;
+                unit_notice = Some("STRUCTURE DEPLOYED: ConVec erected installation into operational grid.");
+            }
+        }
+
+        // 6. Tactical Guard & Patrol Orders
+        for u in &mut self.units {
+            match u.current_order {
+                UnitOrder::Guard { anchor_x, anchor_y } => {
+                    let closest_enemy = unit_positions.iter()
+                        .filter(|p| p.1 != u.faction && p.4 > 0)
+                        .map(|p| {
+                            let dist_from_anchor = ((p.2 as f64 - anchor_x as f64).powi(2) + (p.3 as f64 - anchor_y as f64).powi(2)).sqrt();
+                            (p.0, p.2, p.3, dist_from_anchor)
+                        })
+                        .filter(|p| p.3 <= 7.0)
+                        .min_by(|a, b| a.3.partial_cmp(&b.3).unwrap_or(std::cmp::Ordering::Equal));
+
+                    if let Some((_eid, ex, ey, _)) = closest_enemy {
+                        let dist_to_enemy = (u.tile_x - ex).abs() + (u.tile_y - ey).abs();
+                        let max_range = u.weapon.map(|w| w.range_tiles() as i32).unwrap_or(1);
+                        if dist_to_enemy > max_range && u.path.is_empty() {
+                            if let Some(path) = PathFinder::find_path(&self.game_map, (u.tile_x, u.tile_y), (ex, ey)) {
+                                u.path = path;
+                            }
+                        }
+                    } else {
+                        let dist_to_anchor = (u.tile_x - anchor_x).abs() + (u.tile_y - anchor_y).abs();
+                        if dist_to_anchor > 1 && u.path.is_empty() {
+                            if let Some(path) = PathFinder::find_path(&self.game_map, (u.tile_x, u.tile_y), (anchor_x, anchor_y)) {
+                                u.path = path;
+                            }
+                        }
+                    }
+                }
+                UnitOrder::Patrol { start_x, start_y, end_x, end_y, ref mut heading_to_end } => {
+                    let (tx, ty) = if *heading_to_end { (end_x, end_y) } else { (start_x, start_y) };
+                    let dist = (u.tile_x - tx).abs() + (u.tile_y - ty).abs();
+                    if dist <= 1 {
+                        *heading_to_end = !*heading_to_end;
+                        let next_target = if *heading_to_end { (end_x, end_y) } else { (start_x, start_y) };
+                        if let Some(path) = PathFinder::find_path(&self.game_map, (u.tile_x, u.tile_y), next_target) {
+                            u.path = path;
+                        }
+                    } else if u.path.is_empty() {
+                        if let Some(path) = PathFinder::find_path(&self.game_map, (u.tile_x, u.tile_y), (tx, ty)) {
+                            u.path = path;
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        // 7. Atmospheric Vortices: sever conduits and buffet units
         for v in &self.disasters.active_vortices {
             let vx_tile = v.x.round() as i32;
             let vy_tile = v.y.round() as i32;
@@ -919,7 +1094,7 @@ impl ColonyState {
             }
         }
 
-        // 6. Hydroponics Life Support & Demographics
+        // 8. Hydroponics Life Support & Demographics
         let food_mult = self.tech_tree.food_multiplier();
         if (self.sol * 10.0) as u32 % 50 == 0 {
             let agro_count = self.buildings.iter().filter(|b| b.name.contains("Bio-Dome") && b.is_active).count() as u32;
@@ -958,10 +1133,14 @@ impl ColonyState {
         // Refresh dynamic sensor fog of war
         self.fog.update_visibility(&self.units, &self.buildings);
 
+        let vortex_active = !self.disasters.active_vortices.is_empty();
+
         SimUpdateResult {
             notice: warning.or(ai_alert).or(unit_notice).or(mission_alert),
             laser_fired,
             unit_destroyed,
+            building_deployed,
+            vortex_active,
         }
     }
 
@@ -1036,6 +1215,135 @@ impl ColonyState {
         Ok(format!("Deployed {} successfully", name))
     }
 
+    /// Deploy a structure from a ConVec's loaded construction kit
+    pub fn deploy_convec_kit(&mut self, unit_id: u32, tile_x: i32, tile_y: i32) -> Result<String, String> {
+        let (kit_name, ux, uy) = {
+            let u = self.units.iter().find(|u| u.id == unit_id)
+                .ok_or_else(|| "ConVec not found".to_string())?;
+            let kit = u.cargo_kit.as_ref()
+                .ok_or_else(|| "ConVec has no construction kit loaded".to_string())?;
+            (kit.clone(), u.tile_x, u.tile_y)
+        };
+
+        let st = StructureType::from_name(&kit_name)
+            .ok_or_else(|| format!("Unknown kit specification: {}", kit_name))?;
+
+        let (w, h) = st.dimensions();
+
+        // Check if footprint collides with existing structures or impassable lava
+        for b in &self.buildings {
+            let collides_x = tile_x < b.tile_x + b.width && tile_x + w > b.tile_x;
+            let collides_y = tile_y < b.tile_y + b.height && tile_y + h > b.tile_y;
+            if collides_x && collides_y {
+                return Err(format!("Placement conflict: space occupied by {}", b.name));
+            }
+        }
+
+        for dy in 0..h {
+            for dx in 0..w {
+                let tx = (tile_x + dx) as u32;
+                let ty = (tile_y + dy) as u32;
+                if let Some(tile) = self.game_map.get_tile(tx, ty) {
+                    if tile.is_lava {
+                        return Err("Cannot deploy structure onto active molten lava fissure!".into());
+                    }
+                }
+            }
+        }
+
+        let next_id = self.buildings.len() as u32 + 1;
+        let power = st.power_cost();
+        let name = format!("{} #{}", st.name(), next_id);
+
+        let new_b = Building {
+            id: next_id,
+            name: name.clone(),
+            tile_x,
+            tile_y,
+            width: w,
+            height: h,
+            power_cost: power,
+            is_active: true,
+            is_selected: false,
+            production_queue: Vec::new(),
+            production_progress: 0.0,
+        };
+
+        // Mark map tiles as wall or building
+        for dy in 0..h {
+            for dx in 0..w {
+                let tx = (tile_x + dx) as u32;
+                let ty = (tile_y + dy) as u32;
+                let idx = (ty * self.game_map.width + tx) as usize;
+                if idx < self.game_map.tiles.len() {
+                    self.game_map.tiles[idx].is_wall_or_building = true;
+                }
+            }
+        }
+
+        // Connect new structure to nearest building via transport tubes
+        if let Some(nearest) = self.buildings.iter().min_by_key(|b| (b.tile_x - tile_x).abs() + (b.tile_y - tile_y).abs()) {
+            let start = (tile_x + w / 2, tile_y + h / 2);
+            let end = (nearest.tile_x + nearest.width / 2, nearest.tile_y + nearest.height / 2);
+            connect_with_tubes(&mut self.tubes, start, end);
+        }
+
+        if power > 0 {
+            self.power_consumed += power as u32;
+        } else {
+            self.power_produced += (-power) as u32;
+        }
+
+        self.buildings.push(new_b);
+        self.fog.update_visibility(&self.units, &self.buildings);
+
+        // Spawn visual beam effect
+        self.active_beams.push(CombatBeam {
+            from_x: ux as f64,
+            from_y: uy as f64,
+            to_x: (tile_x + w / 2) as f64,
+            to_y: (tile_y + h / 2) as f64,
+            color: "#38bdf8".into(),
+            lifetime: 0.35,
+            max_lifetime: 0.35,
+        });
+
+        // Destroy / consume the ConVec into foundation
+        if let Some(u) = self.units.iter_mut().find(|u| u.id == unit_id) {
+            u.hp = 0;
+        }
+        self.units.retain(|u| u.hp > 0);
+
+        Ok(format!("{} deployed successfully!", name))
+    }
+
+    /// Load a construction kit onto an idle ConVec
+    pub fn load_convec_kit(&mut self, unit_id: u32, kit_name: String) -> Result<String, String> {
+        let st = StructureType::from_name(&kit_name)
+            .ok_or_else(|| format!("Unknown kit type: {}", kit_name))?;
+        let (cost_common, cost_rare) = st.ore_cost();
+
+        if self.common_ore < cost_common || self.rare_ore < cost_rare {
+            return Err(format!("Insufficient Ore for {}: requires {} C, {} R", kit_name, cost_common, cost_rare));
+        }
+
+        let u = self.units.iter_mut().find(|u| u.id == unit_id)
+            .ok_or_else(|| "Unit not found".to_string())?;
+
+        if !u.name.contains("ConVec") {
+            return Err("Only ConVec transport vehicles can load construction kits".into());
+        }
+
+        if u.cargo_kit.is_some() {
+            return Err("ConVec is already carrying a kit".into());
+        }
+
+        self.common_ore -= cost_common;
+        self.rare_ore -= cost_rare;
+        u.cargo_kit = Some(kit_name.clone());
+        Ok(format!("Loaded {} Kit onto {}", kit_name, u.name))
+    }
+
     /// Queue a vehicle or starship module in a selected factory
     pub fn queue_production(&mut self, building_id: u32, item: String) -> Result<String, String> {
         let (cost_common, cost_rare) = match item.as_str() {
@@ -1044,6 +1352,10 @@ impl ColonyState {
             "Cargo Truck" => (150, 0),
             "Repair Vehicle" => (180, 20),
             "Earthworker" => (160, 0),
+            "ConVec" => (150, 0),
+            "ConVec (Smelter)" => (450, 50),
+            "ConVec (Solar)" => (320, 0),
+            "ConVec (Agridome)" => (320, 50),
             "Starship Component" => (500, 200),
             _ => (100, 0),
         };

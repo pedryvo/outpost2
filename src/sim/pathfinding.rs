@@ -16,6 +16,8 @@ pub enum UnitOrder {
     BuildWall { target_x: i32, target_y: i32 },
     BuildTube { target_x: i32, target_y: i32 },
     ClearHazard { target_x: i32, target_y: i32 },
+    Guard { anchor_x: i32, anchor_y: i32 },
+    Patrol { start_x: i32, start_y: i32, end_x: i32, end_y: i32, heading_to_end: bool },
 }
 
 #[derive(Copy, Clone, Eq, PartialEq)]

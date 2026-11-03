@@ -125,6 +125,55 @@ impl AudioManager {
         }
     }
 
+    /// Play triumphant structure commissioning / ConVec kit deployment arpeggio
+    pub fn play_construction_deploy(&self) {
+        if self.muted {
+            return;
+        }
+        if let (Some(ctx), Some(gain)) = (&self.ctx, &self.master_gain) {
+            let notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+            for (i, &freq) in notes.iter().enumerate() {
+                if let Ok(osc) = ctx.create_oscillator() {
+                    if let Ok(note_gain) = ctx.create_gain() {
+                        let now = ctx.current_time() + (i as f64 * 0.08);
+                        osc.set_type(web_sys::OscillatorType::Sine);
+                        let _ = osc.frequency().set_value_at_time(freq, now);
+                        let _ = note_gain.gain().set_value_at_time(0.35, now);
+                        let _ = note_gain.gain().exponential_ramp_to_value_at_time(0.001, now + 0.22);
+                        let _ = osc.connect_with_audio_node(&note_gain);
+                        let _ = note_gain.connect_with_audio_node(gain);
+                        let _ = osc.start_with_when(now);
+                        let _ = osc.stop_with_when(now + 0.22);
+                    }
+                }
+            }
+        }
+    }
+
+    /// Play atmospheric dust vortex whistling howling wind gust
+    pub fn play_vortex_howl(&self) {
+        if self.muted {
+            return;
+        }
+        if let (Some(ctx), Some(gain)) = (&self.ctx, &self.master_gain) {
+            if let Ok(osc) = ctx.create_oscillator() {
+                if let Ok(note_gain) = ctx.create_gain() {
+                    let now = ctx.current_time();
+                    osc.set_type(web_sys::OscillatorType::Sine);
+                    let _ = osc.frequency().set_value_at_time(180.0, now);
+                    let _ = osc.frequency().exponential_ramp_to_value_at_time(85.0, now + 0.35);
+                    let _ = osc.frequency().exponential_ramp_to_value_at_time(160.0, now + 0.65);
+                    let _ = note_gain.gain().set_value_at_time(0.25, now);
+                    let _ = note_gain.gain().exponential_ramp_to_value_at_time(0.001, now + 0.65);
+                    let _ = osc.connect_with_audio_node(&note_gain);
+                    let _ = note_gain.connect_with_audio_node(gain);
+                    let _ = osc.start();
+                    let _ = osc.stop_with_when(now + 0.65);
+                }
+            }
+        }
+    }
+
     /// Play building placement error / obstructed buzzer
     pub fn play_build_error(&self) {
         if self.muted {
