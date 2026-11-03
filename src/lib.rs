@@ -14,6 +14,13 @@ use audio::AudioManager;
 use render::Viewport;
 use sim::{ColonyState, Faction};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum EngineeringMode {
+    Wall,
+    Tube,
+    Clear,
+}
+
 struct GameApp {
     colony: ColonyState,
     viewport: Viewport,
@@ -23,6 +30,7 @@ struct GameApp {
     last_mouse_y: f64,
     last_frame_time: f64,
     pending_placement: Option<sim::structures::StructureType>,
+    pending_engineering: Option<EngineeringMode>,
     hover_tile: (i32, i32),
     drag_select_start: Option<(f64, f64)>,
     drag_select_current: Option<(f64, f64)>,
@@ -64,6 +72,7 @@ pub fn start() -> Result<(), JsValue> {
         last_mouse_y: 0.0,
         last_frame_time: 0.0,
         pending_placement: None,
+        pending_engineering: None,
         hover_tile: (20, 20),
         drag_select_start: None,
         drag_select_current: None,
@@ -104,15 +113,43 @@ pub fn start() -> Result<(), JsValue> {
                     return;
                 }
 
+                // If in engineering order mode (Earthworker wall/tube/hazard):
+                if let Some(eng_mode) = g.pending_engineering {
+                    let (tx, ty) = g.viewport.screen_to_tile(click_x, click_y);
+                    let mut ordered = false;
+                    for u in &mut g.colony.units {
+                        if u.is_selected && u.name.contains("Earthworker") {
+                            u.current_order = match eng_mode {
+                                EngineeringMode::Wall => sim::pathfinding::UnitOrder::BuildWall { target_x: tx, target_y: ty },
+                                EngineeringMode::Tube => sim::pathfinding::UnitOrder::BuildTube { target_x: tx, target_y: ty },
+                                EngineeringMode::Clear => sim::pathfinding::UnitOrder::ClearHazard { target_x: tx, target_y: ty },
+                            };
+                            ordered = true;
+                        }
+                    }
+                    g.pending_engineering = None;
+                    if ordered {
+                        g.audio.play_build_confirm();
+                        if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                            toast.set_text_content(Some("Engineering order dispatched to Earthworker."));
+                            let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #4ade80; display: block;");
+                        }
+                    } else {
+                        g.audio.play_build_error();
+                    }
+                    return;
+                }
+
                 g.drag_select_start = Some((click_x, click_y));
                 g.drag_select_current = Some((click_x, click_y));
                 g.last_mouse_x = click_x;
                 g.last_mouse_y = click_y;
                 g.is_dragging = true;
             } else if e.button() == 2 {
-                // Right Click = Cancel Placement or issue Tactical Command
-                if g.pending_placement.is_some() {
+                // Right Click = Cancel Placement/Engineering or issue Tactical Command
+                if g.pending_placement.is_some() || g.pending_engineering.is_some() {
                     g.pending_placement = None;
+                    g.pending_engineering = None;
                     g.audio.play_ui_beep();
                     if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
                         let _ = toast.set_attribute("style", "display: none;");
@@ -314,6 +351,7 @@ pub fn start() -> Result<(), JsValue> {
                 "-" | "_" => g.viewport.zoom = (g.viewport.zoom / 1.15).max(0.4),
                 "Escape" => {
                     g.pending_placement = None;
+                    g.pending_engineering = None;
                 }
                 _ => {}
             }
@@ -489,47 +527,96 @@ pub fn start() -> Result<(), JsValue> {
         cb.forget();
     }
 
+    let render_tech_list = {
+        let doc_c = document.clone();
+        let app_c = app.clone();
+        Rc::new(move || {
+            if let Some(list_el) = doc_c.get_element_by_id("tech-list") {
+                list_el.set_inner_html("");
+                let g = app_c.borrow();
+                let ore = g.colony.common_ore;
+
+                for tech in &g.colony.tech_tree.techs {
+                    if let Ok(card) = doc_c.create_element("div") {
+                        let bg = if tech.is_researched { "rgba(16, 185, 129, 0.12)" } else { "#1a202c" };
+                        let border = if tech.is_researched { "#10b981" } else { "#3b475e" };
+                        let _ = card.set_attribute("style", &format!("background: {}; border: 1px solid {}; border-radius: 6px; padding: 10px; display: flex; justify-content: space-between; align-items: center; gap: 12px;", bg, border));
+
+                        let cat_name = sim::tech::TechTree::category_name(tech.category);
+                        let html = format!(
+                            "<div style='display: flex; flex-direction: column; gap: 3px;'><div style='display: flex; align-items: center; gap: 8px;'><span style='font-size: 12px; font-weight: bold; color: #f8fafc;'>{}</span><span style='font-size: 9px; padding: 1px 5px; border-radius: 3px; background: #334155; color: #94a3b8;'>{}</span><span style='font-size: 11px; font-weight: bold; color: #facc15;'>{} C</span></div><span style='font-size: 11px; color: #94a3b8;'>{}</span></div>",
+                            tech.name, cat_name, tech.cost, tech.description
+                        );
+                        card.set_inner_html(&html);
+
+                        if let Ok(btn) = doc_c.create_element("button") {
+                            let btn_c = btn.clone();
+                            if tech.is_researched {
+                                btn.set_text_content(Some("✅ Active"));
+                                let _ = btn.set_attribute("class", "action-btn");
+                                let _ = btn.set_attribute("style", "background: #065f46; color: #6ee7b7; border-color: #10b981; cursor: default; white-space: nowrap;");
+                            } else if ore >= tech.cost {
+                                btn.set_text_content(Some("🔬 Research"));
+                                let _ = btn.set_attribute("class", "action-btn");
+                                let _ = btn.set_attribute("style", "background: #0369a1; color: #e0f2fe; border-color: #38bdf8; cursor: pointer; white-space: nowrap;");
+                                let app_inner = app_c.clone();
+                                let doc_inner = doc_c.clone();
+                                let tid = tech.id;
+                                let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+                                    let mut g_mut = app_inner.borrow_mut();
+                                    let mut ore_mut = g_mut.colony.common_ore;
+                                    if let Ok(msg) = g_mut.colony.tech_tree.research(tid, &mut ore_mut) {
+                                        g_mut.colony.common_ore = ore_mut;
+                                        g_mut.audio.play_build_confirm();
+                                        if let Some(toast) = doc_inner.get_element_by_id("research-toast") {
+                                            toast.set_text_content(Some(&msg));
+                                            let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #4ade80; display: block;");
+                                        }
+                                        btn_c.set_text_content(Some("✅ Active"));
+                                        let _ = btn_c.set_attribute("style", "background: #065f46; color: #6ee7b7; border-color: #10b981; cursor: default; white-space: nowrap;");
+                                    }
+                                }) as Box<dyn FnMut(_)>);
+                                let _ = btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref());
+                                cb.forget();
+                            } else {
+                                btn.set_text_content(Some("Low Ore"));
+                                let _ = btn.set_attribute("class", "action-btn");
+                                let _ = btn.set_attribute("style", "background: #1e293b; color: #64748b; border-color: #334155; cursor: not-allowed; white-space: nowrap;");
+                            }
+                            let _ = card.append_child(&btn);
+                        }
+                        let _ = list_el.append_child(&card);
+                    }
+                }
+            }
+        })
+    };
+
     if let Some(btn_research) = document.get_element_by_id("btn-research") {
         let app_clone = app.clone();
         let doc_clone = document.clone();
+        let render_tech_clone = render_tech_list.clone();
         let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
             let mut g = app_clone.borrow_mut();
             let _ = g.audio.init();
-            
-            // Find next unresearched tech
-            let next_tech_id = g.colony.tech_tree.techs.iter()
-                .find(|t| !t.is_researched)
-                .map(|t| t.id);
-
-            if let Some(id) = next_tech_id {
-                let mut ore = g.colony.common_ore;
-                let res = g.colony.tech_tree.research(id, &mut ore);
-                g.colony.common_ore = ore;
-                match res {
-                    Ok(msg) => {
-                        g.audio.play_build_confirm();
-                        if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
-                            toast.set_text_content(Some(&msg));
-                            let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #4ade80; display: block;");
-                        }
-                    }
-                    Err(err) => {
-                        g.audio.play_ui_beep();
-                        if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
-                            toast.set_text_content(Some(&err));
-                            let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #ef4444; display: block;");
-                        }
-                    }
-                }
-            } else {
-                g.audio.play_ui_beep();
-                if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
-                    toast.set_text_content(Some("All primary technologies researched!"));
-                    let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #38bdf8; display: block;");
-                }
+            g.audio.play_ui_beep();
+            render_tech_clone();
+            if let Some(modal) = doc_clone.get_element_by_id("tech-modal") {
+                let _ = modal.set_attribute("style", "position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 50;");
             }
         }) as Box<dyn FnMut(_)>);
         btn_research.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    if let Some(btn) = document.get_element_by_id("btn-close-tech") {
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            if let Some(modal) = doc_clone.get_element_by_id("tech-modal") {
+                let _ = modal.set_attribute("style", "display: none;");
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
         cb.forget();
     }
 
@@ -747,6 +834,7 @@ pub fn start() -> Result<(), JsValue> {
     setup_queue_btn("btn-queue-scout", "Lynx Scout", app.clone(), document.clone());
     setup_queue_btn("btn-queue-truck", "Cargo Truck", app.clone(), document.clone());
     setup_queue_btn("btn-queue-repair", "Repair Vehicle", app.clone(), document.clone());
+    setup_queue_btn("btn-queue-earthworker", "Earthworker", app.clone(), document.clone());
     setup_queue_btn("btn-queue-starship", "Starship Component", app.clone(), document.clone());
 
     if let Some(btn) = document.get_element_by_id("btn-toggle-power") {
@@ -797,6 +885,58 @@ pub fn start() -> Result<(), JsValue> {
                 }
             } else {
                 g.audio.play_build_error();
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    // Earthworker Contextual Engineering Orders
+    if let Some(btn) = document.get_element_by_id("btn-order-wall") {
+        let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            g.pending_engineering = Some(EngineeringMode::Wall);
+            g.audio.play_build_confirm();
+            if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                toast.set_text_content(Some("Engineering Wall: Click target terrain to erect fortified ceramic barrier (15 C)."));
+                let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #f59e0b; display: block;");
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    if let Some(btn) = document.get_element_by_id("btn-order-tube") {
+        let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            g.pending_engineering = Some(EngineeringMode::Tube);
+            g.audio.play_build_confirm();
+            if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                toast.set_text_content(Some("Engineering Tube: Click target terrain to lay pressurized transport conduit (5 C)."));
+                let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #38bdf8; display: block;");
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
+    if let Some(btn) = document.get_element_by_id("btn-order-clear") {
+        let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            g.pending_engineering = Some(EngineeringMode::Clear);
+            g.audio.play_build_confirm();
+            if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                toast.set_text_content(Some("Engineering Hazard Purge: Click target terrain to neutralize Blight spores."));
+                let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #a855f7; display: block;");
             }
         }) as Box<dyn FnMut(_)>);
         btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
@@ -985,6 +1125,29 @@ pub fn start() -> Result<(), JsValue> {
                         if let Some(box_el) = document.get_element_by_id("inspect-queue-box") {
                             let _ = box_el.set_attribute("style", "display: none;");
                         }
+                    }
+                }
+            } else {
+                let _ = card.set_attribute("style", "display: none;");
+            }
+        }
+
+        // Update Unit Command & Engineering Inspector Card
+        let selected_u = app_borrow.colony.units.iter().find(|u| u.is_selected && u.faction == app_borrow.colony.faction);
+        if let Some(card) = document.get_element_by_id("unit-card") {
+            if let Some(u) = selected_u {
+                let _ = card.set_attribute("style", "position: absolute; bottom: 76px; left: 16px; width: 230px; background: rgba(12, 14, 18, 0.92); border: 2px solid #f59e0b; border-radius: 6px; backdrop-filter: blur(8px); box-shadow: 0 8px 24px rgba(0,0,0,0.6); z-index: 15; display: flex; flex-direction: column; overflow: hidden; padding: 12px; font-size: 12px;");
+                if let Some(name_el) = document.get_element_by_id("unit-inspect-name") {
+                    name_el.set_text_content(Some(&u.name));
+                }
+                if let Some(hp_el) = document.get_element_by_id("unit-inspect-hp") {
+                    hp_el.set_text_content(Some(&format!("{}/{} HP", u.hp, u.max_hp)));
+                }
+                if let Some(actions) = document.get_element_by_id("earthworker-actions") {
+                    if u.name.contains("Earthworker") {
+                        let _ = actions.set_attribute("style", "display: flex; flex-direction: column; gap: 6px; margin-top: 6px;");
+                    } else {
+                        let _ = actions.set_attribute("style", "display: none;");
                     }
                 }
             } else {

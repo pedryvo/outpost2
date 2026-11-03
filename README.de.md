@@ -58,8 +58,9 @@ Ziel ist es, den Strategieklassiker in modernen Webbrowsern mit nativer Leistung
 | **Einheitensteuerung & 8-Wege-A\*** | ✅ | A*-Pfadfindung auf isometrischem Gitter mit Rechtsklick-Befehlen · [`docs/ENGINE_ARCHITECTURE.md`](docs/ENGINE_ARCHITECTURE.md) |
 | **Taktische Rahmen-Mehrfachauswahl**| ✅ | Auswahlrahmen mit Sci-Fi-Winkelretikeln und Shift-Gruppierung |
 | **Fahrzeug-Reparatur & Felddepots** | ✅ | Mobile Reparaturfahrzeuge und Depots mit smaragdgrünen Nanoschweiß-Strahlen |
-| **Dynamische Pest-Ausbreitung** | ✅ | Kriechende mikrobielle Sporen-Gefahr, ätzender Hüllenschaden und schwebende Glutpartikel |
-| **Forschungs-Technologiebaum** | ✅ | 12 wissenschaftliche Disziplinen mit Labor-Investitionen · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
+| **Earthworker-Pioniertechnik** | ✅ | Verstärkte Keramik-Schutzmauern, Verlegung von Feldleitungen und Biogefahren-Bereinigung |
+| **Dynamische Pest & Staubwirbel** | ✅ | Kriechende mikrobielle Sporen-Gefahr, ätzender Hüllenschaden und wirbelnde atmosphärische Tornados |
+| **Wissenschaftliche Forschungsmatrix**| ✅ | Interaktives Tech-Modal mit Kategorien-Taxonomie und passiven Kolonie-Boni (Panzerung, Laser, Erzschmelze) · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **Multi-Karten-Kampagnen** | ✅ | Authentische Schauplätze (Eden 1, Plymouth 1, Akademie-Tutorial) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
 | **Fabrikwarteschlange & Schweißen** | ✅ | Fahrzeugbau mit Plasma-Schweißeffekt und Fortschrittsbalken |
 | **Raumschiff-Evakuierung** | ✅ | Bau in 4 Phasen und dynamische Lebenserhaltungsmechanik · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |

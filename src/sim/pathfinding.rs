@@ -13,6 +13,9 @@ pub enum UnitOrder {
     Repair { target_unit_id: u32 },
     MineOre { deposit_x: i32, deposit_y: i32 },
     DeployStructure { kit_name: String, tile_x: i32, tile_y: i32 },
+    BuildWall { target_x: i32, target_y: i32 },
+    BuildTube { target_x: i32, target_y: i32 },
+    ClearHazard { target_x: i32, target_y: i32 },
 }
 
 #[derive(Copy, Clone, Eq, PartialEq)]

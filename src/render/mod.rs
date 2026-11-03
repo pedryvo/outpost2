@@ -366,9 +366,11 @@ impl Viewport {
 
             let (sx, sy) = self.tile_to_screen(u.tile_x as f64, u.tile_y as f64);
 
-            // Unit chassis: Repair is emerald green, Eden is Cyan, Plymouth is Crimson Red
+            // Unit chassis: Repair is emerald green, Earthworker is amber, Eden is Cyan, Plymouth is Crimson Red
             let chassis_color = if u.name.contains("Repair") {
                 "#10b981"
+            } else if u.name.contains("Earthworker") {
+                "#f59e0b"
             } else if u.faction == Faction::Eden {
                 "#38bdf8"
             } else {
@@ -387,6 +389,10 @@ impl Viewport {
                 ctx.set_fill_style_str("#ecfdf5");
                 ctx.set_font(&format!("bold {}px sans-serif", (9.0 * self.zoom).max(8.0)));
                 let _ = ctx.fill_text("🔧", sx - 5.0 * self.zoom, sy - 18.0 * self.zoom);
+            } else if u.name.contains("Earthworker") {
+                ctx.set_fill_style_str("#fef3c7");
+                ctx.set_font(&format!("bold {}px sans-serif", (9.0 * self.zoom).max(8.0)));
+                let _ = ctx.fill_text("🏗️", sx - 5.0 * self.zoom, sy - 18.0 * self.zoom);
             }
 
             // Unit selection ring
@@ -460,6 +466,43 @@ impl Viewport {
             ctx.set_stroke_style_str("#ef4444");
             ctx.set_line_width(2.0);
             ctx.stroke();
+        }
+
+        // Render Atmospheric Vortices (Dust Devils & Tornadoes)
+        for v in &colony.disasters.active_vortices {
+            let (sx, sy) = self.tile_to_screen(v.x, v.y);
+            let alpha = (v.lifetime / v.max_lifetime).clamp(0.0, 1.0);
+            let vortex_r = v.radius * 8.0 * self.zoom * (0.5 + 0.5 * alpha);
+            let spin = colony.sol * 12.0;
+
+            for i in 0..4 {
+                let a = spin + (i as f64) * std::f64::consts::FRAC_PI_2;
+                ctx.set_stroke_style_str(&format!("rgba(217, 119, 6, {:.2})", 0.45 * alpha));
+                ctx.set_line_width(3.0 * self.zoom);
+                ctx.begin_path();
+                ctx.move_to(sx, sy);
+                let _ = ctx.quadratic_curve_to(
+                    sx + a.cos() * vortex_r * 0.6,
+                    sy + a.sin() * vortex_r * 0.6,
+                    sx + (a + 0.8).cos() * vortex_r,
+                    sy + (a + 0.8).sin() * vortex_r,
+                );
+                ctx.stroke();
+            }
+
+            ctx.set_fill_style_str(&format!("rgba(245, 158, 11, {:.2})", 0.3 * alpha));
+            ctx.begin_path();
+            let _ = ctx.arc(sx, sy, vortex_r * 0.8, 0.0, std::f64::consts::TAU);
+            ctx.fill();
+
+            for p in 0..6 {
+                let pa = spin * 1.5 + (p as f64 * 1.05);
+                let pd = (vortex_r * 0.4) + ((p as f64 * 4.0) % (vortex_r * 0.5));
+                ctx.set_fill_style_str("rgba(254, 240, 138, 0.8)");
+                ctx.begin_path();
+                let _ = ctx.arc(sx + pa.cos() * pd, sy + pa.sin() * pd, 1.5 * self.zoom, 0.0, std::f64::consts::TAU);
+                ctx.fill();
+            }
         }
 
         // Render Holographic Ghost Blueprint Placement

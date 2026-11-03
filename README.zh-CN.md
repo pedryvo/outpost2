@@ -58,8 +58,9 @@ _Sierra 和 Dynamix 经典硬科幻即时战略游戏，<br>专为现代浏览�
 | **单位控制与八方向 A\*** | ✅ | 等轴测八方向 A* 路径规划、右键指令 · [`docs/ENGINE_ARCHITECTURE.md`](docs/ENGINE_ARCHITECTURE.md) |
 | **框选多选与战术标线** | ✅ | 经典多单位拖拽框选、高科技直角瞄准标线与 Shift 增选 |
 | **战车维修与战地保障** | ✅ | 移动维修车与维修工厂阵列，发射翡翠纳米修复光束治疗装甲 |
-| **枯萎病生物灾变蔓延** | ✅ | 微生物真菌孢子动态扩散感染、酸蚀装甲损耗与微粒粒子漂移 |
-| **科研技术树** | ✅ | 12 大基础学科与实验室科研投资 · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
+| **工程车工兵建造** | ✅ | 强化陶瓷防御墙修筑、战地管道延伸与枯萎病危害净化清扫 |
+| **枯萎病灾变与旋风尘暴** | ✅ | 微生物孢子动态感染扩散、酸蚀装甲损耗与地图旋转大气尘暴龙卷风 |
+| **多学科科研矩阵** | ✅ | 分类科技树交互弹窗、被动殖民地加成（强化装甲、脉冲激光、矿石精炼） · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **多战役战场选择器** | ✅ | 真实战役战场（伊甸 1、普利茅斯 1、学院教学） · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
 | **工厂生产队列与焊接** | ✅ | 战车制造排队机制、等离子火花与 HUD 进度条 |
 | **星际逃逸飞船建造** | ✅ | 四阶段飞船组装与生命支持人口动态机制 · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |

@@ -74,7 +74,66 @@ impl TechTree {
             is_researched: false,
         });
 
+        techs.push(TechNode {
+            id: 5202,
+            name: "Pulse Laser Optics".into(),
+            category: 5,
+            cost: 1200,
+            description: "Refined optical focusing crystals granting +15 beam intensity to laser armaments.".into(),
+            is_researched: false,
+        });
+
+        techs.push(TechNode {
+            id: 6101,
+            name: "Cryogenic Evacuation Modules".into(),
+            category: 1,
+            cost: 1500,
+            description: "Advanced passenger stasis units ensuring high survivor payload for the Evacuation Starship.".into(),
+            is_researched: false,
+        });
+
         Self { techs }
+    }
+
+    pub fn is_researched(&self, id: u32) -> bool {
+        self.techs.iter().any(|t| t.id == id && t.is_researched)
+    }
+
+    pub fn category_name(cat: u32) -> &'static str {
+        match cat {
+            0 => "Core Science",
+            1 => "Space & Orbital",
+            2 => "Life Support",
+            3 => "Metallurgy",
+            4 => "Engineering",
+            5 => "Military Robotics",
+            _ => "Applied Physics",
+        }
+    }
+
+    /// Extra armor points for combat vehicles
+    pub fn armor_bonus(&self) -> u32 {
+        if self.is_researched(5104) { 50 } else { 0 }
+    }
+
+    /// Bonus damage for laser weaponry
+    pub fn laser_damage_bonus(&self) -> u32 {
+        if self.is_researched(5202) { 15 } else { 0 }
+    }
+
+    /// Ore smelting output multiplier
+    pub fn smelting_multiplier(&self) -> f64 {
+        if self.is_researched(3402) { 1.25 } else { 1.0 }
+    }
+
+    /// Food production multiplier
+    pub fn food_multiplier(&self) -> f64 {
+        if self.is_researched(3301) { 1.50 } else { 1.0 }
+    }
+
+    /// Whether fortified walls can be deployed
+    pub fn can_build_walls(&self) -> bool {
+        self.is_researched(4201)
     }
 
     /// Attempt to complete research on a technology node

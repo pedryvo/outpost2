@@ -53,8 +53,9 @@ Diferente de máquinas virtuais pesadas ou emuladores x86, este porte roda nativ
 | **Controle de Unidades & 8-Way A\*** | ✅ | Pathfinding A* isométrico em 8 direções, evasão de lava e ordens com botão direito · [`docs/ENGINE_ARCHITECTURE.md`](docs/ENGINE_ARCHITECTURE.md) |
 | **Seleção Tática por Área (Drag)** | ✅ | Caixa de seleção em arrasto com retículos angulares sci-fi e agrupamento via Shift |
 | **Reparo de Veículos & Triagem** | ✅ | Veículos de Reparo móveis e Depósitos de Manutenção com feixes de nanosolda esmeralda |
-| **Contágio Dinâmico do Blight** | ✅ | Contágio orgânico de esporos microbianos, corrosão cáustica de veículos e fagulhas atmosféricas |
-| **Árvore de Pesquisa Tecnológica** | ✅ | 12 disciplinas científicas com investimento dinâmico de laboratório · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
+| **Engenharia com Earthworker** | ✅ | Construção de muros cerâmicos defensivos, tubos de campo e purificação de bioameaças |
+| **Blight Dinâmico & Vórtices** | ✅ | Contágio orgânico de esporos, corrosão cáustica de veículos e tornados atmosféricos giratórios |
+| **Matriz Científica de Pesquisa** | ✅ | Modal interativo de tecnologias com taxonomia de ramos e bônus passivos (blindagem, lasers, fundição) · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **Campanhas Multi-Mapas** | ✅ | Teatros autênticos de operação (Eden 1, Plymouth 1, Tutorial da Academia) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
 | **Filas de Fábrica & Animação** | ✅ | Agendamento de fabricação, arcos elétricos de solda e barras de progresso no HUD |
 | **Evacuação por Espaçonave** | ✅ | Montagem em 4 estágios da nave estelar e mecânica demográfica de suporte de vida · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |

@@ -4,11 +4,24 @@
 use crate::sim::map::GameMap;
 
 #[derive(Debug, Clone)]
+pub struct AtmosphericVortex {
+    pub x: f64,
+    pub y: f64,
+    pub vx: f64,
+    pub vy: f64,
+    pub radius: f64,
+    pub lifetime: f64,
+    pub max_lifetime: f64,
+}
+
+#[derive(Debug, Clone)]
 pub struct DisasterSimulator {
     pub sol_timer: f64,
     pub blight_timer: f64,
+    pub vortex_timer: f64,
     pub active_lava_tiles: Vec<(u32, u32)>,
     pub active_blight_tiles: Vec<(u32, u32)>,
+    pub active_vortices: Vec<AtmosphericVortex>,
     pub eruption_count: u32,
     pub quake_shake_offset: (f64, f64),
     pub quake_duration: f64,
@@ -19,8 +32,10 @@ impl DisasterSimulator {
         Self {
             sol_timer: 0.0,
             blight_timer: 0.0,
+            vortex_timer: 0.0,
             active_lava_tiles: Vec::new(),
             active_blight_tiles: Vec::new(),
+            active_vortices: Vec::new(),
             eruption_count: 0,
             quake_shake_offset: (0.0, 0.0),
             quake_duration: 0.0,
@@ -31,6 +46,34 @@ impl DisasterSimulator {
     pub fn update(&mut self, map: &mut GameMap, dt_secs: f64) -> Option<&'static str> {
         self.sol_timer += dt_secs;
         self.blight_timer += dt_secs;
+        self.vortex_timer += dt_secs;
+
+        // Advance active atmospheric vortices
+        self.active_vortices.retain_mut(|v| {
+            v.lifetime -= dt_secs;
+            v.x += v.vx * dt_secs;
+            v.y += v.vy * dt_secs;
+            v.lifetime > 0.0
+        });
+
+        // Spawn rotary dust vortex every ~50 seconds
+        let mut vortex_notice = None;
+        if self.vortex_timer > 50.0 {
+            self.vortex_timer = 0.0;
+            let start_x = 10.0 + (self.eruption_count as f64 * 7.0) % 35.0;
+            let start_y = 5.0 + (self.eruption_count as f64 * 5.0) % 25.0;
+            let angle = (self.sol_timer * 1.7) % std::f64::consts::TAU;
+            self.active_vortices.push(AtmosphericVortex {
+                x: start_x,
+                y: start_y,
+                vx: angle.cos() * 2.2,
+                vy: angle.sin() * 2.2,
+                radius: 3.5,
+                lifetime: 24.0,
+                max_lifetime: 24.0,
+            });
+            vortex_notice = Some("METEOROLOGICAL ALERT: Rotary dust vortex formed on New Terra! Secure transport conduits.");
+        }
 
         // Quake camera shake dissipation
         if self.quake_duration > 0.0 {
@@ -72,7 +115,7 @@ impl DisasterSimulator {
             return Some("SEISMIC WARNING: Volcanic fissure erupted on New Terra! Magma is advancing.");
         }
 
-        None
+        vortex_notice
     }
 
     /// Creep microbial blight to neighboring tiles

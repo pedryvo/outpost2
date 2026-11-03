@@ -474,12 +474,16 @@ impl ColonyState {
                             let dist = ((tx - u.tile_x as f64).powi(2) + (ty - u.tile_y as f64).powi(2)).sqrt();
                             if dist <= weapon.range_tiles() && thp > 0 {
                                 u.attack_cooldown = weapon.fire_interval();
+                                let mut dmg = weapon.damage();
+                                if weapon == WeaponType::Laser && u.faction == self.faction {
+                                    dmg += self.tech_tree.laser_damage_bonus();
+                                }
                                 combat_events.push((
                                     tid,
                                     (u.tile_x as f64, u.tile_y as f64),
                                     (tx, ty),
                                     weapon,
-                                    weapon.damage(),
+                                    dmg,
                                 ));
                             }
                         }
@@ -591,8 +595,9 @@ impl ColonyState {
             }
         }
 
-        self.common_ore += ore_delivered_common;
-        self.rare_ore += ore_delivered_rare;
+        let smelt_mult = self.tech_tree.smelting_multiplier();
+        self.common_ore += (ore_delivered_common as f64 * smelt_mult) as u32;
+        self.rare_ore += (ore_delivered_rare as f64 * smelt_mult) as u32;
 
         // Building Production Queue & Fabrication Progress
         let mut completed_items = Vec::new();
@@ -612,14 +617,15 @@ impl ColonyState {
             let next_id = self.units.len() as u32 + 1;
             match item.as_str() {
                 "Panther Battle Tank" => {
+                    let hp = 250 + self.tech_tree.armor_bonus();
                     self.units.push(Unit {
                         id: next_id,
                         name: format!("Panther Battle Tank #{}", next_id),
                         faction: self.faction,
                         tile_x: spawn_x,
                         tile_y: spawn_y,
-                        hp: 250,
-                        max_hp: 250,
+                        hp,
+                        max_hp: hp,
                         is_selected: false,
                         current_order: UnitOrder::Idle,
                         path: Vec::new(),
@@ -632,14 +638,15 @@ impl ColonyState {
                     unit_notice = Some("FABRICATION COMPLETE: Panther Battle Tank rolled out of production bay.");
                 }
                 "Lynx Scout" => {
+                    let hp = 140 + self.tech_tree.armor_bonus();
                     self.units.push(Unit {
                         id: next_id,
                         name: format!("Lynx Scout #{}", next_id),
                         faction: self.faction,
                         tile_x: spawn_x,
                         tile_y: spawn_y,
-                        hp: 140,
-                        max_hp: 140,
+                        hp,
+                        max_hp: hp,
                         is_selected: false,
                         current_order: UnitOrder::Idle,
                         path: Vec::new(),
@@ -690,6 +697,26 @@ impl ColonyState {
                         hauler_state: None,
                     });
                     unit_notice = Some("FABRICATION COMPLETE: Repair Vehicle deployed for field maintenance.");
+                }
+                "Earthworker" => {
+                    self.units.push(Unit {
+                        id: next_id,
+                        name: format!("Earthworker #{}", next_id),
+                        faction: self.faction,
+                        tile_x: spawn_x,
+                        tile_y: spawn_y,
+                        hp: 200,
+                        max_hp: 200,
+                        is_selected: false,
+                        current_order: UnitOrder::Idle,
+                        path: Vec::new(),
+                        move_cooldown: 0.0,
+                        weapon: None,
+                        attack_cooldown: 0.0,
+                        cargo: None,
+                        hauler_state: None,
+                    });
+                    unit_notice = Some("FABRICATION COMPLETE: Earthworker commissioned for engineering and terrain fortification.");
                 }
                 "Starship Component" => {
                     self.starship_progress = (self.starship_progress + 25.0).min(100.0);
@@ -793,6 +820,111 @@ impl ColonyState {
             if idx < self.game_map.tiles.len() && self.game_map.tiles[idx].is_blight {
                 u.hp = u.hp.saturating_sub(((dt_secs * 6.0) as u32).max(1));
             }
+        }
+
+        // 4. Earthworker Construction & Hazard Remediation Orders
+        for u in &mut self.units {
+            if u.name.contains("Earthworker") && u.faction == self.faction {
+                match u.current_order {
+                    UnitOrder::BuildWall { target_x, target_y } => {
+                        let dist = (u.tile_x - target_x).abs() + (u.tile_y - target_y).abs();
+                        if dist <= 1 {
+                            if self.tech_tree.can_build_walls() && self.common_ore >= 15 {
+                                let idx = (target_y.clamp(0, self.game_map.height as i32 - 1) as u32 * self.game_map.width
+                                    + target_x.clamp(0, self.game_map.width as i32 - 1) as u32) as usize;
+                                if idx < self.game_map.tiles.len() {
+                                    self.common_ore -= 15;
+                                    self.game_map.tiles[idx].is_wall_or_building = true;
+                                    self.active_beams.push(CombatBeam {
+                                        from_x: u.tile_x as f64,
+                                        from_y: u.tile_y as f64,
+                                        to_x: target_x as f64,
+                                        to_y: target_y as f64,
+                                        color: "#f59e0b".into(),
+                                        lifetime: 0.25,
+                                        max_lifetime: 0.25,
+                                    });
+                                }
+                            }
+                            u.current_order = UnitOrder::Idle;
+                        } else if u.path.is_empty() {
+                            if let Some(path) = PathFinder::find_path(&self.game_map, (u.tile_x, u.tile_y), (target_x, target_y)) {
+                                u.path = path;
+                            }
+                        }
+                    }
+                    UnitOrder::BuildTube { target_x, target_y } => {
+                        let dist = (u.tile_x - target_x).abs() + (u.tile_y - target_y).abs();
+                        if dist <= 1 {
+                            if self.common_ore >= 5 {
+                                self.common_ore -= 5;
+                                self.tubes.insert((target_x, target_y));
+                                self.active_beams.push(CombatBeam {
+                                    from_x: u.tile_x as f64,
+                                    from_y: u.tile_y as f64,
+                                    to_x: target_x as f64,
+                                    to_y: target_y as f64,
+                                    color: "#38bdf8".into(),
+                                    lifetime: 0.25,
+                                    max_lifetime: 0.25,
+                                });
+                            }
+                            u.current_order = UnitOrder::Idle;
+                        } else if u.path.is_empty() {
+                            if let Some(path) = PathFinder::find_path(&self.game_map, (u.tile_x, u.tile_y), (target_x, target_y)) {
+                                u.path = path;
+                            }
+                        }
+                    }
+                    UnitOrder::ClearHazard { target_x, target_y } => {
+                        let dist = (u.tile_x - target_x).abs() + (u.tile_y - target_y).abs();
+                        if dist <= 1 {
+                            let idx = (target_y.clamp(0, self.game_map.height as i32 - 1) as u32 * self.game_map.width
+                                + target_x.clamp(0, self.game_map.width as i32 - 1) as u32) as usize;
+                            if idx < self.game_map.tiles.len() {
+                                self.game_map.tiles[idx].is_blight = false;
+                                self.active_beams.push(CombatBeam {
+                                    from_x: u.tile_x as f64,
+                                    from_y: u.tile_y as f64,
+                                    to_x: target_x as f64,
+                                    to_y: target_y as f64,
+                                    color: "#a855f7".into(),
+                                    lifetime: 0.25,
+                                    max_lifetime: 0.25,
+                                });
+                            }
+                            u.current_order = UnitOrder::Idle;
+                        } else if u.path.is_empty() {
+                            if let Some(path) = PathFinder::find_path(&self.game_map, (u.tile_x, u.tile_y), (target_x, target_y)) {
+                                u.path = path;
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        // 5. Atmospheric Vortices: sever conduits and buffet units
+        for v in &self.disasters.active_vortices {
+            let vx_tile = v.x.round() as i32;
+            let vy_tile = v.y.round() as i32;
+            self.tubes.remove(&(vx_tile, vy_tile));
+
+            for u in &mut self.units {
+                let dist = ((u.tile_x as f64 - v.x).powi(2) + (u.tile_y as f64 - v.y).powi(2)).sqrt();
+                if dist <= v.radius {
+                    u.hp = u.hp.saturating_sub(((dt_secs * 8.0) as u32).max(1));
+                }
+            }
+        }
+
+        // 6. Hydroponics Life Support & Demographics
+        let food_mult = self.tech_tree.food_multiplier();
+        if (self.sol * 10.0) as u32 % 50 == 0 {
+            let agro_count = self.buildings.iter().filter(|b| b.name.contains("Bio-Dome") && b.is_active).count() as u32;
+            let harvest = (agro_count as f64 * 35.0 * food_mult) as u32;
+            self.food_units = self.food_units.saturating_add(harvest).saturating_sub(self.population / 4);
         }
 
         // Colony Demographics & Life Support Dynamics
@@ -911,6 +1043,7 @@ impl ColonyState {
             "Lynx Scout" => (140, 0),
             "Cargo Truck" => (150, 0),
             "Repair Vehicle" => (180, 20),
+            "Earthworker" => (160, 0),
             "Starship Component" => (500, 200),
             _ => (100, 0),
         };
