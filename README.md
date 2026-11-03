@@ -41,13 +41,17 @@ Unlike heavyweight virtual machines or x86 emulators, this port runs natively in
 |---|:---:|---|
 | **Plan & Architecture** | ✅ | Full project breakdown and roadmap · [`docs/PLAN.md`](docs/PLAN.md) |
 | **REA Reverse Engineering** | ✅ | PE analysis of `Outpost2.exe`, 509 exported C++ engine APIs · [`re/engine_symbols.json`](re/engine_symbols.json) |
-| **`.vol` Volume Reader** | ✅ | Pure Rust streaming parser for archive containers · [spec](docs/formats/vol_archive.md) |
-| **Palette & Asset Decoders** | ✅ | 256-color palette parser and BMP tile decoder |
-| **Isometric Tile Renderer** | 🟡 | Multi-layer isometric projection with camera viewport & culling |
-| **Audio Engine** | 🟡 | Web Audio API manager for sound effects and radio voice chatter |
-| **Colony Simulation Core** | 🟡 | Eden & Plymouth base logistics: power grid, life support, metals, colonist morale |
-| **Unit Control & Pathfinding** | 🟡 | ConVec, Cargo Truck, Robo-Miner movement and building kit deployment |
-| **Modern Sci-Fi HUD** | 🟡 | Real-time telemetry, radar minimap, build queues, and unit command console |
+| **`.vol` Volume Reader** | ✅ | Pure Rust streaming parser for archive containers · [`docs/formats/vol_archive.md`](docs/formats/vol_archive.md) |
+| **Palette & Sprite Decoders** | ✅ | 256-color palette parser, `.prt` 5,390 sprite definitions · [`docs/formats/prt_format.md`](docs/formats/prt_format.md) |
+| **Isometric Tile Renderer** | ✅ | Dynamic isometric grid, day/night diurnal lighting, viewport culling · [`docs/formats/palette_and_tiles.md`](docs/formats/palette_and_tiles.md) |
+| **Fog of War & Radar** | ✅ | 3-tier visibility sensor grid (Unexplored, Explored, Visible) · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
+| **Colony Simulation Core** | ✅ | Eden & Plymouth logistics: power flux, life support, ore, morale, disasters · [`docs/formats/disasters.md`](docs/formats/disasters.md) |
+| **Structures & Tube Network** | ✅ | Modular base kits & pressurized transport tube grid · [`docs/formats/structures_and_tubes.md`](docs/formats/structures_and_tubes.md) |
+| **Unit Control & 8-Way A\*** | ✅ | A* isometric pathfinding, lava avoidance, right-click orders · [`docs/ENGINE_ARCHITECTURE.md`](docs/ENGINE_ARCHITECTURE.md) |
+| **Tech Research Tree** | ✅ | 12 primary scientific disciplines with live lab investment · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
+| **State Persistence & Touch** | ✅ | Browser storage quicksave/load, mobile pinch-to-zoom & gesture controls |
+| **Audio Engine** | ✅ | Web Audio API synthesizer for UI beeps, unit selection chimes, and build orders |
+| **Modern Sci-Fi HUD** | ✅ | Real-time telemetry, radar minimap, build queues, and unit command console |
 | **Localization (i18n)** | ✅ | Multi-language schema: EN, PT-BR, ES, DE, ZH-CN, RU |
 | **Vercel & WASM Ready** | ✅ | Trunk pipeline with release LTO optimization (`vercel.json`) |
 

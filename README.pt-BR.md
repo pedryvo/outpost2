@@ -41,13 +41,17 @@ Diferente de máquinas virtuais pesadas ou emuladores x86, este porte roda nativ
 |---|:---:|---|
 | **Plano & Arquitetura** | ✅ | Estrutura completa do projeto e roadmap · [`docs/PLAN.md`](docs/PLAN.md) |
 | **Engenharia Reversa com REA** | ✅ | Análise PE de `Outpost2.exe`, 509 APIs C++ exportadas · [`re/engine_symbols.json`](re/engine_symbols.json) |
-| **Leitor de Volume `.vol`** | ✅ | Parser puro em Rust para arquivos de volume · [especificação](docs/formats/vol_archive.md) |
-| **Decodificadores de Paleta & Assets** | ✅ | Parser de paleta de 256 cores e decodificador de tiles BMP |
-| **Renderizador Isométrico de Tiles** | 🟡 | Projeção isométrica multicamada com controle de câmera e culling |
-| **Engine de Áudio** | 🟡 | Gerenciador Web Audio API para efeitos sonoros e vozes de rádio |
-| **Núcleo de Simulação da Colônia** | 🟡 | Logística das bases Eden e Plymouth: energia, suporte de vida, minérios, moral |
-| **Controle de Unidades & Pathfinding** | 🟡 | Movimentação de ConVec, Caminhão de Carga, Robo-Minerador e kits de construção |
-| **HUD Tático Sci-Fi** | 🟡 | Telemetria em tempo real, minimapa de radar, filas de produção e console de unidades |
+| **Leitor de Volume `.vol`** | ✅ | Parser puro em Rust para arquivos de volume · [`docs/formats/vol_archive.md`](docs/formats/vol_archive.md) |
+| **Decodificadores de Paleta & Sprites** | ✅ | Paleta de 256 cores, 5.390 definições de sprite em `.prt` · [`docs/formats/prt_format.md`](docs/formats/prt_format.md) |
+| **Renderizador Isométrico de Tiles** | ✅ | Grade isométrica dinâmica, iluminação diurna dia/noite e culling · [`docs/formats/palette_and_tiles.md`](docs/formats/palette_and_tiles.md) |
+| **Névoa de Guerra & Radar** | ✅ | Grid sensorial de visibilidade em 3 níveis (Inexplorado, Explorado, Visível) · [`docs/formats/fog_of_war.md`](docs/formats/fog_of_war.md) |
+| **Núcleo de Simulação da Colônia** | ✅ | Logística Eden e Plymouth: fluxo de energia, suporte à vida, minério, moral e desastres · [`docs/formats/disasters.md`](docs/formats/disasters.md) |
+| **Estruturas & Rede de Tubos** | ✅ | Kits modulares de construção e rede arterial de tubos pressurizados · [`docs/formats/structures_and_tubes.md`](docs/formats/structures_and_tubes.md) |
+| **Controle de Unidades & 8-Way A\*** | ✅ | Pathfinding A* isométrico em 8 direções, evasão de lava e ordens com botão direito · [`docs/ENGINE_ARCHITECTURE.md`](docs/ENGINE_ARCHITECTURE.md) |
+| **Árvore de Pesquisa Tecnológica** | ✅ | 12 disciplinas científicas com investimento dinâmico de laboratório · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
+| **Persistência de Estado & Touch** | ✅ | Salvamento/carregamento rápido no navegador, gestos touch e pinch-to-zoom |
+| **Engine de Áudio** | ✅ | Sintetizador Web Audio API para beeps de interface, chimes de seleção e ordens |
+| **HUD Tático Sci-Fi** | ✅ | Telemetria em tempo real, minimapa de radar, filas de produção e console de unidades |
 | **Localização (i18n)** | ✅ | Esquema multilíngue: EN, PT-BR, ES, DE, ZH-CN, RU |
 | **Pronto para Vercel & WASM** | ✅ | Pipeline do Trunk com otimização LTO em modo release (`vercel.json`) |
 

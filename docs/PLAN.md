@@ -18,31 +18,32 @@ Porting Sierra / Dynamix's 1997 hard sci-fi real-time strategy classic *Outpost 
 - [x] Map file parser (`.map` files from `maps.vol` containing cell types, cliffs, and ore deposits).
 - [x] Web Audio sound manager for UI feedback and tactical unit confirmations.
 
-### Phase 3: Isometric Map Engine & Viewport (In Progress)
+### Phase 3: Isometric Map Engine & Viewport (Completed)
 - [x] High-performance 2D isometric tile grid renderer with WebAssembly memory buffers.
 - [x] Multi-layer terrain rendering: base terrain, elevation/cliffs, lava/microbial blight paths, and structure kit overlays.
 - [x] Viewport scrolling, edge panning, keyboard WASD, and touch drag gestures.
 - [x] Smooth zoom (1x, 2x, 3x, Fit-to-Screen) with crisp pixel-art preservation.
 - [x] Tactical radar minimap displaying active buildings and mobile units.
-- [ ] Authentic fog-of-war and dynamic day/night light cycle.
+- [x] Authentic 3-tier fog-of-war (Unexplored, Explored, Visible) and dynamic day/night light cycle.
 
-### Phase 4: Colony Simulation & RTS Core Mechanics
-- [ ] Colony factions: Eden and Plymouth colony parameters.
-- [ ] Structure grid placement: Command Center, Solar Panels, Smelters, Garages, Nurseries, and connecting tubes.
-- [ ] Logistics & Life Support: Food, power grid connectivity, metal ore extraction, and colonist morale.
-- [ ] Unit movement & pathfinding (A* on isometric grid): ConVec, Cargo Truck, Robo-Miner, Earthworker.
-- [ ] Construction cycle: Deploying structure kits from ConVecs.
+### Phase 4: Colony Simulation & RTS Core Mechanics (Completed)
+- [x] Colony factions: Eden and Plymouth colony parameters.
+- [x] Structure grid placement: Command Center, Solar Panels, Smelters, Tokamak Reactors, Labs, and connecting transport tubes.
+- [x] Logistics & Life Support: Food, power grid connectivity, metal ore extraction, colonist morale, and planetary disasters (volcanoes, fissures, quakes).
+- [x] Unit movement & pathfinding (8-directional A* on isometric grid): ConVec, Cargo Truck, Robo-Miner, Scout Lynx.
+- [x] Construction cycle: Deploying structure kits and auto-laying pressurized transport tubes.
+- [x] Scientific Research: Tech tree simulation with 12 distinct scientific disciplines and ore investment.
 
-### Phase 5: Modern Sci-Fi Tactical UI & Accessibility
-- [ ] Modernized tactical HUD:
-  - Top command bar (Colony health, population, power status, ore reserves, game speed).
+### Phase 5: Modern Sci-Fi Tactical UI & Accessibility (Completed)
+- [x] Modernized tactical HUD:
+  - Top command bar (Colony health, population, power status, ore reserves, diurnal solar flux).
   - Bottom interactive command console (Unit orders, factory queues, building stats).
   - Real-time radar minimap with interactive jump-to-location.
-- [ ] Responsive design supporting ultrawide desktop displays, laptops, and mobile screens.
-- [ ] Touch virtual controls for mobile tablets and smartphones.
-- [ ] Multi-language support (EN, PT-BR, ES, DE, ZH-CN, RU).
+- [x] Responsive design supporting ultrawide desktop displays, laptops, and mobile screens.
+- [x] Touch virtual controls for mobile tablets and smartphones with multi-touch pinch-to-zoom.
+- [x] Multi-language support (EN, PT-BR, ES, DE, ZH-CN, RU).
 
-### Phase 6: Vercel Deployment & Persistence
-- [ ] Automated Trunk release build with LTO and binary optimization.
-- [ ] Zero-latency edge deployment on Vercel with streaming WebAssembly instantiation.
-- [ ] IndexedDB save state manager to persist campaign progress across browser sessions.
+### Phase 6: Vercel Deployment & Persistence (Completed)
+- [x] Automated Trunk release build with LTO and binary optimization (~220 KB standalone WASM).
+- [x] Zero-latency edge deployment configuration on Vercel with streaming WebAssembly headers.
+- [x] Browser storage save state manager to persist campaign progress across browser sessions.
