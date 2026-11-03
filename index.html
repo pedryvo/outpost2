@@ -184,39 +184,49 @@
     <header id="top-bar">
       <div class="telemetry-group">
         <div class="telemetry-item">
-          <span class="telemetry-label">Faction:</span>
+          <span class="telemetry-label" id="lbl-faction">Faction:</span>
           <span class="telemetry-val val-eden" id="colony-faction">EDEN</span>
         </div>
         <div class="telemetry-item">
-          <span class="telemetry-label">Sol:</span>
+          <span class="telemetry-label" id="lbl-sol">Sol:</span>
           <span class="telemetry-val" id="colony-sol">1.04</span>
         </div>
         <div class="telemetry-item">
-          <span class="telemetry-label">Sun:</span>
+          <span class="telemetry-label" id="lbl-sun">Sun:</span>
           <span class="telemetry-val" style="color: #facc15;" id="colony-sun">100%</span>
         </div>
         <div class="telemetry-item">
-          <span class="telemetry-label">Pop:</span>
+          <span class="telemetry-label" id="lbl-pop">Pop:</span>
           <span class="telemetry-val" id="colony-pop">124 (98% Morale)</span>
         </div>
       </div>
 
       <div class="telemetry-group">
         <div class="telemetry-item">
-          <span class="telemetry-label">Power:</span>
+          <span class="telemetry-label" id="lbl-power">Power:</span>
           <span class="telemetry-val val-power" id="colony-power">450 / 380 kW</span>
         </div>
         <div class="telemetry-item">
-          <span class="telemetry-label">Common Ore:</span>
+          <span class="telemetry-label" id="lbl-ore">Common Ore:</span>
           <span class="telemetry-val val-metal" id="colony-ore">2,450 t</span>
         </div>
         <div class="telemetry-item">
-          <span class="telemetry-label">Rare Ore:</span>
+          <span class="telemetry-label" id="lbl-rare">Rare Ore:</span>
           <span class="telemetry-val val-metal" id="colony-rare">680 t</span>
         </div>
         <div class="telemetry-item">
-          <span class="telemetry-label">Food:</span>
+          <span class="telemetry-label" id="lbl-food">Food:</span>
           <span class="telemetry-val val-food" id="colony-food">1,200</span>
+        </div>
+        <div class="telemetry-item">
+          <select id="lang-select" style="background: #1e2636; color: #38bdf8; border: 1px solid #3b475e; border-radius: 4px; padding: 2px 6px; font-size: 11px; font-weight: bold; cursor: pointer;">
+            <option value="en">🌐 EN</option>
+            <option value="pt-BR">🌐 PT-BR</option>
+            <option value="es">🌐 ES</option>
+            <option value="de">🌐 DE</option>
+            <option value="zh-CN">🌐 中文</option>
+            <option value="ru">🌐 RU</option>
+          </select>
         </div>
       </div>
     </header>
@@ -228,7 +238,7 @@
       <!-- Tactical Radar Minimap -->
       <aside id="minimap-card">
         <div id="minimap-header">
-          <span>Tactical Radar</span>
+          <span id="minimap-title">Tactical Radar</span>
           <span id="radar-sweep" style="color: #4ade80;">ACTIVE</span>
         </div>
         <canvas id="minimap-canvas"></canvas>

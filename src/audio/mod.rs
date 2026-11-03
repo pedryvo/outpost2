@@ -1,5 +1,7 @@
 //! Web Audio API sound manager for Outpost 2 sound effects
 
+pub mod radio;
+
 use wasm_bindgen::JsValue;
 use web_sys::{AudioContext, GainNode, OscillatorNode};
 

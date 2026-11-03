@@ -15,6 +15,7 @@ pub enum WeaponType {
     AcidCloud,
 }
 
+#[allow(dead_code)]
 impl WeaponType {
     pub fn name(&self) -> &'static str {
         match self {
@@ -80,6 +81,7 @@ pub struct CombatBeam {
     pub to_y: f64,
     pub color: &'static str,
     pub lifetime: f64,
+    #[allow(dead_code)]
     pub max_lifetime: f64,
 }
 

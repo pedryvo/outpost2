@@ -1,5 +1,6 @@
 //! Outpost 2 Colony Simulation and Game State
 
+pub mod ai;
 pub mod combat;
 pub mod disasters;
 pub mod fog;
@@ -10,6 +11,7 @@ pub mod tech;
 
 use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
+use ai::FactionAiDirector;
 use combat::{CombatBeam, ExplosionEffect, WeaponType};
 use disasters::DisasterSimulator;
 use fog::FogOfWar;
@@ -95,6 +97,7 @@ pub struct ColonyState {
     pub sunlight: f64,
     pub active_beams: Vec<CombatBeam>,
     pub active_explosions: Vec<ExplosionEffect>,
+    pub ai_director: FactionAiDirector,
 }
 
 impl ColonyState {
@@ -277,6 +280,7 @@ impl ColonyState {
             sunlight: 1.0,
             active_beams: Vec::new(),
             active_explosions: Vec::new(),
+            ai_director: FactionAiDirector::new(Faction::Plymouth, 38, 30),
         }
     }
 
@@ -408,10 +412,13 @@ impl ColonyState {
         }
         self.units.retain(|u| u.hp > 0);
 
+        // Advance Rival Faction AI Director
+        let ai_alert = self.ai_director.update(&mut self.units, dt_secs);
+
         // Refresh dynamic sensor fog of war
         self.fog.update_visibility(&self.units, &self.buildings);
 
-        warning
+        warning.or(ai_alert)
     }
 
     /// Deploy a colonial structure kit, deducting ore costs and weaving transport tubes

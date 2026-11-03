@@ -48,6 +48,7 @@ features = [
   "Request",
   "RequestInit",
   "Storage",
+  "HtmlSelectElement",
 ]
 
 [profile.release]

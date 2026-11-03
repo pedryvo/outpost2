@@ -6,6 +6,7 @@ use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, KeyboardEvent, MouseE
 
 mod archive;
 mod audio;
+mod i18n;
 mod render;
 mod sim;
 
@@ -444,6 +445,21 @@ pub fn start() -> Result<(), JsValue> {
         touch_end.forget();
     }
 
+    // In-game Language Switcher
+    if let Some(lang_select) = document.get_element_by_id("lang-select") {
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |e: web_sys::Event| {
+            if let Some(target) = e.target() {
+                if let Ok(select) = target.dyn_into::<web_sys::HtmlSelectElement>() {
+                    let val = select.value();
+                    i18n::apply_language(&val, &doc_clone);
+                }
+            }
+        }) as Box<dyn FnMut(_)>);
+        lang_select.add_event_listener_with_callback("change", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
     // Main Animation Loop
     let f = Rc::new(RefCell::new(None));
     let g = f.clone();
@@ -478,6 +494,7 @@ pub fn start() -> Result<(), JsValue> {
         let disaster_warning = app_borrow.colony.update(dt.min(0.1));
 
         if let Some(warning) = disaster_warning {
+            audio::radio::RadioDispatcher::announce(warning);
             if let Some(toast) = document.get_element_by_id("research-toast") {
                 toast.set_text_content(Some(warning));
                 let _ = toast.set_attribute("style", "font-size: 11px; font-weight: bold; color: #f97316; display: block;");
