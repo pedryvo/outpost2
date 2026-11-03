@@ -1,7 +1,10 @@
 //! Isometric Viewport and HTML5 Canvas Renderer
 
+pub mod palette;
+
 use web_sys::CanvasRenderingContext2d;
 use crate::sim::{ColonyState, Faction};
+use palette::MASTER_PALETTE;
 
 pub struct Viewport {
     pub camera_x: f64,
@@ -57,15 +60,17 @@ impl Viewport {
                     continue;
                 }
 
-                // New Terra terrain coloration: iron-oxide rust reds and basalt grays
-                let terrain_color = match (c + r * 3) % 7 {
-                    0 | 1 => "#7c2d12", // Red planetary soil
-                    2 | 3 => "#9a3412", // Highland clay
-                    4 => "#431407",     // Basalt crater
-                    _ => "#854d0e",     // Ore-rich soil
+                // Authentic New Terra terrain coloration mapped through the 256 master palette
+                let pal_idx = match (c + r * 3) % 7 {
+                    0 | 1 => 45, // Iron-oxide red
+                    2 | 3 => 52, // Highland clay
+                    4 => 18,     // Basalt crater
+                    _ => 78,     // Ore-rich soil
                 };
+                let [pr, pg, pb] = MASTER_PALETTE[pal_idx];
+                let terrain_color = format!("rgb({},{},{})", pr, pg, pb);
 
-                ctx.set_fill_style_str(terrain_color);
+                ctx.set_fill_style_str(&terrain_color);
                 ctx.set_stroke_style_str("#1c1917");
                 ctx.set_line_width(0.75);
 
