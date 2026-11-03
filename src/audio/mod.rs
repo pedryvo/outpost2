@@ -106,6 +106,29 @@ impl AudioManager {
         }
     }
 
+    /// Play heavy hyper-velocity railgun kinetic discharge sound
+    pub fn play_railgun(&self) {
+        if self.muted {
+            return;
+        }
+        if let (Some(ctx), Some(gain)) = (&self.ctx, &self.master_gain) {
+            if let Ok(osc) = ctx.create_oscillator() {
+                if let Ok(note_gain) = ctx.create_gain() {
+                    let now = ctx.current_time();
+                    osc.set_type(web_sys::OscillatorType::Square);
+                    let _ = osc.frequency().set_value_at_time(320.0, now);
+                    let _ = osc.frequency().exponential_ramp_to_value_at_time(42.0, now + 0.24);
+                    let _ = note_gain.gain().set_value_at_time(0.5, now);
+                    let _ = note_gain.gain().exponential_ramp_to_value_at_time(0.01, now + 0.24);
+                    let _ = osc.connect_with_audio_node(&note_gain);
+                    let _ = note_gain.connect_with_audio_node(gain);
+                    let _ = osc.start();
+                    let _ = osc.stop_with_when(now + 0.24);
+                }
+            }
+        }
+    }
+
     /// Play heavy vehicle or structure destruction explosion
     pub fn play_explosion(&self) {
         if self.muted {

@@ -54,6 +54,8 @@ Unlike heavyweight virtual machines or x86 emulators, this port runs natively in
 | **Structure Recycling & Demolition**| ✅ | Salvage obsolete or damaged buildings to reclaim 50% ore investment & rebalance power grids |
 | **Unit Control & 8-Way A\*** | ✅ | A* isometric pathfinding, lava avoidance, right-click orders · [`docs/ENGINE_ARCHITECTURE.md`](docs/ENGINE_ARCHITECTURE.md) |
 | **Tactical Drag Selection** | ✅ | Multi-unit drag-box with corner bracket reticles and Shift-click grouping |
+| **Tiger Heavy Tanks & Railguns**  | ✅ | Heavy dual-tread assault tanks with supersonic hyper-velocity railguns and magnetic coil visuals |
+| **Robo-Miner Mine Head Construction**| ✅ | Subterranean mine head excavation over mineral beacons, activating automated cargo extraction · [`docs/formats/mining_and_logistics.md`](docs/formats/mining_and_logistics.md) |
 | **Vehicle Repair & Field Triage**| ✅ | Mobile Repair Vehicles and stationary Depots projecting emerald nano-welding beams |
 | **Earthworker Engineering** | ✅ | Fortified ceramic defense walls, field conduit laying, and bio-cleansing hazard purging |
 | **ConVec Modular Kit Deployment** | ✅ | Construction Vehicles hauling pre-fabricated kits, unfolding installations, and foundation lockdown |

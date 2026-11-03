@@ -230,7 +230,7 @@ impl Viewport {
             }
         }
 
-        // Render Subterranean Ore Deposits
+        // Render Subterranean Ore Deposits & Active Mine Heads
         for dep in &colony.ore_deposits {
             let fog = colony.fog.get(dep.tile_x as usize, dep.tile_y as usize);
             if fog == FogState::Unexplored {
@@ -243,23 +243,71 @@ impl Viewport {
                 crate::sim::mining::OreType::Rare => "#38bdf8",   // Titanium vein
             };
 
-            ctx.set_fill_style_str(color);
-            ctx.set_stroke_style_str("#0f172a");
-            ctx.set_line_width(1.0);
-            ctx.begin_path();
-            let _ = ctx.arc(sx, sy, 5.0 * self.zoom, 0.0, std::f64::consts::PI * 2.0);
-            ctx.fill();
-            ctx.stroke();
+            if dep.has_miner {
+                // Active Industrial Mine Head Superstructure
+                let head_w = 18.0 * self.zoom;
+                let head_h = 14.0 * self.zoom;
 
-            // Label
-            if fog == FogState::Visible {
+                // Shaft base foundation
+                ctx.set_fill_style_str("#1e293b");
+                ctx.set_stroke_style_str("#475569");
+                ctx.set_line_width(1.5 * self.zoom);
+                ctx.fill_rect(sx - head_w * 0.5, sy - head_h * 0.5, head_w, head_h);
+                ctx.stroke_rect(sx - head_w * 0.5, sy - head_h * 0.5, head_w, head_h);
+
+                // Gantry drill tower
+                ctx.set_stroke_style_str("#eab308");
+                ctx.set_line_width(1.2 * self.zoom);
+                ctx.begin_path();
+                ctx.move_to(sx - head_w * 0.35, sy - head_h * 0.5);
+                ctx.line_to(sx, sy - head_h * 1.2);
+                ctx.line_to(sx + head_w * 0.35, sy - head_h * 0.5);
+                ctx.stroke();
+
+                // Extraction drill indicator light
+                let drill_pulse = (colony.sol * 8.0).sin().abs();
+                ctx.set_fill_style_str(&format!("rgba(56, 189, 248, {:.2})", 0.4 + 0.5 * drill_pulse));
+                ctx.begin_path();
+                let _ = ctx.arc(sx, sy - head_h * 1.2, 2.5 * self.zoom, 0.0, std::f64::consts::TAU);
+                ctx.fill();
+
+                if fog == FogState::Visible {
+                    ctx.set_fill_style_str(color);
+                    ctx.set_font(&format!("bold {}px monospace", (8.0 * self.zoom).max(7.0)));
+                    let label = format!("🏭 Mine ({})", match dep.ore_type {
+                        crate::sim::mining::OreType::Common => "Common",
+                        crate::sim::mining::OreType::Rare => "Rare",
+                    });
+                    let _ = ctx.fill_text(&label, sx - 22.0 * self.zoom, sy - head_h * 1.35);
+                }
+            } else {
+                // Unmined Ore Beacon Spire
                 ctx.set_fill_style_str(color);
-                ctx.set_font(&format!("bold {}px sans-serif", (9.0 * self.zoom).max(8.0)));
-                let desc = match dep.ore_type {
-                    crate::sim::mining::OreType::Common => "⛏️ Common Ore",
-                    crate::sim::mining::OreType::Rare => "💎 Rare Ore",
-                };
-                let _ = ctx.fill_text(desc, sx - 22.0 * self.zoom, sy - 8.0 * self.zoom);
+                ctx.set_stroke_style_str("#0f172a");
+                ctx.set_line_width(1.0);
+                ctx.begin_path();
+                let _ = ctx.arc(sx, sy, 5.0 * self.zoom, 0.0, std::f64::consts::TAU);
+                ctx.fill();
+                ctx.stroke();
+
+                // Pulsing survey beacon rings
+                let ring_pulse = (colony.sol * 3.0).sin().abs();
+                ctx.set_stroke_style_str(&format!("rgba(245, 158, 11, {:.2})", 0.4 + 0.4 * ring_pulse));
+                ctx.set_line_width(1.0 * self.zoom);
+                ctx.begin_path();
+                let _ = ctx.arc(sx, sy, (8.0 + 4.0 * ring_pulse) * self.zoom, 0.0, std::f64::consts::TAU);
+                ctx.stroke();
+
+                // Label
+                if fog == FogState::Visible {
+                    ctx.set_fill_style_str("#facc15");
+                    ctx.set_font(&format!("bold {}px sans-serif", (9.0 * self.zoom).max(8.0)));
+                    let desc = match dep.ore_type {
+                        crate::sim::mining::OreType::Common => "📡 Beacon (Common)",
+                        crate::sim::mining::OreType::Rare => "📡 Beacon (Rare)",
+                    };
+                    let _ = ctx.fill_text(desc, sx - 28.0 * self.zoom, sy - 10.0 * self.zoom);
+                }
             }
         }
 
@@ -458,26 +506,63 @@ impl Viewport {
 
             let (sx, sy) = self.tile_to_screen(u.tile_x as f64, u.tile_y as f64);
 
-            // Unit chassis: Repair is emerald green, Earthworker is amber, ConVec is construction yellow, Eden is Cyan, Plymouth is Crimson Red
+            // Unit chassis: Repair is emerald green, Earthworker is amber, ConVec is yellow, Miner is slate grey, Tiger is reinforced navy/dark crimson
+            let is_tiger = u.name.contains("Tiger");
+            let is_miner = u.name.contains("Robo-Miner");
+            let chassis_radius = if is_tiger { 11.0 * self.zoom } else { 8.0 * self.zoom };
+
             let chassis_color = if u.name.contains("Repair") {
                 "#10b981"
             } else if u.name.contains("Earthworker") {
                 "#f59e0b"
             } else if u.name.contains("ConVec") {
                 "#eab308"
+            } else if is_miner {
+                "#64748b"
+            } else if is_tiger {
+                if u.faction == Faction::Eden { "#0284c7" } else { "#b91c1c" }
             } else if u.faction == Faction::Eden {
                 "#38bdf8"
             } else {
                 "#ef4444"
             };
+
+            // Tiger tank treads
+            if is_tiger {
+                ctx.set_fill_style_str("#1e293b");
+                ctx.fill_rect(sx - 13.0 * self.zoom, sy - 8.0 * self.zoom, 26.0 * self.zoom, 3.0 * self.zoom);
+                ctx.fill_rect(sx - 13.0 * self.zoom, sy + 5.0 * self.zoom, 26.0 * self.zoom, 3.0 * self.zoom);
+            }
+
             ctx.set_fill_style_str(chassis_color);
             ctx.begin_path();
-            let _ = ctx.arc(sx, sy, 8.0 * self.zoom, 0.0, std::f64::consts::PI * 2.0);
+            let _ = ctx.arc(sx, sy, chassis_radius, 0.0, std::f64::consts::PI * 2.0);
             ctx.fill();
 
             ctx.set_stroke_style_str("#0f172a");
             ctx.set_line_width(1.5);
             ctx.stroke();
+
+            // Tiger Railgun elongated magnetic barrel
+            if is_tiger {
+                ctx.set_stroke_style_str("#38bdf8");
+                ctx.set_line_width(2.5 * self.zoom);
+                ctx.begin_path();
+                ctx.move_to(sx, sy);
+                ctx.line_to(sx + 15.0 * self.zoom, sy);
+                ctx.stroke();
+
+                // Railgun magnetic accelerator rings
+                ctx.set_stroke_style_str("#e0f2fe");
+                ctx.set_line_width(1.2 * self.zoom);
+                for ring_i in 1..4 {
+                    let rx = sx + (5.0 + ring_i as f64 * 3.0) * self.zoom;
+                    ctx.begin_path();
+                    ctx.move_to(rx, sy - 3.0 * self.zoom);
+                    ctx.line_to(rx, sy + 3.0 * self.zoom);
+                    ctx.stroke();
+                }
+            }
 
             if u.name.contains("Repair") {
                 ctx.set_fill_style_str("#ecfdf5");
@@ -492,6 +577,14 @@ impl Viewport {
                 ctx.set_font(&format!("bold {}px sans-serif", (9.0 * self.zoom).max(8.0)));
                 let icon = if u.cargo_kit.is_some() { "📦" } else { "🚛" };
                 let _ = ctx.fill_text(icon, sx - 5.0 * self.zoom, sy - 18.0 * self.zoom);
+            } else if is_tiger {
+                ctx.set_fill_style_str("#e0f2fe");
+                ctx.set_font(&format!("bold {}px sans-serif", (9.0 * self.zoom).max(8.0)));
+                let _ = ctx.fill_text("🐅", sx - 5.0 * self.zoom, sy - 18.0 * self.zoom);
+            } else if is_miner {
+                ctx.set_fill_style_str("#fef08a");
+                ctx.set_font(&format!("bold {}px sans-serif", (9.0 * self.zoom).max(8.0)));
+                let _ = ctx.fill_text("⛏️", sx - 5.0 * self.zoom, sy - 18.0 * self.zoom);
             }
 
             // Stance badge (Guard or Patrol)

@@ -33,6 +33,18 @@ Each Cargo Truck autonomously runs a state machine:
 
 ---
 
-## 3. Visual Representation
-- **Mineral Deposits:** Rendered on the isometric grid as metallic nodules with ore markers (Silver for Common Ore, Cyan for Rare Ore).
+## 3. Subterranean Mine Heads & Robo-Miner Construction
+1. **Unmined Survey Beacons:**
+   - Unexploited ore deposits appear as sensor beacons with pulsing amber/cyan survey rings (`📡 Beacon`).
+   - Cargo Trucks cannot extract ore directly from an unmined deposit until a subterranean shaft is excavated.
+2. **Robo-Miner Deployment:**
+   - Specialized **Robo-Miners** (200 C, 40 R) navigate to an unmined beacon.
+   - Upon command (`⛏️ Construct Mine Head`), the unit locks onto the mineral vein and erects a heavy industrial mine head with gantry crane tower, elevator cables, and animated extraction drill strobes.
+   - Once operational (`has_miner = true`), the shaft begins automated underground extraction, immediately enabling Cargo Truck logistics hauling.
+
+---
+
+## 4. Visual Representation
+- **Active Mine Heads:** Rendered with reinforced titanium gantry framework, yellow structural warning struts, and pulsing extraction strobe lights.
+- **Survey Beacons:** Pulsing holographic rings showing unexplored ore composition (Hematite vs Titanium).
 - **Cargo Payloads:** Cargo Trucks physically carry a metallic ore container on their rear chassis during the haul phase.

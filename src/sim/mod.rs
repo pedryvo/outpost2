@@ -128,6 +128,7 @@ pub struct ColonyState {
 pub struct SimUpdateResult {
     pub notice: Option<&'static str>,
     pub laser_fired: bool,
+    pub railgun_fired: bool,
     pub unit_destroyed: bool,
     pub building_deployed: bool,
     pub vortex_active: bool,
@@ -379,8 +380,10 @@ impl ColonyState {
         let mut dep1 = OreDeposit::new(1, OreType::Common, 26, 22, 50_000);
         dep1.has_miner = true;
         let dep2 = OreDeposit::new(2, OreType::Rare, 18, 28, 25_000);
+        let dep3 = OreDeposit::new(3, OreType::Common, 30, 16, 60_000);
         ore_deposits.push(dep1);
         ore_deposits.push(dep2);
+        ore_deposits.push(dep3);
 
         let map_w = game_map.width as usize;
         let map_h = game_map.height as usize;
@@ -519,9 +522,15 @@ impl ColonyState {
         }
 
         // Apply weapon damage and spawn beams/explosions
-        let mut laser_fired = !combat_events.is_empty();
+        let mut laser_fired = false;
+        let mut railgun_fired = false;
         let mut destroyed_units = Vec::new();
         for (target_id, from_pos, to_pos, weapon, dmg) in combat_events {
+            if weapon == WeaponType::Railgun {
+                railgun_fired = true;
+            } else {
+                laser_fired = true;
+            }
             self.active_beams.push(CombatBeam {
                 from_x: from_pos.0,
                 from_y: from_pos.1,
@@ -902,6 +911,50 @@ impl ColonyState {
                     });
                     unit_notice = Some("FABRICATION COMPLETE: ConVec pre-loaded with Hydroponics Kit.");
                 }
+                "Tiger Heavy Tank" => {
+                    let hp = 420 + self.tech_tree.armor_bonus();
+                    self.units.push(Unit {
+                        id: next_id,
+                        name: format!("Tiger Heavy Tank #{}", next_id),
+                        faction: self.faction,
+                        tile_x: spawn_x,
+                        tile_y: spawn_y,
+                        hp,
+                        max_hp: hp,
+                        is_selected: false,
+                        current_order: UnitOrder::Idle,
+                        path: Vec::new(),
+                        move_cooldown: 0.0,
+                        weapon: Some(WeaponType::Railgun),
+                        attack_cooldown: 0.0,
+                        cargo: None,
+                        hauler_state: None,
+                        cargo_kit: None,
+                    });
+                    unit_notice = Some("FABRICATION COMPLETE: Tiger Heavy Assault Tank with Railgun rolled out.");
+                }
+                "Robo-Miner" => {
+                    let hp = 160 + self.tech_tree.armor_bonus();
+                    self.units.push(Unit {
+                        id: next_id,
+                        name: format!("Robo-Miner #{}", next_id),
+                        faction: self.faction,
+                        tile_x: spawn_x,
+                        tile_y: spawn_y,
+                        hp,
+                        max_hp: hp,
+                        is_selected: false,
+                        current_order: UnitOrder::Idle,
+                        path: Vec::new(),
+                        move_cooldown: 0.0,
+                        weapon: None,
+                        attack_cooldown: 0.0,
+                        cargo: None,
+                        hauler_state: None,
+                        cargo_kit: None,
+                    });
+                    unit_notice = Some("FABRICATION COMPLETE: Robo-Miner ready to construct subterranean mine heads.");
+                }
                 "Starship Component" => {
                     self.starship_progress = (self.starship_progress + 25.0).min(100.0);
                     if self.starship_progress >= 100.0 {
@@ -1267,6 +1320,7 @@ impl ColonyState {
         SimUpdateResult {
             notice: warning.or(ai_alert).or(unit_notice).or(mission_alert),
             laser_fired,
+            railgun_fired,
             unit_destroyed,
             building_deployed,
             vortex_active,
@@ -1482,8 +1536,10 @@ impl ColonyState {
     pub fn queue_production(&mut self, building_id: u32, item: String) -> Result<String, String> {
         let (cost_common, cost_rare) = match item.as_str() {
             "Panther Battle Tank" => (250, 50),
+            "Tiger Heavy Tank" => (350, 100),
             "Lynx Scout" => (140, 0),
             "Cargo Truck" => (150, 0),
+            "Robo-Miner" => (200, 40),
             "Repair Vehicle" => (180, 20),
             "Earthworker" => (160, 0),
             "ConVec" => (150, 0),
@@ -1536,6 +1592,39 @@ impl ColonyState {
         self.fog.update_visibility(&self.units, &self.buildings);
 
         Ok(format!("{} dismantled. Reclaimed {} Common, {} Rare ore.", building.name, refund_common, refund_rare))
+    }
+
+    /// Construct an active subterranean mine head onto an unmined ore deposit beacon
+    pub fn deploy_mine_head(&mut self, unit_id: u32) -> Result<String, String> {
+        let (ux, uy) = {
+            let u = self.units.iter().find(|u| u.id == unit_id)
+                .ok_or_else(|| "Unit not found".to_string())?;
+            if !u.name.contains("Robo-Miner") {
+                return Err("Only specialized Robo-Miners can construct subterranean mine heads.".to_string());
+            }
+            (u.tile_x, u.tile_y)
+        };
+
+        // Find closest ore deposit without a miner within 3 tiles
+        let mut target_deposit = None;
+        for dep in &mut self.ore_deposits {
+            let dist = (dep.tile_x - ux).abs() + (dep.tile_y - uy).abs();
+            if dist <= 3 && !dep.has_miner {
+                dep.has_miner = true;
+                target_deposit = Some((dep.ore_type, dep.tile_x, dep.tile_y));
+                break;
+            }
+        }
+
+        if let Some((ore_t, dx, dy)) = target_deposit {
+            let desc = match ore_t {
+                OreType::Common => "Common Hematite",
+                OreType::Rare => "Rare Titanium",
+            };
+            Ok(format!("Subterranean Mine Head constructed at ({}, {}) on {} vein!", dx, dy, desc))
+        } else {
+            Err("No unmined ore deposit beacon within range (3 tiles). Drive Robo-Miner closer to beacon.".into())
+        }
     }
 
     /// Export colony state to a JSON-serializable snapshot

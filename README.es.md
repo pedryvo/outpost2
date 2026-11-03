@@ -59,6 +59,8 @@ El objetivo es preservar y modernizar este clásico juego de estrategia en tiemp
 | **Reciclaje y Demolición Colonial**| ✅ | Desmantelamiento de edificios para recuperar 50% de minerales y equilibrar la red energética |
 | **Control de Unidades y A\* 8-Vías** | ✅ | Pathfinding A* isométrico en 8 direcciones y órdenes tácticas · [`docs/ENGINE_ARCHITECTURE.md`](docs/ENGINE_ARCHITECTURE.md) |
 | **Selección Táctica por Arrastre** | ✅ | Caja de selección multi-unidad con retículas angulares sci-fi y agrupación con Shift |
+| **Tanques Pesados Tiger & Cañón Rail**| ✅ | Blindados pesados de doble oruga con cañones cinéticos de hipervelocidad y bobinas magnéticas |
+| **Construcción de Minas con Robo-Miner**| ✅ | Excavación de cabezas de pozo sobre balizas de minerales, activando logística con camiones · [`docs/formats/mining_and_logistics.md`](docs/formats/mining_and_logistics.md) |
 | **Reparación de Vehículos & Triage**| ✅ | Vehículos de Reparación móviles y Talleres con rayos de nanosoldadura esmeralda |
 | **Ingeniería con Earthworker** | ✅ | Muros defensivos de cerámica reforzada, tendido de tubos y purga de biopeligros |
 | **Despliegue de Kits con ConVec** | ✅ | Vehículos de Construcción transportando kits modulares, montaje en terreno y anclaje |

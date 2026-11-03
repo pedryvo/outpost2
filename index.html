@@ -262,8 +262,10 @@
         </div>
         <div id="factory-actions" style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
           <button class="action-btn" id="btn-queue-tank" style="justify-content: center;">⚔️ Build Panther Tank</button>
+          <button class="action-btn" id="btn-queue-tiger" style="justify-content: center; background: #082f49; border-color: #38bdf8;">🐅 Build Tiger Railgun Tank (350 C, 100 R)</button>
           <button class="action-btn" id="btn-queue-scout" style="justify-content: center;">🛰️ Build Lynx Scout</button>
           <button class="action-btn" id="btn-queue-truck" style="justify-content: center;">🚚 Build Cargo Truck</button>
+          <button class="action-btn" id="btn-queue-miner" style="justify-content: center; background: #1e293b; border-color: #64748b;">⛏️ Build Robo-Miner (200 C, 40 R)</button>
           <button class="action-btn" id="btn-queue-repair" style="justify-content: center;">🔧 Build Repair Vehicle</button>
           <button class="action-btn" id="btn-queue-earthworker" style="justify-content: center;">🏗️ Build Earthworker</button>
           <button class="action-btn" id="btn-queue-convec" style="justify-content: center; background: #713f12; border-color: #eab308;">🚛 Build ConVec (150 C)</button>
@@ -308,6 +310,11 @@
           <button class="action-btn" id="btn-order-guard" style="justify-content: center; background: #1e3a8a; border-color: #60a5fa;">🛡️ Set Guard Anchor</button>
           <button class="action-btn" id="btn-order-patrol" style="justify-content: center; background: #1e293b; border-color: #94a3b8;">🔄 Assign Patrol Route</button>
           <button class="action-btn" id="btn-order-halt" style="justify-content: center; background: #7f1d1d; border-color: #ef4444;">🛑 Halt / Hold Position</button>
+        </div>
+
+        <!-- Robo-Miner Subterranean Mine Operations -->
+        <div id="miner-actions" style="display: none; flex-direction: column; gap: 6px; margin-top: 4px;">
+          <button class="action-btn" id="btn-deploy-mine" style="justify-content: center; background: #334155; border-color: #64748b;">⛏️ Construct Mine Head on Beacon</button>
         </div>
       </aside>
 

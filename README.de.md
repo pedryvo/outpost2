@@ -59,6 +59,8 @@ Ziel ist es, den Strategieklassiker in modernen Webbrowsern mit nativer Leistung
 | **Gebäude-Recycling & Rückbau** | ✅ | Abbruch von Strukturen für 50% Erz-Rückerstattung und automatische Stromgitter-Neubalancierung |
 | **Einheitensteuerung & 8-Wege-A\*** | ✅ | A*-Pfadfindung auf isometrischem Gitter mit Rechtsklick-Befehlen · [`docs/ENGINE_ARCHITECTURE.md`](docs/ENGINE_ARCHITECTURE.md) |
 | **Taktische Rahmen-Mehrfachauswahl**| ✅ | Auswahlrahmen mit Sci-Fi-Winkelretikeln und Shift-Gruppierung |
+| **Schwere Tiger-Panzer & Railgun**| ✅ | Schwere Doppelkettenpanzer mit Überschall-Railguns und magnetischen Beschleunigungsspulen |
+| **Minenkopf-Bau mit Robo-Miner**  | ✅ | Unterirdischer Förderturm-Bau über Mineralien-Baken, der Frachttransport für Trucks aktiviert · [`docs/formats/mining_and_logistics.md`](docs/formats/mining_and_logistics.md) |
 | **Fahrzeug-Reparatur & Felddepots** | ✅ | Mobile Reparaturfahrzeuge und Depots mit smaragdgrünen Nanoschweiß-Strahlen |
 | **Earthworker-Pioniertechnik** | ✅ | Verstärkte Keramik-Schutzmauern, Verlegung von Feldleitungen und Biogefahren-Bereinigung |
 | **ConVec-Bausatz-Entfaltung** | ✅ | Baufahrzeuge mit vorgefertigten Gebäudekits, Vor-Ort-Entfaltung und Fundamentintegration |

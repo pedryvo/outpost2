@@ -54,6 +54,8 @@ Diferente de máquinas virtuais pesadas ou emuladores x86, este porte roda nativ
 | **Reciclagem & Demolição de Bases**| ✅ | Desmonte de estruturas com reembolso de 50% de minério e balanceamento automático da rede elétrica |
 | **Controle de Unidades & 8-Way A\*** | ✅ | Pathfinding A* isométrico em 8 direções, evasão de lava e ordens com botão direito · [`docs/ENGINE_ARCHITECTURE.md`](docs/ENGINE_ARCHITECTURE.md) |
 | **Seleção Tática por Área (Drag)** | ✅ | Caixa de seleção em arrasto com retículos angulares sci-fi e agrupamento via Shift |
+| **Tanques Pesados Tiger & Railgun**| ✅ | Blindados pesados de esteira dupla equipados com canhões eletromagnéticos supersônicos de alta velocidade |
+| **Construção de Minas com Robo-Miner**| ✅ | Escavação de cabeças de poço subterrâneas sobre beacons de minério, liberando extração para caminhões · [`docs/formats/mining_and_logistics.md`](docs/formats/mining_and_logistics.md) |
 | **Reparo de Veículos & Triagem** | ✅ | Veículos de Reparo móveis e Depósitos de Manutenção com feixes de nanosolda esmeralda |
 | **Engenharia com Earthworker** | ✅ | Construção de muros cerâmicos defensivos, tubos de campo e purificação de bioameaças |
 | **Implantação de Kits via ConVec** | ✅ | Veículos de Construção transportando kits pré-fabricados, montagem em campo e fundação |

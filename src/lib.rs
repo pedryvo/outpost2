@@ -899,8 +899,10 @@ pub fn start() -> Result<(), JsValue> {
     };
 
     setup_queue_btn("btn-queue-tank", "Panther Battle Tank", app.clone(), document.clone());
+    setup_queue_btn("btn-queue-tiger", "Tiger Heavy Tank", app.clone(), document.clone());
     setup_queue_btn("btn-queue-scout", "Lynx Scout", app.clone(), document.clone());
     setup_queue_btn("btn-queue-truck", "Cargo Truck", app.clone(), document.clone());
+    setup_queue_btn("btn-queue-miner", "Robo-Miner", app.clone(), document.clone());
     setup_queue_btn("btn-queue-repair", "Repair Vehicle", app.clone(), document.clone());
     setup_queue_btn("btn-queue-earthworker", "Earthworker", app.clone(), document.clone());
     setup_queue_btn("btn-queue-convec", "ConVec", app.clone(), document.clone());
@@ -1242,6 +1244,37 @@ pub fn start() -> Result<(), JsValue> {
         cb.forget();
     }
 
+    // Robo-Miner Subterranean Mine Head Construction Order
+    if let Some(btn) = document.get_element_by_id("btn-deploy-mine") {
+        let app_clone = app.clone();
+        let doc_clone = document.clone();
+        let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            let mut g = app_clone.borrow_mut();
+            let _ = g.audio.init();
+            let selected_u_id = g.colony.units.iter().find(|u| u.is_selected && u.faction == g.colony.faction).map(|u| u.id);
+            if let Some(uid) = selected_u_id {
+                match g.colony.deploy_mine_head(uid) {
+                    Ok(msg) => {
+                        g.audio.play_build_confirm();
+                        if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                            toast.set_text_content(Some(&msg));
+                            let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #4ade80; display: block;");
+                        }
+                    }
+                    Err(err) => {
+                        g.audio.play_build_error();
+                        if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                            toast.set_text_content(Some(&err));
+                            let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #ef4444; display: block;");
+                        }
+                    }
+                }
+            }
+        }) as Box<dyn FnMut(_)>);
+        btn.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
+        cb.forget();
+    }
+
     // Campaign Briefing Modal Controls
     if let Some(btn) = document.get_element_by_id("btn-briefing") {
         let doc_clone = document.clone();
@@ -1362,6 +1395,9 @@ pub fn start() -> Result<(), JsValue> {
         }
         if sim_result.laser_fired {
             app_borrow.audio.play_laser();
+        }
+        if sim_result.railgun_fired {
+            app_borrow.audio.play_railgun();
         }
         if sim_result.unit_destroyed || sim_result.meteor_hit {
             app_borrow.audio.play_explosion();
@@ -1588,6 +1624,14 @@ pub fn start() -> Result<(), JsValue> {
 
                 if let Some(actions) = document.get_element_by_id("combat-actions") {
                     if u.weapon.is_some() {
+                        let _ = actions.set_attribute("style", "display: flex; flex-direction: column; gap: 6px; margin-top: 4px;");
+                    } else {
+                        let _ = actions.set_attribute("style", "display: none;");
+                    }
+                }
+
+                if let Some(actions) = document.get_element_by_id("miner-actions") {
+                    if u.name.contains("Robo-Miner") {
                         let _ = actions.set_attribute("style", "display: flex; flex-direction: column; gap: 6px; margin-top: 4px;");
                     } else {
                         let _ = actions.set_attribute("style", "display: none;");
