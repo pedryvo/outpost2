@@ -543,6 +543,27 @@ pub fn start() -> Result<(), JsValue> {
                     let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
                         let mut g = app_c.borrow_mut();
                         let _ = g.audio.init();
+
+                        // Tech prerequisite verification
+                        if structure_type == sim::structures::StructureType::GuardPost && !g.colony.tech_tree.can_build_guard_posts() {
+                            g.audio.play_build_error();
+                            audio::radio::RadioDispatcher::announce("Research required: Automated Point Defense Turrets.");
+                            if let Some(toast) = doc_c.get_element_by_id("research-toast") {
+                                toast.set_text_content(Some("Requires Research: Automated Point Defense Turrets (600 C)"));
+                                let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #ef4444; display: block;");
+                            }
+                            return;
+                        }
+                        if structure_type == sim::structures::StructureType::GeothermalPlant && !g.colony.tech_tree.can_build_geothermal() {
+                            g.audio.play_build_error();
+                            audio::radio::RadioDispatcher::announce("Research required: Vulcanology and Hydrothermal Extraction.");
+                            if let Some(toast) = doc_c.get_element_by_id("research-toast") {
+                                toast.set_text_content(Some("Requires Research: Vulcanology & Hydrothermal Extraction (750 C)"));
+                                let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #ef4444; display: block;");
+                            }
+                            return;
+                        }
+
                         g.audio.play_build_confirm();
                         g.pending_placement = Some(structure_type);
                         if let Some(drawer) = doc_c.get_element_by_id("build-drawer") {
@@ -637,6 +658,9 @@ pub fn start() -> Result<(), JsValue> {
                                     if let Ok(msg) = g_mut.colony.tech_tree.research(tid, &mut ore_mut) {
                                         g_mut.colony.common_ore = ore_mut;
                                         g_mut.audio.play_build_confirm();
+                                        if !g_mut.audio.is_muted() {
+                                            audio::radio::RadioDispatcher::announce(&format!("Scientific advancement: {}", msg));
+                                        }
                                         if let Some(toast) = doc_inner.get_element_by_id("research-toast") {
                                             toast.set_text_content(Some(&msg));
                                             let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #4ade80; display: block;");
@@ -885,7 +909,10 @@ pub fn start() -> Result<(), JsValue> {
                             }
                         }
                         Err(err) => {
-                            g.audio.play_ui_beep();
+                            g.audio.play_build_error();
+                            if err.contains("Requires Research") && !g.audio.is_muted() {
+                                audio::radio::RadioDispatcher::announce(&err);
+                            }
                             if let Some(toast) = doc_rc.get_element_by_id("research-toast") {
                                 toast.set_text_content(Some(&err));
                                 let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #ef4444; display: block;");
@@ -1058,6 +1085,19 @@ pub fn start() -> Result<(), JsValue> {
         let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
             let mut g = app_clone.borrow_mut();
             let _ = g.audio.init();
+
+            if !g.colony.tech_tree.can_build_walls() {
+                g.audio.play_build_error();
+                if !g.audio.is_muted() {
+                    audio::radio::RadioDispatcher::announce("Research required: Lava Containment Walls.");
+                }
+                if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                    toast.set_text_content(Some("Requires Research: Lava Containment Walls (1100 C)"));
+                    let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #ef4444; display: block;");
+                }
+                return;
+            }
+
             g.pending_engineering = Some(EngineeringMode::Wall);
             g.audio.play_build_confirm();
             if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
@@ -1422,6 +1462,9 @@ pub fn start() -> Result<(), JsValue> {
         }
         if sim_result.unit_destroyed || sim_result.meteor_hit {
             app_borrow.audio.play_explosion();
+        }
+        if sim_result.disaster_siren {
+            app_borrow.audio.play_disaster_siren();
         }
         if sim_result.building_deployed {
             app_borrow.audio.play_construction_deploy();

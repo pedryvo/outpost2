@@ -67,7 +67,8 @@ Ziel ist es, den Strategieklassiker in modernen Webbrowsern mit nativer Leistung
 | **ConVec-Bausatz-Entfaltung** | ✅ | Baufahrzeuge mit vorgefertigten Gebäudekits, Vor-Ort-Entfaltung und Fundamentintegration |
 | **Wach- & Patrouillen-Taktik** | ✅ | Automatische Sektoren-Wachanker, bidirektionale Patrouillenrouten und reaktive Zielerfassung |
 | **Planetare Gefahren & Katastrophen**| ✅ | Kriechende mikrobielle Pest, Vulkanspalten, Staubwirbel-Tornados und kinetische Meteorschauer |
-| **Wissenschaftliche Forschungsmatrix**| ✅ | Interaktives Tech-Modal mit Kategorien-Taxonomie und passiven Kolonie-Boni (Panzerung, Laser, Erzschmelze) · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
+| **Roter Alarm Sirene & Überfälle**| ✅ | Zweiton-Notfallsirene der Kommandozentrale und koordinierte Angriffsstaffeln feindlicher Plymouth-Einheiten |
+| **Wissenschaftliche Forschungsmatrix**| ✅ | 11-Knoten-Tech-Baum mit Pflichtvoraussetzungen (Vulkanologie, Railguns, Punktverteidigung) und passiven Boni · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **Multi-Karten-Kampagnen** | ✅ | Authentische Schauplätze (Eden 1, Plymouth 1, Akademie-Tutorial) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
 | **Fabrikwarteschlange & Schweißen** | ✅ | Fahrzeugbau mit Plasma-Schweißeffekt und Fortschrittsbalken |
 | **Raumschiff-Evakuierung & Start** | ✅ | Bau in 4 Phasen, orbitale Startanimation mit lodernden Abgasfahnen und Siegesfanfare · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |

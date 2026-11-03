@@ -258,6 +258,34 @@ impl AudioManager {
         }
     }
 
+    /// Play urgent colony disaster / red alert dual-tone siren
+    pub fn play_disaster_siren(&self) {
+        if self.muted {
+            return;
+        }
+        if let (Some(ctx), Some(gain)) = (&self.ctx, &self.master_gain) {
+            let cycles = 3;
+            for c in 0..cycles {
+                let start = c as f64 * 0.40;
+                if let Ok(osc) = ctx.create_oscillator() {
+                    if let Ok(note_gain) = ctx.create_gain() {
+                        let now = ctx.current_time() + start;
+                        osc.set_type(web_sys::OscillatorType::Sawtooth);
+                        let _ = osc.frequency().set_value_at_time(587.33, now); // D5
+                        let _ = osc.frequency().linear_ramp_to_value_at_time(880.0, now + 0.20); // A5
+                        let _ = osc.frequency().linear_ramp_to_value_at_time(587.33, now + 0.38); // D5
+                        let _ = note_gain.gain().set_value_at_time(0.32, now);
+                        let _ = note_gain.gain().exponential_ramp_to_value_at_time(0.01, now + 0.38);
+                        let _ = osc.connect_with_audio_node(&note_gain);
+                        let _ = note_gain.connect_with_audio_node(gain);
+                        let _ = osc.start_with_when(now);
+                        let _ = osc.stop_with_when(now + 0.38);
+                    }
+                }
+            }
+        }
+    }
+
     /// Play building placement error / obstructed buzzer
     pub fn play_build_error(&self) {
         if self.muted {

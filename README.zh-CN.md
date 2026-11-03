@@ -67,7 +67,8 @@ _Sierra 和 Dynamix 经典硬科幻即时战略游戏，<br>专为现代浏览�
 | **ConVec 建造车套件部署** | ✅ | 战地建造车承载预制建筑套件，目标点展开并地基锁死就地落成 |
 | **战术警戒与双向巡逻** | ✅ | 自动扇区警戒锚点、双向巡逻路径规划与自动化索敌还击 |
 | **行星灾害与天体灾变** | ✅ | 蔓延性枯萎病微生物真菌、火山熔岩裂隙、大气尘暴旋风与动能陨石雨撞击 |
-| **多学科科研矩阵** | ✅ | 分类科技树交互弹窗、被动殖民地加成（强化装甲、脉冲激光、矿石精炼） · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
+| **红色警报警报声与敌军突袭**| ✅ | 指挥中心双音频道紧急红色警报警报器，普利茅斯协同战术突击波次进攻 |
+| **多学科科研矩阵** | ✅ | 11 大科技前置解锁树（火山学、电磁轨道炮、点防御）与被动增益 · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **多战役战场选择器** | ✅ | 真实战役战场（伊甸 1、普利茅斯 1、学院教学） · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
 | **工厂生产队列与焊接** | ✅ | 战车制造排队机制、等离子火花与 HUD 进度条 |
 | **星际逃逸飞船建造与点火升空** | ✅ | 四阶段飞船组装、升空轨道点火粒子尾焰动画与胜利号角 · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |

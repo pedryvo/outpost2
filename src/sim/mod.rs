@@ -133,6 +133,7 @@ pub struct SimUpdateResult {
     pub building_deployed: bool,
     pub vortex_active: bool,
     pub meteor_hit: bool,
+    pub disaster_siren: bool,
     pub mission_ended: Option<mission::MissionStatus>,
     pub starship_launched: bool,
 }
@@ -1298,7 +1299,12 @@ impl ColonyState {
         }
 
         // Advance Rival Faction AI Director
-        let ai_alert = self.ai_director.update(&mut self.units, dt_secs);
+        let player_targets: Vec<(i32, i32)> = self.buildings
+            .iter()
+            .map(|b| (b.tile_x + b.width / 2, b.tile_y + b.height / 2))
+            .chain(self.units.iter().filter(|u| u.faction == self.faction).map(|u| (u.tile_x, u.tile_y)))
+            .collect();
+        let ai_alert = self.ai_director.update(&mut self.units, &player_targets, dt_secs);
 
         // Evaluate Campaign Mission Objectives
         let mission_alert = self.mission.evaluate(
@@ -1362,6 +1368,9 @@ impl ColonyState {
         self.fog.update_visibility(&self.units, &self.buildings);
 
         let vortex_active = !self.disasters.active_vortices.is_empty();
+        let disaster_siren = meteor_hit
+            || ai_alert.map(|a| a.contains("Red Alert")).unwrap_or(false)
+            || warning.map(|w| w.contains("Disaster") || w.contains("Tremor") || w.contains("Eruption") || w.contains("Blight")).unwrap_or(false);
 
         SimUpdateResult {
             notice: warning.or(ai_alert).or(unit_notice).or(mission_alert),
@@ -1371,6 +1380,7 @@ impl ColonyState {
             building_deployed,
             vortex_active,
             meteor_hit,
+            disaster_siren,
             mission_ended,
             starship_launched: self.starship_launched,
         }
@@ -1378,6 +1388,13 @@ impl ColonyState {
 
     /// Deploy a colonial structure kit, deducting ore costs and weaving transport tubes
     pub fn deploy_structure(&mut self, structure_type: StructureType, tile_x: i32, tile_y: i32) -> Result<String, String> {
+        if structure_type == StructureType::GuardPost && !self.tech_tree.can_build_guard_posts() {
+            return Err("Requires Research: Automated Point Defense Turrets (600 C)".into());
+        }
+        if structure_type == StructureType::GeothermalPlant && !self.tech_tree.can_build_geothermal() {
+            return Err("Requires Research: Vulcanology & Hydrothermal Extraction (750 C)".into());
+        }
+
         let (w, h) = structure_type.dimensions();
         let (cost_common, cost_rare) = structure_type.ore_cost();
 
@@ -1555,6 +1572,14 @@ impl ColonyState {
     pub fn load_convec_kit(&mut self, unit_id: u32, kit_name: String) -> Result<String, String> {
         let st = StructureType::from_name(&kit_name)
             .ok_or_else(|| format!("Unknown kit type: {}", kit_name))?;
+
+        if st == StructureType::GuardPost && !self.tech_tree.can_build_guard_posts() {
+            return Err("Requires Research: Automated Point Defense Turrets (600 C)".into());
+        }
+        if st == StructureType::GeothermalPlant && !self.tech_tree.can_build_geothermal() {
+            return Err("Requires Research: Vulcanology & Hydrothermal Extraction (750 C)".into());
+        }
+
         let (cost_common, cost_rare) = st.ore_cost();
 
         if self.common_ore < cost_common || self.rare_ore < cost_rare {
@@ -1580,6 +1605,17 @@ impl ColonyState {
 
     /// Queue a vehicle or starship module in a selected factory
     pub fn queue_production(&mut self, building_id: u32, item: String) -> Result<String, String> {
+        // Tech prerequisites
+        if item == "Tiger Heavy Tank" && !self.tech_tree.can_build_railgun_tanks() {
+            return Err("Requires Research: Magnetic Acceleration & Railgun Armaments (1400 C)".into());
+        }
+        if (item == "ConVec (Guard)" || item == "Guard Post") && !self.tech_tree.can_build_guard_posts() {
+            return Err("Requires Research: Automated Point Defense Turrets (600 C)".into());
+        }
+        if (item == "ConVec (Geothermal)" || item == "Geothermal Power Plant") && !self.tech_tree.can_build_geothermal() {
+            return Err("Requires Research: Vulcanology & Hydrothermal Extraction (750 C)".into());
+        }
+
         let (cost_common, cost_rare) = match item.as_str() {
             "Panther Battle Tank" => (250, 50),
             "Tiger Heavy Tank" => (350, 100),

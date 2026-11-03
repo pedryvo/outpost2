@@ -67,7 +67,8 @@ El objetivo es preservar y modernizar este clásico juego de estrategia en tiemp
 | **Despliegue de Kits con ConVec** | ✅ | Vehículos de Construcción transportando kits modulares, montaje en terreno y anclaje |
 | **Tácticas de Guardia y Patrulla** | ✅ | Puntos de anclaje de defensa, rutas bidireccionales de patrulla y combate reactivo |
 | **Peligros Planetarios y Desastres**| ✅ | Plaga microbiana reptante, fisuras volcánicas, vórtices de polvo y lluvias de meteoritos cinéticos |
-| **Matriz Científica de Investigación** | ✅ | Modal interactivo de tecnologías con taxonomía de ramas y bonificaciones pasivas (blindaje, láser, fundición) · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
+| **Sirena de Alerta Roja & Incursiones**| ✅ | Sirena bitonal de emergencia del Centro de Mando y asaltos coordinados de escuadrones Plymouth |
+| **Matriz Científica de Investigación** | ✅ | Árbol de 11 tecnologías con prerrequisitos obligatorios (Vulcanología, Cañón Rail, Defensas) y bonos pasivos · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **Campañas Multi-Mapa** | ✅ | Teatros de operación auténticos (Eden 1, Plymouth 1, Academia) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
 | **Filas de Fábrica y Soldadura** | ✅ | Planificación de producción de vehículos con arcos de plasma y barras de progreso |
 | **Evacuación y Lanzamiento de Nave**| ✅ | Fabricación en 4 etapas, animación de ignición orbital con plumas de escape y fanfarria de victoria · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |

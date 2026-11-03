@@ -62,7 +62,8 @@ Unlike heavyweight virtual machines or x86 emulators, this port runs natively in
 | **ConVec Modular Kit Deployment** | ✅ | Construction Vehicles hauling pre-fabricated kits, unfolding installations, and foundation lockdown |
 | **Tactical Guard & Patrol Stances** | ✅ | Automated sector guard anchors, bidirectional patrol lanes, and reactive target acquisition |
 | **Planetary Hazards & Disasters** | ✅ | Creeping microbial Blight, volcanic fissures, atmospheric dust vortices, and kinetic meteor showers |
-| **Scientific Research Matrix** | ✅ | Interactive tech modal with category taxonomy and passive colony bonuses (armor, laser, smelting) · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
+| **Red Alert Siren & Hostile Raids**| ✅ | Command Center dual-tone disaster sirens and coordinated hostile Plymouth incursion assault waves |
+| **Scientific Research Matrix** | ✅ | 11-node tech tree with prerequisite gating (Vulcanology, Railguns, Point Defense) and passive bonuses · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **Multi-Map Campaigns** | ✅ | Authentic operational theaters (Eden 1, Plymouth 1, Academy Tutorial) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
 | **Factory Queues & Animation** | ✅ | Production queue scheduling, welding plasma arcs, HUD progress bars |
 | **Starship Evacuation & Launch** | ✅ | 4-stage starship assembly, orbital launch animation with billowing exhaust plumes, and escape fanfare · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |

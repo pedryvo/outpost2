@@ -62,7 +62,8 @@ Diferente de máquinas virtuais pesadas ou emuladores x86, este porte roda nativ
 | **Implantação de Kits via ConVec** | ✅ | Veículos de Construção transportando kits pré-fabricados, montagem em campo e fundação |
 | **Posturas de Guarda & Patrulha** | ✅ | Âncoras de guarda de setor automatizadas, rotas bidirecionais de patrulha e combate reativo |
 | **Perigos Planetários & Desastres** | ✅ | Blight microbiano rastejante, fissuras vulcânicas, vórtices de poeira e chuvas de meteoros cinéticos |
-| **Matriz Científica de Pesquisa** | ✅ | Modal interativo de tecnologias com taxonomia de ramos e bônus passivos (blindagem, lasers, fundição) · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
+| **Sirene de Alerta Vermelho & Incursões**| ✅ | Sirene bitonal de emergência do Centro de Comando e ondas táticas coordenadas de ataque da Plymouth |
+| **Matriz Científica de Pesquisa** | ✅ | Árvore de 11 tecnologias com requisitos obrigatórios (Vulcanologia, Railguns, Defesa de Ponto) e bônus passivos · [`docs/formats/tech_tree.md`](docs/formats/tech_tree.md) |
 | **Campanhas Multi-Mapas** | ✅ | Teatros autênticos de operação (Eden 1, Plymouth 1, Tutorial da Academia) · [`docs/formats/campaigns_and_scenarios.md`](docs/formats/campaigns_and_scenarios.md) |
 | **Filas de Fábrica & Animação** | ✅ | Agendamento de fabricação, arcos elétricos de solda e barras de progresso no HUD |
 | **Evacuação & Lançamento de Nave**| ✅ | Montagem em 4 estágios da nave estelar, animação de ignição orbital com plumas de escape e fanfarra de vitória · [`docs/formats/starship_assembly.md`](docs/formats/starship_assembly.md) |

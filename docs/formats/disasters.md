@@ -14,3 +14,15 @@ New Terra is a geologically volatile world in active crustal tectonic transition
 - **Nature:** A synthetic bio-weaponized alien spore organism that feeds on copper alloys, polymer insulation, and colonial biological matter.
 - **Spread Vector:** Creeps outward from infected epicenter tiles into adjacent cells marked `bMicrobePossible`.
 - **Mitigation:** Colonists must research bio-containment walls or deploy Earthworker burn barriers to sterilize contaminated soil.
+
+## 3. Kinetic Meteor Showers & Impact Detonations
+
+- **Atmospheric Entry:** Hypersonic kinetic orbital fragments plummet across Martian coordinates, impacting surface terrain with blast radius detonations.
+- **Infrastructure Damage:** Severed transport conduit tubes, structure health degradation, and lethal area-of-effect blast damage to unshielded vehicles.
+- **Seismic Tremor:** Generates localized ground quakes and visual shockwave rings registered across tactical radar sensors.
+
+## 4. Red Alert Siren & Plymouth Incursion Raids
+
+- **Emergency Alert Acoustic System:** Command Center synthesizes a dual-tone sawtooth red alert siren (alternating between 587.33 Hz and 880.0 Hz) upon incoming impact detonations or hostile tactical strike waves.
+- **Hostile Plymouth Assault Squads:** Rival faction AI directors organize periodic coordinated combat incursions every 2nd reinforcement cycle, deploying Tiger Railgun tanks and Raider escorts with march-to-contact orders targeting player perimeter structures and ore haulers.
+- **Voice Radio Dispatch:** Synthesized computerized tactical voice dispatches broadcast urgent audio status advisories to player commanders in real-time.

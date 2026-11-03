@@ -66,6 +66,15 @@ impl TechTree {
         });
 
         techs.push(TechNode {
+            id: 4301,
+            name: "Vulcanology & Hydrothermal Extraction".into(),
+            category: 4,
+            cost: 750,
+            description: "Harnesses subsurface volcanic heat vectors, unlocking continuous +450 kW Geothermal Power Plants.".into(),
+            is_researched: false,
+        });
+
+        techs.push(TechNode {
             id: 5104,
             name: "Lynx Chassis Reinforced Armor".into(),
             category: 5,
@@ -80,6 +89,24 @@ impl TechTree {
             category: 5,
             cost: 1200,
             description: "Refined optical focusing crystals granting +15 beam intensity to laser armaments.".into(),
+            is_researched: false,
+        });
+
+        techs.push(TechNode {
+            id: 5301,
+            name: "Magnetic Acceleration & Railgun Armaments".into(),
+            category: 5,
+            cost: 1400,
+            description: "High-power magnetic accelerator coils, enabling Tiger Heavy Tanks armed with kinetic Hyper-Velocity Railguns.".into(),
+            is_researched: false,
+        });
+
+        techs.push(TechNode {
+            id: 5401,
+            name: "Automated Point Defense Turrets".into(),
+            category: 5,
+            cost: 600,
+            description: "Micro-targeting optical arrays and dual servo-mounts, unlocking automated perimeter Guard Post defense turrets.".into(),
             is_researched: false,
         });
 
@@ -134,6 +161,21 @@ impl TechTree {
     /// Whether fortified walls can be deployed
     pub fn can_build_walls(&self) -> bool {
         self.is_researched(4201)
+    }
+
+    /// Whether geothermal power plants can be constructed
+    pub fn can_build_geothermal(&self) -> bool {
+        self.is_researched(4301)
+    }
+
+    /// Whether Tiger Heavy Railgun Tanks can be assembled
+    pub fn can_build_railgun_tanks(&self) -> bool {
+        self.is_researched(5301)
+    }
+
+    /// Whether perimeter Guard Post defense turrets can be deployed
+    pub fn can_build_guard_posts(&self) -> bool {
+        self.is_researched(5401)
     }
 
     /// Attempt to complete research on a technology node
