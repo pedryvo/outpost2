@@ -1,9 +1,11 @@
 //! Outpost 2 Colony Simulation and Game State
 
 pub mod map;
+pub mod tech;
 
 use serde::{Deserialize, Serialize};
 use map::GameMap;
+use tech::TechTree;
 
 const DEFAULT_MAP_DATA: &[u8] = include_bytes!("../../assets/eden01.map");
 
@@ -50,6 +52,7 @@ pub struct ColonyState {
     pub units: Vec<Unit>,
     pub buildings: Vec<Building>,
     pub game_map: GameMap,
+    pub tech_tree: TechTree,
 }
 
 impl ColonyState {
@@ -132,6 +135,7 @@ impl ColonyState {
             units,
             buildings,
             game_map,
+            tech_tree: TechTree::new(),
         }
     }
 

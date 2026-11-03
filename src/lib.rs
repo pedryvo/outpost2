@@ -226,10 +226,43 @@ pub fn start() -> Result<(), JsValue> {
 
     if let Some(btn_research) = document.get_element_by_id("btn-research") {
         let app_clone = app.clone();
+        let doc_clone = document.clone();
         let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
             let mut g = app_clone.borrow_mut();
             let _ = g.audio.init();
-            g.audio.play_ui_beep();
+            
+            // Find next unresearched tech
+            let next_tech_id = g.colony.tech_tree.techs.iter()
+                .find(|t| !t.is_researched)
+                .map(|t| t.id);
+
+            if let Some(id) = next_tech_id {
+                let mut ore = g.colony.common_ore;
+                let res = g.colony.tech_tree.research(id, &mut ore);
+                g.colony.common_ore = ore;
+                match res {
+                    Ok(msg) => {
+                        g.audio.play_build_confirm();
+                        if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                            toast.set_text_content(Some(&msg));
+                            let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #4ade80; display: block;");
+                        }
+                    }
+                    Err(err) => {
+                        g.audio.play_ui_beep();
+                        if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                            toast.set_text_content(Some(&err));
+                            let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #ef4444; display: block;");
+                        }
+                    }
+                }
+            } else {
+                g.audio.play_ui_beep();
+                if let Some(toast) = doc_clone.get_element_by_id("research-toast") {
+                    toast.set_text_content(Some("All primary technologies researched!"));
+                    let _ = toast.set_attribute("style", "font-size: 11px; font-weight: 500; color: #38bdf8; display: block;");
+                }
+            }
         }) as Box<dyn FnMut(_)>);
         btn_research.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
         cb.forget();
