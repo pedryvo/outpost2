@@ -1,10 +1,12 @@
 //! Outpost 2 Colony Simulation and Game State
 
+pub mod disasters;
 pub mod map;
 pub mod pathfinding;
 pub mod tech;
 
 use serde::{Deserialize, Serialize};
+use disasters::DisasterSimulator;
 use map::GameMap;
 use pathfinding::{PathFinder, UnitOrder};
 use tech::TechTree;
@@ -58,6 +60,7 @@ pub struct ColonyState {
     pub buildings: Vec<Building>,
     pub game_map: GameMap,
     pub tech_tree: TechTree,
+    pub disasters: DisasterSimulator,
 }
 
 impl ColonyState {
@@ -150,11 +153,15 @@ impl ColonyState {
             buildings,
             game_map,
             tech_tree: TechTree::new(),
+            disasters: DisasterSimulator::new(),
         }
     }
 
-    pub fn update(&mut self, dt_secs: f64) {
+    pub fn update(&mut self, dt_secs: f64) -> Option<&'static str> {
         self.sol += dt_secs * 0.05; // 1 Sol every ~20 seconds
+
+        // Update planetary disasters
+        let warning = self.disasters.update(&mut self.game_map, dt_secs);
 
         // Update units along their computed path
         for u in &mut self.units {
@@ -172,6 +179,8 @@ impl ColonyState {
                 }
             }
         }
+
+        warning
     }
 
     /// Issue an 8-way movement order to all currently selected units

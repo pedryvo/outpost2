@@ -316,7 +316,14 @@ pub fn start() -> Result<(), JsValue> {
         }
 
         // Update simulation
-        app_borrow.colony.update(dt.min(0.1));
+        let disaster_warning = app_borrow.colony.update(dt.min(0.1));
+
+        if let Some(warning) = disaster_warning {
+            if let Some(toast) = document.get_element_by_id("research-toast") {
+                toast.set_text_content(Some(warning));
+                let _ = toast.set_attribute("style", "font-size: 11px; font-weight: bold; color: #f97316; display: block;");
+            }
+        }
 
         // Update HUD DOM telemetry values
         if let Some(el) = document.get_element_by_id("colony-sol") {

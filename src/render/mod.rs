@@ -47,6 +47,10 @@ impl Viewport {
 
     /// Render the terrain, colony buildings, and units
     pub fn render(&self, ctx: &CanvasRenderingContext2d, colony: &ColonyState, width: f64, height: f64) {
+        let (shake_x, shake_y) = colony.disasters.quake_shake_offset;
+        let _ = ctx.save();
+        let _ = ctx.translate(shake_x, shake_y);
+
         // Clear background (Deep space black)
         ctx.set_fill_style_str("#07090e");
         ctx.fill_rect(0.0, 0.0, width, height);
@@ -167,6 +171,8 @@ impl Viewport {
             ctx.set_fill_style_str("#16a34a");
             ctx.fill_rect(sx - 12.0, sy - 14.0 * self.zoom, 24.0 * hp_pct, 3.0);
         }
+
+        let _ = ctx.restore();
     }
 
     /// Render mini-radar overview
