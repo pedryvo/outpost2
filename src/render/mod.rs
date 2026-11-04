@@ -59,6 +59,55 @@ fn building_animation_frame(sol: f64, frame_count: usize) -> usize {
     if frame_count == 0 { 0 } else { ((sol * 160.0).max(0.0) as usize) % frame_count }
 }
 
+/// Chimney positions relative to the original sprite canvas.
+fn building_exhaust_sources(name: &str, faction: Faction) -> &'static [(f64, f64)] {
+    if name.contains("Rare Ore Smelter") {
+        if faction == Faction::Eden { &[(0.36, 0.08), (0.55, 0.08)] }
+        else { &[(0.72, 0.10)] }
+    } else if name.contains("Smelter") {
+        if faction == Faction::Eden { &[(0.55, 0.07)] }
+        else { &[(0.30, 0.12), (0.78, 0.12)] }
+    } else if name.contains("Geothermal") {
+        &[(0.32, 0.12), (0.70, 0.12)]
+    } else {
+        &[]
+    }
+}
+
+fn draw_building_exhaust(
+    ctx: &CanvasRenderingContext2d,
+    name: &str,
+    faction: Faction,
+    building_id: u32,
+    sol: f64,
+    sprite_left: f64,
+    sprite_top: f64,
+    sprite_width: f64,
+    sprite_height: f64,
+    zoom: f64,
+) {
+    let sources = building_exhaust_sources(name, faction);
+    for (source_index, &(source_x, source_y)) in sources.iter().enumerate() {
+        let origin_x = sprite_left + sprite_width * source_x;
+        let origin_y = sprite_top + sprite_height * source_y;
+        for puff in 0..4 {
+            let phase = (sol * 30.0 + building_id as f64 * 0.13 + source_index as f64 * 0.41 + puff as f64 * 0.25).rem_euclid(1.0);
+            let drift = if source_index % 2 == 0 { 1.0 } else { -1.0 };
+            let x = origin_x + drift * phase * 9.0 * zoom;
+            let y = origin_y - phase * 25.0 * zoom;
+            let radius = (2.0 + phase * 3.0) * zoom;
+            let alpha = (1.0 - phase) * 0.36;
+            let color = if name.contains("Rare") { (175, 194, 221) }
+                else if name.contains("Geothermal") { (221, 226, 225) }
+                else { (190, 190, 185) };
+            ctx.set_fill_style_str(&format!("rgba({}, {}, {}, {:.3})", color.0, color.1, color.2, alpha));
+            ctx.begin_path();
+            let _ = ctx.arc(x, y, radius, 0.0, std::f64::consts::TAU);
+            ctx.fill();
+        }
+    }
+}
+
 #[cfg(test)]
 mod building_animation_tests {
     use super::*;
@@ -71,6 +120,15 @@ mod building_animation_tests {
         assert_eq!(building_animation_frame(0.0, count), 0);
         assert_eq!(building_animation_frame(0.00625, count), 1);
         assert_eq!(building_animation_frame(count as f64 / 160.0, count), 0);
+    }
+
+    #[test]
+    fn industrial_buildings_have_rooftop_exhaust_sources() {
+        assert_eq!(building_exhaust_sources("Common Ore Smelter", Faction::Eden).len(), 1);
+        assert_eq!(building_exhaust_sources("Common Ore Smelter", Faction::Plymouth).len(), 2);
+        assert_eq!(building_exhaust_sources("Rare Ore Smelter", Faction::Eden).len(), 2);
+        assert_eq!(building_exhaust_sources("Geothermal Power Plant", Faction::Eden).len(), 2);
+        assert!(building_exhaust_sources("Residence", Faction::Eden).is_empty());
     }
 }
 
@@ -401,6 +459,17 @@ impl Viewport {
                     ctx, frame, animation_frame, center_x, bottom_y, self.zoom,
                     b.faction.unwrap_or(colony.faction) == Faction::Eden,
                 ) {
+                        if b.is_active && fog == FogState::Visible {
+                            if let Some((left, top, right, bottom)) = sprite_mgr.atlas.group_bounds(frame) {
+                                let sprite_width = (right - left) as f64 * self.zoom;
+                                let sprite_height = (bottom - top) as f64 * self.zoom;
+                                draw_building_exhaust(
+                                    ctx, &b.name, b.faction.unwrap_or(colony.faction), b.id,
+                                    colony.sol, center_x - sprite_width * 0.5,
+                                    bottom_y - sprite_height, sprite_width, sprite_height, self.zoom,
+                                );
+                            }
+                        }
                         if b.is_selected {
                             ctx.set_stroke_style_str("#b8e868");
                             ctx.set_line_width(1.0);

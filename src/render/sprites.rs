@@ -231,6 +231,7 @@ pub struct SpriteAtlas {
     pub decoded_cache: HashMap<u32, DecodedSprite>,
     canvas_cache: HashMap<u32, HtmlCanvasElement>,
     group_cache: HashMap<(u32, usize, bool), HtmlCanvasElement>,
+    group_bounds_cache: HashMap<u32, (i32, i32, i32, i32)>,
 }
 
 impl SpriteAtlas {
@@ -243,6 +244,7 @@ impl SpriteAtlas {
             decoded_cache: HashMap::new(),
             canvas_cache: HashMap::new(),
             group_cache: HashMap::new(),
+            group_bounds_cache: HashMap::new(),
         }
     }
 
@@ -265,6 +267,17 @@ impl SpriteAtlas {
         self.raw_bitmap = Some(data);
         self.decoded_cache.clear();
         self.canvas_cache.clear();
+        self.group_cache.clear();
+        self.group_bounds_cache.clear();
+    }
+
+    pub fn group_bounds(&mut self, group_id: u32) -> Option<(i32, i32, i32, i32)> {
+        if let Some(bounds) = self.group_bounds_cache.get(&group_id) {
+            return Some(*bounds);
+        }
+        let bounds = self.prt.as_ref()?.animation_bounds(group_id as usize)?;
+        self.group_bounds_cache.insert(group_id, bounds);
+        Some(bounds)
     }
 
     /// Get sprite metadata by ID.
@@ -473,7 +486,7 @@ impl SpriteAtlas {
                 Some(layers) if !layers.is_empty() => layers.clone(),
                 _ => return Ok(false),
             };
-            let bounds = match self.prt.as_ref().and_then(|prt| prt.animation_bounds(group_id as usize)) {
+            let bounds = match self.group_bounds(group_id) {
                 Some(bounds) => bounds,
                 None => return Ok(false),
             };
