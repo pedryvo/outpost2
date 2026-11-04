@@ -114,6 +114,7 @@ pub fn start() -> Result<(), JsValue> {
             let mut g = app.borrow_mut();
             g.hud.state.radar.radar_width = mini_w;
             g.hud.state.radar.radar_height = mini_h;
+            center_on_colony(&mut g, &canvas);
         }
     }
 
@@ -164,17 +165,17 @@ pub fn start() -> Result<(), JsValue> {
             let mut g = app_clone.borrow_mut();
             let _ = g.audio.init();
 
-            let click_x = e.client_x() as f64;
-            let click_y = e.client_y() as f64;
+            let (click_x, click_y) = canvas_position(&canvas_clone, e.client_x(), e.client_y());
 
             if !g.menu.is_in_game() {
                 if e.button() == 0 {
-                    let canvas_w = canvas_clone.width() as f64;
-                    let canvas_h = canvas_clone.height() as f64;
+                    let canvas_w = canvas_clone.client_width() as f64;
+                    let canvas_h = canvas_clone.client_height() as f64;
                     let action = g.menu.handle_mouse_down(click_x, click_y, canvas_w, canvas_h, true);
                     match action {
                         render::MenuAction::StartScenario(sc_id) => {
                             g.colony = ColonyState::new_scenario(sc_id);
+                            center_on_colony(&mut g, &canvas_clone);
                             g.menu.switch_screen(render::MenuScreen::None);
                             g.audio.play_build_confirm();
                         }
@@ -186,6 +187,7 @@ pub fn start() -> Result<(), JsValue> {
                             new_colony.common_ore = c_ore;
                             new_colony.rare_ore = r_ore;
                             g.colony = new_colony;
+                            center_on_colony(&mut g, &canvas_clone);
                             g.menu.switch_screen(render::MenuScreen::None);
                             g.audio.play_build_confirm();
                         }
@@ -241,6 +243,7 @@ pub fn start() -> Result<(), JsValue> {
                         }
                         render::MenuAction::RestartScenario => {
                             g.colony = ColonyState::new_scenario(g.colony.mission.scenario_id);
+                            center_on_colony(&mut g, &canvas_clone);
                             g.menu.switch_screen(render::MenuScreen::None);
                             g.audio.play_build_confirm();
                         }
@@ -491,10 +494,10 @@ pub fn start() -> Result<(), JsValue> {
 
     {
         let app_clone = app.clone();
+        let canvas_clone = canvas.clone();
         let on_mouse_move = Closure::wrap(Box::new(move |e: MouseEvent| {
             let mut g = app_clone.borrow_mut();
-            let cur_x = e.client_x() as f64;
-            let cur_y = e.client_y() as f64;
+            let (cur_x, cur_y) = canvas_position(&canvas_clone, e.client_x(), e.client_y());
 
             if !g.menu.is_in_game() {
                 g.menu.handle_mouse_move(cur_x, cur_y);
@@ -521,6 +524,7 @@ pub fn start() -> Result<(), JsValue> {
 
     {
         let app_clone = app.clone();
+        let canvas_clone = canvas.clone();
         let on_mouse_up = Closure::wrap(Box::new(move |e: MouseEvent| {
             let mut g = app_clone.borrow_mut();
             if !g.menu.is_in_game() {
@@ -530,8 +534,7 @@ pub fn start() -> Result<(), JsValue> {
                 return;
             }
 
-            let click_x = e.client_x() as f64;
-            let click_y = e.client_y() as f64;
+            let (click_x, click_y) = canvas_position(&canvas_clone, e.client_x(), e.client_y());
 
             if let (Some((x1, y1)), Some((x2, y2))) = (g.drag_select_start, g.drag_select_current) {
                 let dist = ((x2 - x1).powi(2) + (y2 - y1).powi(2)).sqrt();
@@ -2809,4 +2812,65 @@ fn request_animation_frame(window: &Window, f: &Closure<dyn FnMut(f64)>) {
     window
         .request_animation_frame(f.as_ref().unchecked_ref())
         .expect("should register `requestAnimationFrame` OK");
+}
+
+fn center_on_colony(app: &mut GameApp, canvas: &HtmlCanvasElement) {
+    let base = app.colony.buildings.iter()
+        .find(|b| b.faction == Some(app.colony.faction) && b.name.contains("Command Center"))
+        .or_else(|| app.colony.buildings.iter().find(|b| b.faction == Some(app.colony.faction)));
+    if let Some(base) = base {
+        let x = base.tile_x as f64 + base.width as f64 * 0.5;
+        let y = base.tile_y as f64 + base.height as f64 * 0.5;
+        let half_w = app.viewport.tile_width * 0.5 * app.viewport.zoom;
+        let half_h = app.viewport.tile_height * 0.5 * app.viewport.zoom;
+        app.viewport.camera_x = canvas.client_width() as f64 * 0.5 - (x - y) * half_w;
+        app.viewport.camera_y = canvas.client_height() as f64 * 0.5 - (x + y) * half_h;
+    }
+}
+
+fn canvas_position(canvas: &HtmlCanvasElement, client_x: i32, client_y: i32) -> (f64, f64) {
+    let rect = canvas.get_bounding_client_rect();
+    logical_canvas_position(
+        client_x as f64,
+        client_y as f64,
+        rect.x(),
+        rect.y(),
+        rect.width(),
+        rect.height(),
+        canvas.client_width() as f64,
+        canvas.client_height() as f64,
+    )
+}
+
+fn logical_canvas_position(
+    client_x: f64,
+    client_y: f64,
+    left: f64,
+    top: f64,
+    displayed_width: f64,
+    displayed_height: f64,
+    logical_width: f64,
+    logical_height: f64,
+) -> (f64, f64) {
+    (
+        (client_x - left) * logical_width / displayed_width,
+        (client_y - top) * logical_height / displayed_height,
+    )
+}
+
+#[cfg(test)]
+mod input_tests {
+    use super::logical_canvas_position;
+
+    #[test]
+    fn pointer_uses_canvas_origin_and_css_size() {
+        assert_eq!(
+            logical_canvas_position(400.0, 378.0, 0.0, 48.0, 800.0, 552.0, 800.0, 552.0),
+            (400.0, 330.0)
+        );
+        assert_eq!(
+            logical_canvas_position(400.0, 378.0, 0.0, 48.0, 400.0, 276.0, 800.0, 552.0),
+            (800.0, 660.0)
+        );
+    }
 }

@@ -11,7 +11,7 @@
  * Ensures full offline playability on Desktop Chrome/Firefox/Edge/Safari, iOS Safari, and Android Chrome.
  */
 
-const CACHE_VERSION = 'outpost2-v1.3.0.8';
+const CACHE_VERSION = 'outpost2-v1.3.0.9';
 const CACHE_NAME = `outpost2-cache-${CACHE_VERSION}`;
 
 // Pre-cached core assets
@@ -173,6 +173,23 @@ self.addEventListener('fetch', (event) => {
 
   // Ignore browser extensions or non-http protocols
   if (!url.protocol.startsWith('http')) {
+    return;
+  }
+
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).then((response) => {
+        if (response.ok) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        }
+        return response;
+      }).catch(async () =>
+        (await caches.match(event.request)) ||
+        (await caches.match('./index.html')) ||
+        caches.match('./')
+      )
+    );
     return;
   }
 
