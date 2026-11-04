@@ -319,7 +319,7 @@ pub fn start() -> Result<(), JsValue> {
                             g.audio.play_ui_beep();
                         }
                         render::MenuAction::PlayBeep => {
-                            g.audio.play_ui_beep();
+                            g.audio.play_ui_click();
                         }
                         _ => {}
                     }
@@ -520,7 +520,9 @@ pub fn start() -> Result<(), JsValue> {
             let (cur_x, cur_y) = canvas_position(&canvas_clone, e.client_x(), e.client_y());
 
             if !g.menu.is_in_game() {
-                g.menu.handle_mouse_move(cur_x, cur_y);
+                if g.menu.handle_mouse_move(cur_x, cur_y) {
+                    g.audio.play_ui_hover();
+                }
                 return;
             }
 

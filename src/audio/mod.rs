@@ -173,7 +173,7 @@ impl AudioManager {
         self.bank.play_voice_event(event_id);
     }
 
-    /// Play futuristic sci-fi UI confirmation beep
+    /// Play futuristic sci-fi UI confirmation beep (beep2.wav)
     pub fn play_ui_beep(&self) {
         if self.muted {
             return;
@@ -184,6 +184,34 @@ impl AudioManager {
         }
         if let (Some(ctx), Some(gain)) = (&self.ctx, self.sfx_output()) {
             let _ = self.play_tone(ctx, gain, 880.0, 0.04);
+        }
+    }
+
+    /// Play lightweight menu button hover sound cue (beep5.wav)
+    pub fn play_ui_hover(&self) {
+        if self.muted {
+            return;
+        }
+        if self.bank.is_sample_loaded("beep5.wav") {
+            self.bank.play_sample_with_volume("beep5.wav", 0.40);
+            return;
+        }
+        if let (Some(ctx), Some(gain)) = (&self.ctx, self.sfx_output()) {
+            let _ = self.play_tone(ctx, gain, 1200.0, 0.025);
+        }
+    }
+
+    /// Play menu button selection/toggle sound cue (beep8.wav)
+    pub fn play_ui_click(&self) {
+        if self.muted {
+            return;
+        }
+        if self.bank.is_sample_loaded("beep8.wav") {
+            self.bank.play_sample_with_volume("beep8.wav", 0.70);
+            return;
+        }
+        if let (Some(ctx), Some(gain)) = (&self.ctx, self.sfx_output()) {
+            let _ = self.play_tone(ctx, gain, 660.0, 0.05);
         }
     }
 
@@ -666,12 +694,19 @@ mod tests {
         assert!(mgr.bank.is_sample_loaded("savant71.wav"));
         assert!(mgr.bank.is_sample_loaded("savant2.wav"));
         assert!(mgr.bank.is_sample_loaded("uni_grad.wav"));
+        assert!(mgr.bank.is_sample_loaded("beep2.wav"));
+        assert!(mgr.bank.is_sample_loaded("beep5.wav"));
+        assert!(mgr.bank.is_sample_loaded("beep8.wav"));
+        assert!(mgr.bank.is_sample_loaded("beep9.wav"));
     }
 
     #[test]
     fn test_audio_event_dispatch_methods_when_muted_or_uninitialized() {
         let mut mgr = AudioManager::new();
         // None of these should panic even when uninitialized
+        mgr.play_ui_beep();
+        mgr.play_ui_hover();
+        mgr.play_ui_click();
         mgr.play_vehicle_selection("Panther Tank #1");
         mgr.play_vehicle_selection("Earthworker #2");
         mgr.play_vehicle_selection("Robo-Miner #3");

@@ -1,0 +1,1074 @@
+{
+  "137": {
+    "id": 137,
+    "title": "MAIN MENU",
+    "pos": [
+      0,
+      0,
+      124,
+      196
+    ],
+    "style": "0x80c00040",
+    "font": {
+      "name": "MS Sans Serif",
+      "size": 8
+    },
+    "controls": [
+      {
+        "id": 1014,
+        "class": "Button",
+        "pos": [
+          17,
+          8,
+          90,
+          14
+        ],
+        "style": "0x50010001",
+        "text": "&TUTORIALS"
+      },
+      {
+        "id": 1000,
+        "class": "Button",
+        "pos": [
+          17,
+          28,
+          90,
+          14
+        ],
+        "style": "0x50010000",
+        "text": "&NEW CAMPAIGN"
+      },
+      {
+        "id": 1006,
+        "class": "Button",
+        "pos": [
+          17,
+          48,
+          90,
+          14
+        ],
+        "style": "0x50010000",
+        "text": "&COLONY GAMES"
+      },
+      {
+        "id": 1005,
+        "class": "Button",
+        "pos": [
+          17,
+          68,
+          90,
+          14
+        ],
+        "style": "0x50010000",
+        "text": "&MULTIPLAYER"
+      },
+      {
+        "id": 1007,
+        "class": "Button",
+        "pos": [
+          17,
+          88,
+          90,
+          14
+        ],
+        "style": "0x50010000",
+        "text": "&LOAD GAME"
+      },
+      {
+        "id": 1011,
+        "class": "Button",
+        "pos": [
+          17,
+          108,
+          90,
+          14
+        ],
+        "style": "0x50010000",
+        "text": "&GAME PREFERENCES"
+      },
+      {
+        "id": 1012,
+        "class": "Button",
+        "pos": [
+          17,
+          128,
+          90,
+          14
+        ],
+        "style": "0x58010000",
+        "text": "&HELP"
+      },
+      {
+        "id": 1010,
+        "class": "Button",
+        "pos": [
+          17,
+          148,
+          90,
+          14
+        ],
+        "style": "0x50010000",
+        "text": "&ABOUT OUTPOST 2"
+      },
+      {
+        "id": 1013,
+        "class": "Button",
+        "pos": [
+          17,
+          168,
+          90,
+          14
+        ],
+        "style": "0x50010000",
+        "text": "&QUIT"
+      },
+      {
+        "id": 1033,
+        "class": "Button",
+        "pos": [
+          17,
+          182,
+          90,
+          9
+        ],
+        "style": "0x50010000",
+        "text": "&DEBUG TEST..."
+      }
+    ]
+  },
+  "140": {
+    "id": 140,
+    "title": "NEW CAMPAIGN OPTIONS",
+    "pos": [
+      0,
+      0,
+      196,
+      114
+    ],
+    "style": "0x80c00040",
+    "font": {
+      "name": "MS Sans Serif",
+      "size": 8
+    },
+    "controls": [
+      {
+        "id": 1014,
+        "class": "Button",
+        "pos": [
+          15,
+          25,
+          11,
+          9
+        ],
+        "style": "0x50020009",
+        "text": ""
+      },
+      {
+        "id": 1015,
+        "class": "Button",
+        "pos": [
+          15,
+          39,
+          12,
+          9
+        ],
+        "style": "0x50000009",
+        "text": ""
+      },
+      {
+        "id": 1018,
+        "class": "Button",
+        "pos": [
+          115,
+          25,
+          11,
+          9
+        ],
+        "style": "0x50020009",
+        "text": ""
+      },
+      {
+        "id": 1017,
+        "class": "Button",
+        "pos": [
+          115,
+          39,
+          12,
+          9
+        ],
+        "style": "0x50000009",
+        "text": ""
+      },
+      {
+        "id": 1016,
+        "class": "Button",
+        "pos": [
+          115,
+          53,
+          11,
+          9
+        ],
+        "style": "0x50000009",
+        "text": ""
+      },
+      {
+        "id": 1,
+        "class": "Button",
+        "pos": [
+          53,
+          75,
+          90,
+          14
+        ],
+        "style": "0x50030001",
+        "text": "&OK"
+      },
+      {
+        "id": 2,
+        "class": "Button",
+        "pos": [
+          53,
+          93,
+          90,
+          14
+        ],
+        "style": "0x50030001",
+        "text": "&CANCEL"
+      },
+      {
+        "id": 65535,
+        "class": "Static",
+        "pos": [
+          7,
+          9,
+          82,
+          12
+        ],
+        "style": "0x50020000",
+        "text": "Colony Selection:"
+      },
+      {
+        "id": 65535,
+        "class": "Static",
+        "pos": [
+          106,
+          9,
+          83,
+          13
+        ],
+        "style": "0x50020000",
+        "text": "Difficulty Level:"
+      },
+      {
+        "id": 65535,
+        "class": "Static",
+        "pos": [
+          29,
+          25,
+          75,
+          12
+        ],
+        "style": "0x50020000",
+        "text": "Eden"
+      },
+      {
+        "id": 65535,
+        "class": "Static",
+        "pos": [
+          29,
+          39,
+          75,
+          12
+        ],
+        "style": "0x50020000",
+        "text": "Plymouth"
+      },
+      {
+        "id": 65535,
+        "class": "Static",
+        "pos": [
+          129,
+          25,
+          59,
+          12
+        ],
+        "style": "0x50020000",
+        "text": "Easy"
+      },
+      {
+        "id": 65535,
+        "class": "Static",
+        "pos": [
+          129,
+          39,
+          51,
+          12
+        ],
+        "style": "0x50020000",
+        "text": "Normal"
+      },
+      {
+        "id": 65535,
+        "class": "Static",
+        "pos": [
+          129,
+          53,
+          38,
+          12
+        ],
+        "style": "0x50020000",
+        "text": "Hard"
+      }
+    ]
+  },
+  "142": {
+    "id": 142,
+    "title": "PREFERENCES",
+    "pos": [
+      0,
+      0,
+      276,
+      198
+    ],
+    "style": "0x80c00040",
+    "font": {
+      "name": "MS Sans Serif",
+      "size": 8
+    },
+    "controls": [
+      {
+        "id": 2,
+        "class": "Button",
+        "pos": [
+          159,
+          173,
+          53,
+          14
+        ],
+        "style": "0x50010000",
+        "text": "CANCEL"
+      },
+      {
+        "id": 1022,
+        "class": "Button",
+        "pos": [
+          6,
+          5,
+          10,
+          10
+        ],
+        "style": "0x50000003",
+        "text": ""
+      },
+      {
+        "id": 1024,
+        "class": "Button",
+        "pos": [
+          133,
+          5,
+          10,
+          10
+        ],
+        "style": "0x50000003",
+        "text": ""
+      },
+      {
+        "id": 1026,
+        "class": "Button",
+        "pos": [
+          6,
+          82,
+          10,
+          10
+        ],
+        "style": "0x50000003",
+        "text": ""
+      },
+      {
+        "id": 1027,
+        "class": "Button",
+        "pos": [
+          6,
+          65,
+          10,
+          10
+        ],
+        "style": "0x50000003",
+        "text": ""
+      },
+      {
+        "id": 1028,
+        "class": "Button",
+        "pos": [
+          133,
+          80,
+          10,
+          10
+        ],
+        "style": "0x50000003",
+        "text": ""
+      },
+      {
+        "id": 1029,
+        "class": "Button",
+        "pos": [
+          133,
+          64,
+          10,
+          10
+        ],
+        "style": "0x50000003",
+        "text": ""
+      },
+      {
+        "id": 65535,
+        "class": "Static",
+        "pos": [
+          133,
+          18,
+          40,
+          12
+        ],
+        "style": "0x50020000",
+        "text": "Volume:"
+      },
+      {
+        "id": 65535,
+        "class": "Static",
+        "pos": [
+          6,
+          100,
+          65,
+          11
+        ],
+        "style": "0x50020000",
+        "text": "Game Speed:"
+      },
+      {
+        "id": 65535,
+        "class": "Static",
+        "pos": [
+          133,
+          100,
+          64,
+          12
+        ],
+        "style": "0x50020000",
+        "text": "Scroll Speed:"
+      },
+      {
+        "id": 65535,
+        "class": "Static",
+        "pos": [
+          19,
+          5,
+          54,
+          11
+        ],
+        "style": "0x50020000",
+        "text": "Music"
+      },
+      {
+        "id": 65535,
+        "class": "Static",
+        "pos": [
+          146,
+          5,
+          92,
+          14
+        ],
+        "style": "0x50020000",
+        "text": "Sound Effects"
+      },
+      {
+        "id": 65535,
+        "class": "Static",
+        "pos": [
+          19,
+          65,
+          78,
+          14
+        ],
+        "style": "0x50020000",
+        "text": "Ambient Animations"
+      },
+      {
+        "id": 65535,
+        "class": "Static",
+        "pos": [
+          146,
+          65,
+          78,
+          14
+        ],
+        "style": "0x50020000",
+        "text": "Unit Shadows"
+      },
+      {
+        "id": 65535,
+        "class": "Static",
+        "pos": [
+          146,
+          80,
+          78,
+          14
+        ],
+        "style": "0x50020000",
+        "text": "Structure Shadows"
+      },
+      {
+        "id": 65535,
+        "class": "Static",
+        "pos": [
+          19,
+          82,
+          78,
+          14
+        ],
+        "style": "0x50020000",
+        "text": "Computer Overlay"
+      },
+      {
+        "id": 1095,
+        "class": "Button",
+        "pos": [
+          6,
+          114,
+          48,
+          14
+        ],
+        "style": "0x50000000",
+        "text": "LESS"
+      },
+      {
+        "id": 1096,
+        "class": "Button",
+        "pos": [
+          145,
+          33,
+          48,
+          14
+        ],
+        "style": "0x50000000",
+        "text": "LESS"
+      },
+      {
+        "id": 1097,
+        "class": "Button",
+        "pos": [
+          146,
+          114,
+          48,
+          14
+        ],
+        "style": "0x50000000",
+        "text": "LESS"
+      },
+      {
+        "id": 1099,
+        "class": "Button",
+        "pos": [
+          66,
+          114,
+          48,
+          14
+        ],
+        "style": "0x50000000",
+        "text": "MORE"
+      },
+      {
+        "id": 1100,
+        "class": "Button",
+        "pos": [
+          205,
+          33,
+          48,
+          14
+        ],
+        "style": "0x50000000",
+        "text": "MORE"
+      },
+      {
+        "id": 1101,
+        "class": "Button",
+        "pos": [
+          206,
+          114,
+          48,
+          14
+        ],
+        "style": "0x50000000",
+        "text": "MORE"
+      },
+      {
+        "id": 1025,
+        "class": "Button",
+        "pos": [
+          6,
+          146,
+          10,
+          10
+        ],
+        "style": "0x50000003",
+        "text": ""
+      },
+      {
+        "id": 65535,
+        "class": "Static",
+        "pos": [
+          20,
+          146,
+          106,
+          14
+        ],
+        "style": "0x50020000",
+        "text": "Play Intro AVI at Startup"
+      },
+      {
+        "id": 1103,
+        "class": "Static",
+        "pos": [
+          215,
+          18,
+          40,
+          12
+        ],
+        "style": "0x50020002",
+        "text": "Static"
+      },
+      {
+        "id": 1104,
+        "class": "Static",
+        "pos": [
+          67,
+          100,
+          40,
+          12
+        ],
+        "style": "0x50020002",
+        "text": "Static"
+      },
+      {
+        "id": 1105,
+        "class": "Static",
+        "pos": [
+          215,
+          100,
+          40,
+          12
+        ],
+        "style": "0x50020002",
+        "text": "Static"
+      },
+      {
+        "id": 1,
+        "class": "Button",
+        "pos": [
+          62,
+          173,
+          53,
+          14
+        ],
+        "style": "0x50010000",
+        "text": "ACCEPT"
+      },
+      {
+        "id": 1030,
+        "class": "Button",
+        "pos": [
+          133,
+          146,
+          10,
+          10
+        ],
+        "style": "0x50000003",
+        "text": ""
+      },
+      {
+        "id": 65535,
+        "class": "Static",
+        "pos": [
+          147,
+          146,
+          124,
+          14
+        ],
+        "style": "0x50020000",
+        "text": "Show Completed Objectives"
+      }
+    ]
+  },
+  "219": {
+    "id": 219,
+    "title": "MISSION MENU",
+    "pos": [
+      0,
+      0,
+      124,
+      126
+    ],
+    "style": "0x80c00040",
+    "font": {
+      "name": "MS Sans Serif",
+      "size": 8
+    },
+    "controls": [
+      {
+        "id": 1091,
+        "class": "Button",
+        "pos": [
+          17,
+          8,
+          90,
+          14
+        ],
+        "style": "0x50010000",
+        "text": "MISSION &BRIEFING"
+      },
+      {
+        "id": 1090,
+        "class": "Button",
+        "pos": [
+          17,
+          28,
+          90,
+          14
+        ],
+        "style": "0x50010000",
+        "text": "SPECIFIC &OBJECTIVES"
+      },
+      {
+        "id": 1005,
+        "class": "Button",
+        "pos": [
+          17,
+          48,
+          90,
+          14
+        ],
+        "style": "0x50010000",
+        "text": "S&TORY"
+      },
+      {
+        "id": 1095,
+        "class": "Button",
+        "pos": [
+          17,
+          68,
+          90,
+          14
+        ],
+        "style": "0x50010000",
+        "text": "&START MISSION"
+      },
+      {
+        "id": 1094,
+        "class": "Button",
+        "pos": [
+          17,
+          98,
+          90,
+          14
+        ],
+        "style": "0x50010000",
+        "text": "&LEAVE CAMPAIGN"
+      }
+    ]
+  },
+  "215": {
+    "id": 215,
+    "title": "CHAPTERS",
+    "pos": [
+      0,
+      0,
+      300,
+      130
+    ],
+    "style": "0x80c00040",
+    "font": {
+      "name": "MS Sans Serif",
+      "size": 8
+    },
+    "controls": [
+      {
+        "id": 1080,
+        "class": "Button",
+        "pos": [
+          52,
+          109,
+          90,
+          14
+        ],
+        "style": "0x50010001",
+        "text": "VIEW STORY"
+      },
+      {
+        "id": 1081,
+        "class": "ListBox",
+        "pos": [
+          7,
+          7,
+          286,
+          97
+        ],
+        "style": "0x50a00101",
+        "text": ""
+      },
+      {
+        "id": 1089,
+        "class": "Button",
+        "pos": [
+          158,
+          109,
+          90,
+          14
+        ],
+        "style": "0x50010000",
+        "text": "MISSION MENU"
+      }
+    ]
+  },
+  "216": {
+    "id": 216,
+    "title": "STORY TITLE",
+    "pos": [
+      0,
+      0,
+      402,
+      234
+    ],
+    "style": "0x80c00040",
+    "font": {
+      "name": "MS Sans Serif",
+      "size": 8
+    },
+    "controls": [
+      {
+        "id": 1082,
+        "class": "Button",
+        "pos": [
+          105,
+          213,
+          90,
+          14
+        ],
+        "style": "0x50010000",
+        "text": "SELECT &CHAPTER"
+      },
+      {
+        "id": 1089,
+        "class": "Button",
+        "pos": [
+          205,
+          213,
+          90,
+          14
+        ],
+        "style": "0x50010001",
+        "text": "&MISSION MENU"
+      }
+    ]
+  },
+  "222": {
+    "id": 222,
+    "title": "COLONY GAMES",
+    "pos": [
+      0,
+      0,
+      318,
+      126
+    ],
+    "style": "0x80c00040",
+    "font": {
+      "name": "MS Sans Serif",
+      "size": 8
+    },
+    "controls": [
+      {
+        "id": 1,
+        "class": "Button",
+        "pos": [
+          7,
+          105,
+          90,
+          14
+        ],
+        "style": "0x50010001",
+        "text": "PLAY"
+      },
+      {
+        "id": 3,
+        "class": "Button",
+        "pos": [
+          111,
+          105,
+          90,
+          14
+        ],
+        "style": "0x50010000",
+        "text": "SCORES"
+      },
+      {
+        "id": 2,
+        "class": "Button",
+        "pos": [
+          215,
+          105,
+          90,
+          14
+        ],
+        "style": "0x50010000",
+        "text": "BACK TO MAIN MENU"
+      },
+      {
+        "id": 1076,
+        "class": "ListBox",
+        "pos": [
+          7,
+          7,
+          213,
+          92
+        ],
+        "style": "0x50a00003",
+        "text": ""
+      },
+      {
+        "id": 1018,
+        "class": "Button",
+        "pos": [
+          233,
+          36,
+          11,
+          9
+        ],
+        "style": "0x50020009",
+        "text": ""
+      },
+      {
+        "id": 1017,
+        "class": "Button",
+        "pos": [
+          233,
+          50,
+          12,
+          9
+        ],
+        "style": "0x50000009",
+        "text": ""
+      },
+      {
+        "id": 1016,
+        "class": "Button",
+        "pos": [
+          233,
+          64,
+          11,
+          9
+        ],
+        "style": "0x50000009",
+        "text": ""
+      },
+      {
+        "id": 65535,
+        "class": "Static",
+        "pos": [
+          235,
+          20,
+          83,
+          13
+        ],
+        "style": "0x50020000",
+        "text": "Difficulty Level:"
+      },
+      {
+        "id": 65535,
+        "class": "Static",
+        "pos": [
+          247,
+          36,
+          59,
+          12
+        ],
+        "style": "0x50020000",
+        "text": "Easy"
+      },
+      {
+        "id": 65535,
+        "class": "Static",
+        "pos": [
+          247,
+          50,
+          51,
+          12
+        ],
+        "style": "0x50020000",
+        "text": "Normal"
+      },
+      {
+        "id": 65535,
+        "class": "Static",
+        "pos": [
+          247,
+          64,
+          38,
+          12
+        ],
+        "style": "0x50020000",
+        "text": "Hard"
+      }
+    ]
+  },
+  "269": {
+    "id": 269,
+    "title": "TUTORIALS",
+    "pos": [
+      0,
+      0,
+      268,
+      154
+    ],
+    "style": "0x80c00040",
+    "font": {
+      "name": "MS Sans Serif",
+      "size": 8
+    },
+    "controls": [
+      {
+        "id": 1,
+        "class": "Button",
+        "pos": [
+          37,
+          127,
+          90,
+          14
+        ],
+        "style": "0x50010001",
+        "text": "START"
+      },
+      {
+        "id": 2,
+        "class": "Button",
+        "pos": [
+          141,
+          127,
+          90,
+          14
+        ],
+        "style": "0x50010000",
+        "text": "BACK TO MAIN MENU"
+      },
+      {
+        "id": 1076,
+        "class": "ListBox",
+        "pos": [
+          7,
+          7,
+          254,
+          119
+        ],
+        "style": "0x50a00003",
+        "text": ""
+      }
+    ]
+  }
+}

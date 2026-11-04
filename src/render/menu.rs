@@ -17,8 +17,10 @@
 //!   and retro visual enhancements
 
 use serde::{Deserialize, Serialize};
-use web_sys::CanvasRenderingContext2d;
+use std::collections::HashMap;
+use web_sys::{CanvasRenderingContext2d, HtmlImageElement};
 
+use crate::render::novella::NOVELLA_CHAPTERS;
 use crate::sim::{
     ai::{AiPersonality, Difficulty},
     save::{LocalStorageBackend, SaveMetadata},
@@ -34,23 +36,54 @@ use crate::sim::{
 pub enum MenuScreen {
     /// In-game live simulation (menu hidden)
     None,
-    /// Outpost 2 Title Splash & Primary Navigation
+    /// Outpost 2 Title Splash & Primary Navigation (Dialog 137)
     MainMenu,
-    /// Campaign Scenario Selection (Eden 1-3, Plymouth 1-3, Tutorial)
+    /// Campaign Scenario Selection / Colony Options (Dialog 140)
     CampaignSelect,
-    /// Tactical Campaign Mission Briefing & Directive Inspection
+    /// Tactical Campaign Mission Briefing & Novella (Dialog 219)
     CampaignBriefing,
-    /// Skirmish Battle Lobby (Custom Map & 1-5 AI Opponents)
+    /// Skirmish Battle Lobby (Dialog 222 Colony Games)
     SkirmishSetup,
     /// Serverless Peer-to-Peer WebRTC Multiplayer Lobby
     MultiplayerLobby,
     /// Visual Save/Load Slot Manager & .op2save Archiver
     LoadMission,
-    /// System Audio & Game Velocity Configuration
+    /// System Audio & Preferences Configuration (Dialog 142)
     Options,
     /// In-Game Tactical Pause Overlay
     PauseMenu,
+    /// Tutorials List Screen (Dialog 269)
+    Tutorials,
+    /// Authentic Outpost 2 Lore & Credits Dialog
+    About,
 }
+
+/// Campaign Difficulty selection (Dialog 140 / Dialog 222)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum CampaignDifficulty {
+    Easy,
+    Normal,
+    Hard,
+}
+
+impl CampaignDifficulty {
+    pub fn display_name(&self) -> &'static str {
+        match self {
+            Self::Easy => "Easy",
+            Self::Normal => "Normal",
+            Self::Hard => "Hard",
+        }
+    }
+}
+
+/// Active tab in Dialog 219 (Mission Menu / Briefing)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum BriefingTab {
+    Briefing,
+    Objectives,
+    Story,
+}
+
 
 /// Resource abundance tier for skirmish matches
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -561,6 +594,26 @@ impl MenuButton {
         }
     }
 
+    pub fn disabled(
+        id: impl Into<String>,
+        x: f64,
+        y: f64,
+        w: f64,
+        h: f64,
+        label: impl Into<String>,
+    ) -> Self {
+        Self {
+            id: id.into(),
+            x,
+            y,
+            w,
+            h,
+            label: label.into(),
+            accent_color: "#646464".into(),
+            enabled: false,
+        }
+    }
+
     pub fn contains(&self, px: f64, py: f64) -> bool {
         self.enabled && px >= self.x && px <= self.x + self.w && py >= self.y && py <= self.y + self.h
     }
@@ -599,6 +652,7 @@ pub enum MenuAction {
     ToggleMpReady,
     LaunchMultiplayerMatch,
     PlayBeep,
+    Quit,
 }
 
 // =========================================================================
@@ -648,7 +702,19 @@ pub struct MenuManager {
     pub mp_room: crate::net::lobby::LobbyRoom,
     pub mp_offer_input: String,
     pub mp_answer_input: String,
+    // Dialog 140 state
+    pub selected_faction: Faction,
+    pub campaign_difficulty: CampaignDifficulty,
+    // Dialog 219 state
+    pub briefing_tab: BriefingTab,
+    pub story_chapter_index: usize,
+    // Native assets
+    pub shell_backdrop: Option<HtmlImageElement>,
+    pub title_plate: Option<HtmlImageElement>,
+    pub briefing_images: HashMap<usize, HtmlImageElement>,
     cached_buttons: Vec<MenuButton>,
+    pub hovered_btn_id: Option<String>,
+    pub active_pressed_btn_id: Option<String>,
 }
 
 impl Default for MenuManager {
@@ -678,7 +744,58 @@ impl MenuManager {
             mp_room,
             mp_offer_input: String::new(),
             mp_answer_input: String::new(),
+            selected_faction: Faction::Eden,
+            campaign_difficulty: CampaignDifficulty::Normal,
+            briefing_tab: BriefingTab::Briefing,
+            story_chapter_index: 0,
+            shell_backdrop: {
+                #[cfg(target_arch = "wasm32")]
+                {
+                    let img = HtmlImageElement::new().ok();
+                    if let Some(ref image) = img {
+                        image.set_src("assets/original_ui/shell_background_640x480.png");
+                    }
+                    img
+                }
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    None
+                }
+            },
+            title_plate: {
+                #[cfg(target_arch = "wasm32")]
+                {
+                    let img = HtmlImageElement::new().ok();
+                    if let Some(ref image) = img {
+                        image.set_src("assets/original_ui/title_plate_logo_544x122.png");
+                    }
+                    img
+                }
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    None
+                }
+            },
+            briefing_images: {
+                #[cfg(target_arch = "wasm32")]
+                {
+                    let mut map = HashMap::new();
+                    for bid in [400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414, 415, 416, 417, 418, 419, 420, 421, 422, 423] {
+                        if let Ok(img) = HtmlImageElement::new() {
+                            img.set_src(&format!("assets/original_ui/briefing/bmp_{}.png", bid));
+                            map.insert(bid, img);
+                        }
+                    }
+                    map
+                }
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    HashMap::new()
+                }
+            },
             cached_buttons: Vec::new(),
+            hovered_btn_id: None,
+            active_pressed_btn_id: None,
         };
         mgr.refresh_save_slots();
         mgr
@@ -712,6 +829,7 @@ impl MenuManager {
             self.previous_screen = self.current_screen;
             self.current_screen = next;
             self.transition_alpha = 0.0;
+            self.hovered_btn_id = None;
             if next == MenuScreen::LoadMission {
                 self.refresh_save_slots();
             }
@@ -738,9 +856,21 @@ impl MenuManager {
         self.status_message = Some((msg.into(), duration_sec));
     }
 
-    /// Update mouse hover coordinate
-    pub fn handle_mouse_move(&mut self, x: f64, y: f64) {
+    /// Update mouse hover coordinate and detect newly hovered button (returns true if a new button was entered)
+    pub fn handle_mouse_move(&mut self, x: f64, y: f64) -> bool {
         self.mouse_pos = (x, y);
+        let new_hover = self
+            .cached_buttons
+            .iter()
+            .find(|b| b.contains(x, y))
+            .map(|b| b.id.clone());
+
+        if new_hover != self.hovered_btn_id {
+            self.hovered_btn_id = new_hover.clone();
+            new_hover.is_some()
+        } else {
+            false
+        }
     }
 
     /// Handle keyboard shortcut dispatch for menus
@@ -801,20 +931,31 @@ impl MenuManager {
             .find(|b| b.contains(click_x, click_y))
             .map(|b| b.id.clone());
 
-        if let Some(id) = hit_btn {
-            self.execute_button_action(&id)
+        if let Some(ref id) = hit_btn {
+            self.active_pressed_btn_id = Some(id.clone());
+            self.execute_button_action(id)
         } else {
+            self.active_pressed_btn_id = None;
             MenuAction::None
         }
+    }
+
+    /// Reset pressed button state when mouse is released
+    pub fn handle_mouse_up(&mut self) {
+        self.active_pressed_btn_id = None;
     }
 
     /// Execute command associated with a button ID
     pub fn execute_button_action(&mut self, btn_id: &str) -> MenuAction {
         match btn_id {
-            // Main Menu
+            // Main Menu (Dialog 137)
             "btn_resume" => {
                 self.switch_screen(MenuScreen::None);
                 MenuAction::ResumeGame
+            }
+            "btn_tutorials" => {
+                self.switch_screen(MenuScreen::Tutorials);
+                MenuAction::PlayBeep
             }
             "btn_campaign" => {
                 self.switch_screen(MenuScreen::CampaignSelect);
@@ -836,6 +977,87 @@ impl MenuManager {
                 self.switch_screen(MenuScreen::Options);
                 MenuAction::PlayBeep
             }
+            "btn_help" => {
+                // Authentic 1997 Help button - disabled/grayed out
+                MenuAction::None
+            }
+            "btn_about" => {
+                self.switch_screen(MenuScreen::About);
+                MenuAction::PlayBeep
+            }
+            "btn_quit" => {
+                MenuAction::Quit
+            }
+
+            // Dialog 140: New Campaign Options
+            "btn_d140_fac_eden" => {
+                self.selected_faction = Faction::Eden;
+                MenuAction::PlayBeep
+            }
+            "btn_d140_fac_plymouth" => {
+                self.selected_faction = Faction::Plymouth;
+                MenuAction::PlayBeep
+            }
+            "btn_d140_diff_easy" => {
+                self.campaign_difficulty = CampaignDifficulty::Easy;
+                MenuAction::PlayBeep
+            }
+            "btn_d140_diff_normal" => {
+                self.campaign_difficulty = CampaignDifficulty::Normal;
+                MenuAction::PlayBeep
+            }
+            "btn_d140_diff_hard" => {
+                self.campaign_difficulty = CampaignDifficulty::Hard;
+                MenuAction::PlayBeep
+            }
+            "btn_d140_ok" => {
+                // Determine initial scenario based on selected faction: Eden -> 0, Plymouth -> 1
+                self.selected_scenario_id = if self.selected_faction == Faction::Eden { 0 } else { 1 };
+                self.briefing_tab = BriefingTab::Briefing;
+                self.switch_screen(MenuScreen::CampaignBriefing);
+                MenuAction::PlayBeep
+            }
+            "btn_d140_cancel" => {
+                self.switch_screen(MenuScreen::MainMenu);
+                MenuAction::PlayBeep
+            }
+
+            // Dialog 219: Mission Menu / Briefing Controls
+            "btn_d219_briefing" => {
+                self.briefing_tab = BriefingTab::Briefing;
+                MenuAction::PlayBeep
+            }
+            "btn_d219_objectives" => {
+                self.briefing_tab = BriefingTab::Objectives;
+                MenuAction::PlayBeep
+            }
+            "btn_d219_story" => {
+                self.briefing_tab = BriefingTab::Story;
+                MenuAction::PlayBeep
+            }
+            "btn_d219_start_mission" => {
+                let id = self.selected_scenario_id;
+                self.switch_screen(MenuScreen::None);
+                MenuAction::StartScenario(id)
+            }
+            "btn_d219_leave_campaign" => {
+                self.switch_screen(MenuScreen::MainMenu);
+                MenuAction::PlayBeep
+            }
+
+            // Dialog 219 Story Navigation
+            "btn_story_prev" => {
+                if self.story_chapter_index > 0 {
+                    self.story_chapter_index -= 1;
+                }
+                MenuAction::PlayBeep
+            }
+            "btn_story_next" => {
+                if self.story_chapter_index + 1 < NOVELLA_CHAPTERS.len() {
+                    self.story_chapter_index += 1;
+                }
+                MenuAction::PlayBeep
+            }
 
             // Navigation
             "btn_back" => {
@@ -852,7 +1074,7 @@ impl MenuManager {
                 MenuAction::PlayBeep
             }
 
-            // Campaign Selection
+            // Campaign Selection (Direct Scenario Buttons)
             id if id.starts_with("scenario_") => {
                 if let Ok(idx) = id.trim_start_matches("scenario_").parse::<usize>() {
                     self.selected_scenario_id = idx;
@@ -863,7 +1085,7 @@ impl MenuManager {
                 }
             }
 
-            // Campaign Briefing
+            // Legacy Campaign Briefing Actions
             "btn_begin_operation" => {
                 let id = self.selected_scenario_id;
                 self.switch_screen(MenuScreen::None);
@@ -1163,11 +1385,12 @@ impl MenuManager {
             MenuScreen::None => {}
 
             MenuScreen::MainMenu => {
-                let btn_w = (screen_w * 0.38).clamp(360.0, 440.0);
-                let btn_h = 44.0;
+                // Dialog 137 Authentic Layout: DLU 90x14 -> scaled to ~200x28px
+                let btn_w = 200.0;
+                let btn_h = 28.0;
                 let cx = (screen_w - btn_w) * 0.5;
-                let mut start_y = if has_game { 238.0 } else { 252.0 };
-                let spacing = 52.0;
+                let mut start_y = if has_game { 160.0 } else { 172.0 };
+                let spacing = 32.0;
 
                 if has_game {
                     btns.push(MenuButton::new(
@@ -1176,172 +1399,345 @@ impl MenuManager {
                         start_y,
                         btn_w,
                         btn_h,
-                        dict.main_menu.resume_operation,
+                        "RESUME OPERATION",
                         "#4ade80",
                     ));
                     start_y += spacing;
                 }
 
+                // Authentic Dialog 137 Buttons:
+                // 1. TUTORIALS
+                btns.push(MenuButton::new(
+                    "btn_tutorials",
+                    cx,
+                    start_y,
+                    btn_w,
+                    btn_h,
+                    "TUTORIALS",
+                    "#00ff00",
+                ));
+                start_y += spacing;
+
+                // 2. NEW CAMPAIGN
                 btns.push(MenuButton::new(
                     "btn_campaign",
                     cx,
                     start_y,
                     btn_w,
                     btn_h,
-                    dict.main_menu.campaign_missions,
-                    "#38bdf8",
+                    "NEW CAMPAIGN",
+                    "#00ff00",
                 ));
                 start_y += spacing;
 
+                // 3. COLONY GAMES
                 btns.push(MenuButton::new(
                     "btn_skirmish",
                     cx,
                     start_y,
                     btn_w,
                     btn_h,
-                    dict.main_menu.skirmish_battle,
-                    "#f97316",
+                    "COLONY GAMES",
+                    "#00ff00",
                 ));
                 start_y += spacing;
 
+                // 4. MULTIPLAYER
                 btns.push(MenuButton::new(
                     "btn_multiplayer",
                     cx,
                     start_y,
                     btn_w,
                     btn_h,
-                    dict.main_menu.multiplayer_lobby,
-                    "#818cf8",
+                    "MULTIPLAYER",
+                    "#00ff00",
                 ));
                 start_y += spacing;
 
+                // 5. LOAD GAME
                 btns.push(MenuButton::new(
                     "btn_load",
                     cx,
                     start_y,
                     btn_w,
                     btn_h,
-                    dict.main_menu.load_archive,
-                    "#facc15",
+                    "LOAD GAME",
+                    "#00ff00",
                 ));
                 start_y += spacing;
 
+                // 6. GAME PREFERENCES
                 btns.push(MenuButton::new(
                     "btn_options",
                     cx,
                     start_y,
                     btn_w,
                     btn_h,
-                    dict.main_menu.options_audio_velocity,
-                    "#cbd5e1",
+                    "GAME PREFERENCES",
+                    "#00ff00",
+                ));
+                start_y += spacing;
+
+                // 7. HELP (authentic 1997 look: grayed out disabled)
+                btns.push(MenuButton::disabled(
+                    "btn_help",
+                    cx,
+                    start_y,
+                    btn_w,
+                    btn_h,
+                    "HELP",
+                ));
+                start_y += spacing;
+
+                // 8. ABOUT OUTPOST 2
+                btns.push(MenuButton::new(
+                    "btn_about",
+                    cx,
+                    start_y,
+                    btn_w,
+                    btn_h,
+                    "ABOUT OUTPOST 2",
+                    "#00ff00",
+                ));
+                start_y += spacing;
+
+                // 9. QUIT
+                btns.push(MenuButton::new(
+                    "btn_quit",
+                    cx,
+                    start_y,
+                    btn_w,
+                    btn_h,
+                    "QUIT",
+                    "#00ff00",
                 ));
             }
 
             MenuScreen::CampaignSelect => {
-                let panel_w = (screen_w * 0.85).clamp(600.0, 920.0);
-                let px = (screen_w - panel_w) * 0.5;
-                let start_y = 120.0;
-                let col_w = (panel_w - 40.0) * 0.5;
+                // Dialog 140: NEW CAMPAIGN OPTIONS dialog (pos: 196x114 DLUs -> scaled 440x260px)
+                let dlg_w = 460.0;
+                let dlg_h = 280.0;
+                let dx = (screen_w - dlg_w) * 0.5;
+                let dy = (screen_h - dlg_h) * 0.5;
 
-                // Eden Column (Left)
-                let eden_ids = [0, 3, 5];
-                for (i, &sc_id) in eden_ids.iter().enumerate() {
-                    let y = start_y + (i as f64) * 85.0;
-                    let sc = BriefingScenario::get_localized(sc_id, lang);
-                    btns.push(MenuButton::new(
-                        format!("scenario_{}", sc_id),
-                        px,
-                        y,
-                        col_w,
-                        75.0,
-                        format!("EDEN {}: {}", i + 1, sc.title),
-                        "#38bdf8",
-                    ));
-                }
-
-                // Plymouth Column (Right)
-                let ply_ids = [1, 4, 6];
-                let ply_x = px + col_w + 40.0;
-                for (i, &sc_id) in ply_ids.iter().enumerate() {
-                    let y = start_y + (i as f64) * 85.0;
-                    let sc = BriefingScenario::get_localized(sc_id, lang);
-                    btns.push(MenuButton::new(
-                        format!("scenario_{}", sc_id),
-                        ply_x,
-                        y,
-                        col_w,
-                        75.0,
-                        format!("PLYMOUTH {}: {}", i + 1, sc.title),
-                        "#ef4444",
-                    ));
-                }
-
-                // Academy Tutorial
-                let tut_y = start_y + 3.0 * 85.0 + 10.0;
+                // Faction Radio Buttons (Eden vs Plymouth)
                 btns.push(MenuButton::new(
-                    "scenario_2",
-                    px,
-                    tut_y,
-                    panel_w,
-                    55.0,
-                    dict.main_menu.tutorial_button,
-                    "#facc15",
+                    "btn_d140_fac_eden",
+                    dx + 30.0,
+                    dy + 72.0,
+                    170.0,
+                    32.0,
+                    if self.selected_faction == Faction::Eden { "(X) EDEN" } else { "( ) EDEN" },
+                    if self.selected_faction == Faction::Eden { "#00d4ff" } else { "#475569" },
                 ));
 
-                // Back Button
                 btns.push(MenuButton::new(
-                    "btn_back_main",
-                    px,
-                    tut_y + 70.0,
-                    160.0,
-                    40.0,
-                    dict.main_menu.back_to_menu,
-                    "#94a3b8",
+                    "btn_d140_fac_plymouth",
+                    dx + 30.0,
+                    dy + 112.0,
+                    170.0,
+                    32.0,
+                    if self.selected_faction == Faction::Plymouth { "(X) PLYMOUTH" } else { "( ) PLYMOUTH" },
+                    if self.selected_faction == Faction::Plymouth { "#ff8c00" } else { "#475569" },
+                ));
+
+                // Difficulty Radio Buttons (Easy, Normal, Hard)
+                btns.push(MenuButton::new(
+                    "btn_d140_diff_easy",
+                    dx + 250.0,
+                    dy + 65.0,
+                    170.0,
+                    28.0,
+                    if self.campaign_difficulty == CampaignDifficulty::Easy { "(X) EASY" } else { "( ) EASY" },
+                    if self.campaign_difficulty == CampaignDifficulty::Easy { "#00ff00" } else { "#475569" },
+                ));
+
+                btns.push(MenuButton::new(
+                    "btn_d140_diff_normal",
+                    dx + 250.0,
+                    dy + 98.0,
+                    170.0,
+                    28.0,
+                    if self.campaign_difficulty == CampaignDifficulty::Normal { "(X) NORMAL" } else { "( ) NORMAL" },
+                    if self.campaign_difficulty == CampaignDifficulty::Normal { "#00ff00" } else { "#475569" },
+                ));
+
+                btns.push(MenuButton::new(
+                    "btn_d140_diff_hard",
+                    dx + 250.0,
+                    dy + 131.0,
+                    170.0,
+                    28.0,
+                    if self.campaign_difficulty == CampaignDifficulty::Hard { "(X) HARD" } else { "( ) HARD" },
+                    if self.campaign_difficulty == CampaignDifficulty::Hard { "#00ff00" } else { "#475569" },
+                ));
+
+                // OK and CANCEL Action Buttons (Authentic 90x14 DLUs -> 180x28px)
+                btns.push(MenuButton::new(
+                    "btn_d140_ok",
+                    dx + 130.0,
+                    dy + 185.0,
+                    200.0,
+                    28.0,
+                    "OK",
+                    "#00ff00",
+                ));
+
+                btns.push(MenuButton::new(
+                    "btn_d140_cancel",
+                    dx + 130.0,
+                    dy + 224.0,
+                    200.0,
+                    28.0,
+                    "CANCEL",
+                    "#00ff00",
                 ));
             }
 
             MenuScreen::CampaignBriefing => {
-                let panel_w = (screen_w * 0.9).clamp(640.0, 960.0);
-                let panel_h = (screen_h * 0.85).clamp(480.0, 680.0);
-                let px = (screen_w - panel_w) * 0.5;
-                let py = (screen_h - panel_h) * 0.5;
-                let bottom_y = py + panel_h - 60.0;
+                // Dialog 219: MISSION MENU & BRIEFING
+                // Authentic Dialog 219 command buttons on left column:
+                let btn_w = 180.0;
+                let btn_h = 28.0;
+                let left_x = 36.0;
+                let mut btn_y = 60.0;
+                let spacing = 36.0;
 
+                // 1. MISSION BRIEFING
                 btns.push(MenuButton::new(
-                    "btn_back",
-                    px + 20.0,
-                    bottom_y,
-                    140.0,
-                    42.0,
-                    dict.main_menu.back,
-                    "#94a3b8",
+                    "btn_d219_briefing",
+                    left_x,
+                    btn_y,
+                    btn_w,
+                    btn_h,
+                    if self.briefing_tab == BriefingTab::Briefing { "> MISSION BRIEFING" } else { "MISSION BRIEFING" },
+                    if self.briefing_tab == BriefingTab::Briefing { "#ddff22" } else { "#00ff00" },
                 ));
+                btn_y += spacing;
+
+                // 2. SPECIFIC OBJECTIVES
                 btns.push(MenuButton::new(
-                    "btn_briefing_prev",
-                    px + 170.0,
-                    bottom_y,
-                    120.0,
-                    42.0,
-                    dict.main_menu.prev_op,
-                    "#38bdf8",
+                    "btn_d219_objectives",
+                    left_x,
+                    btn_y,
+                    btn_w,
+                    btn_h,
+                    if self.briefing_tab == BriefingTab::Objectives { "> SPECIFIC OBJECTIVES" } else { "SPECIFIC OBJECTIVES" },
+                    if self.briefing_tab == BriefingTab::Objectives { "#ddff22" } else { "#00ff00" },
                 ));
+                btn_y += spacing;
+
+                // 3. STORY
                 btns.push(MenuButton::new(
-                    "btn_briefing_next",
-                    px + 300.0,
-                    bottom_y,
-                    120.0,
-                    42.0,
-                    dict.main_menu.next_op,
-                    "#38bdf8",
+                    "btn_d219_story",
+                    left_x,
+                    btn_y,
+                    btn_w,
+                    btn_h,
+                    if self.briefing_tab == BriefingTab::Story { "> STORY" } else { "STORY" },
+                    if self.briefing_tab == BriefingTab::Story { "#ddff22" } else { "#00ff00" },
                 ));
+                btn_y += spacing;
+
+                // 4. START MISSION
+                btns.push(MenuButton::new(
+                    "btn_d219_start_mission",
+                    left_x,
+                    btn_y,
+                    btn_w,
+                    btn_h,
+                    "START MISSION",
+                    "#00ff00",
+                ));
+                btn_y += spacing + 12.0;
+
+                // 5. LEAVE CAMPAIGN
+                btns.push(MenuButton::new(
+                    "btn_d219_leave_campaign",
+                    left_x,
+                    btn_y,
+                    btn_w,
+                    btn_h,
+                    "LEAVE CAMPAIGN",
+                    "#00ff00",
+                ));
+
+                // If in Story Tab, provide Previous / Next Chapter buttons
+                if self.briefing_tab == BriefingTab::Story {
+                    let story_box_x = 240.0;
+                    let story_box_y = screen_h - 48.0;
+                    btns.push(MenuButton::new(
+                        "btn_story_prev",
+                        story_box_x,
+                        story_box_y,
+                        130.0,
+                        26.0,
+                        "< PREV CHAPTER",
+                        "#00ff00",
+                    ));
+                    btns.push(MenuButton::new(
+                        "btn_story_next",
+                        story_box_x + 150.0,
+                        story_box_y,
+                        130.0,
+                        26.0,
+                        "NEXT CHAPTER >",
+                        "#00ff00",
+                    ));
+                }
+
+                // Also provide backwards compatibility with btn_begin_operation
                 btns.push(MenuButton::new(
                     "btn_begin_operation",
-                    px + panel_w - 240.0,
-                    bottom_y,
-                    220.0,
-                    42.0,
-                    dict.main_menu.begin_operation,
-                    "#4ade80",
+                    left_x,
+                    screen_h - 48.0,
+                    btn_w,
+                    26.0,
+                    "BEGIN OPERATION",
+                    "#00ff00",
+                ));
+            }
+
+            MenuScreen::Tutorials => {
+                // Dialog 269: TUTORIALS
+                let btn_w = 180.0;
+                let btn_h = 28.0;
+                let cx = (screen_w - btn_w) * 0.5;
+
+                // Scenario 2 is the Tutorial Academy simulator
+                btns.push(MenuButton::new(
+                    "scenario_2",
+                    cx - 100.0,
+                    screen_h - 60.0,
+                    btn_w,
+                    btn_h,
+                    "START TUTORIAL",
+                    "#00ff00",
+                ));
+
+                btns.push(MenuButton::new(
+                    "btn_back_main",
+                    cx + 100.0,
+                    screen_h - 60.0,
+                    btn_w,
+                    btn_h,
+                    "BACK TO MAIN MENU",
+                    "#00ff00",
+                ));
+            }
+
+            MenuScreen::About => {
+                let btn_w = 180.0;
+                let btn_h = 28.0;
+                let cx = (screen_w - btn_w) * 0.5;
+                btns.push(MenuButton::new(
+                    "btn_back_main",
+                    cx,
+                    screen_h - 60.0,
+                    btn_w,
+                    btn_h,
+                    "BACK TO MAIN MENU",
+                    "#00ff00",
                 ));
             }
 
@@ -2024,6 +2420,8 @@ impl MenuManager {
             MenuScreen::LoadMission => self.render_load_mission(ctx, width, height),
             MenuScreen::Options => self.render_options(ctx, width, height),
             MenuScreen::MultiplayerLobby => self.render_multiplayer_lobby(ctx, width, height),
+            MenuScreen::Tutorials => self.render_tutorials(ctx, width, height),
+            MenuScreen::About => self.render_about(ctx, width, height),
             MenuScreen::None | MenuScreen::PauseMenu => {}
         }
 
@@ -2505,119 +2903,234 @@ impl MenuManager {
         ctx.set_text_align("left");
     }
 
-    /// Render Campaign Scenario Selector (Eden 1-3 vs Plymouth 1-3)
-    fn render_campaign_select(&self, ctx: &CanvasRenderingContext2d, w: f64, _h: f64) {
-        let cx = w * 0.5;
-        let lang = crate::i18n::Language::from_code(&self.options.language);
-        let dict = crate::i18n::get_dictionary(lang);
+    /// Render Dialog 140 ("NEW CAMPAIGN OPTIONS")
+    fn render_campaign_select(&self, ctx: &CanvasRenderingContext2d, w: f64, h: f64) {
+        let dlg_w = 460.0;
+        let dlg_h = 280.0;
+        let dx = (w - dlg_w) * 0.5;
+        let dy = (h - dlg_h) * 0.5;
+
+        // Dialog Window Frame
+        ctx.set_fill_style_str("#0a0a0a");
+        ctx.fill_rect(dx, dy, dlg_w, dlg_h);
+
+        // Outer Metallic 3D Border
+        ctx.set_stroke_style_str("#a01f10");
+        ctx.set_line_width(2.0);
+        ctx.stroke_rect(dx, dy, dlg_w, dlg_h);
+
+        // Title Bar
+        ctx.set_fill_style_str("#1c0402");
+        ctx.fill_rect(dx, dy, dlg_w, 28.0);
+        ctx.set_stroke_style_str("#720000");
+        ctx.stroke_rect(dx, dy, dlg_w, 28.0);
 
         ctx.set_text_align("center");
-        ctx.set_font("bold 24px system-ui, sans-serif");
-        ctx.set_fill_style_str("#38bdf8");
-        let _ = ctx.fill_text(dict.main_menu.select_theater, cx, 65.0);
+        ctx.set_font("bold 12px 'MS Sans Serif', Tahoma, sans-serif");
+        ctx.set_fill_style_str("#ddff22");
+        let _ = ctx.fill_text("NEW CAMPAIGN OPTIONS", dx + dlg_w * 0.5, dy + 18.0);
 
-        ctx.set_font("12px system-ui, sans-serif");
-        ctx.set_fill_style_str("#94a3b8");
-        let _ = ctx.fill_text(
-            dict.main_menu.select_theater_sub,
-            cx,
-            90.0,
-        );
-
+        // Section Headers
         ctx.set_text_align("left");
+        ctx.set_font("bold 11px 'MS Sans Serif', Tahoma, sans-serif");
+        ctx.set_fill_style_str("#00ff00");
+        let _ = ctx.fill_text("Colony Selection:", dx + 30.0, dy + 55.0);
+        let _ = ctx.fill_text("Difficulty Level:", dx + 250.0, dy + 50.0);
+
+        // Faction Emblem preview badges
+        self.render_faction_logo(ctx, Faction::Eden, dx + 180.0, dy + 88.0, 16.0);
+        self.render_faction_logo(ctx, Faction::Plymouth, dx + 180.0, dy + 128.0, 16.0);
     }
 
-    /// Render Detailed Tactical Campaign Mission Briefing & Directive Inspection
+    /// Render Dialog 219 ("MISSION MENU" / Campaign Briefing, Objectives & Novella Story)
     fn render_campaign_briefing(&self, ctx: &CanvasRenderingContext2d, w: f64, h: f64) {
         let lang = crate::i18n::Language::from_code(&self.options.language);
         let sc = BriefingScenario::get_localized(self.selected_scenario_id, lang);
-        let dict = crate::i18n::get_dictionary(lang);
-        let panel_w = (w * 0.9).clamp(640.0, 960.0);
-        let panel_h = (h * 0.85).clamp(480.0, 680.0);
-        let px = (w - panel_w) * 0.5;
-        let py = (h - panel_h) * 0.5;
 
-        // Backdrop panel
-        ctx.set_fill_style_str("rgba(15, 23, 42, 0.95)");
-        ctx.fill_rect(px, py, panel_w, panel_h);
+        // Dialog 219 Shell layout: Left Menu Box + Right Main Content Box
+        let left_panel_w = 210.0;
+        let content_x = left_panel_w + 30.0;
+        let content_w = (w - content_x - 30.0).max(360.0);
+        let content_y = 30.0;
+        let content_h = (h - 60.0).max(400.0);
 
-        let border_col = if sc.faction == Faction::Eden {
-            "#38bdf8"
-        } else {
-            "#ef4444"
-        };
-        ctx.set_stroke_style_str(border_col);
+        // Right Main Content Frame
+        ctx.set_fill_style_str("#080808");
+        ctx.fill_rect(content_x, content_y, content_w, content_h);
+
+        ctx.set_stroke_style_str("#a01f10");
         ctx.set_line_width(2.0);
-        ctx.stroke_rect(px, py, panel_w, panel_h);
+        ctx.stroke_rect(content_x, content_y, content_w, content_h);
 
-        // Header Bar
-        ctx.set_fill_style_str("#1e293b");
-        ctx.fill_rect(px, py, panel_w, 42.0);
+        // Header Title Bar
+        ctx.set_fill_style_str("#1c0402");
+        ctx.fill_rect(content_x, content_y, content_w, 32.0);
+        ctx.set_stroke_style_str("#720000");
+        ctx.stroke_rect(content_x, content_y, content_w, 32.0);
 
-        ctx.set_font("bold 14px system-ui, sans-serif");
-        ctx.set_fill_style_str(border_col);
-        let _ = ctx.fill_text(&format!("TACTICAL OPERATION BRIEFING // {}", sc.title.to_uppercase()), px + 16.0, py + 26.0);
+        ctx.set_text_align("left");
+        ctx.set_font("bold 12px 'MS Sans Serif', Tahoma, sans-serif");
+        ctx.set_fill_style_str("#ddff22");
 
-        // Faction Emblem vector art (Left)
-        let emblem_cx = px + 60.0;
-        let emblem_cy = py + 95.0;
-        self.render_faction_logo(ctx, sc.faction, emblem_cx, emblem_cy, 30.0);
+        let tab_title = match self.briefing_tab {
+            BriefingTab::Briefing => format!("MISSION BRIEFING — {}", sc.title.to_uppercase()),
+            BriefingTab::Objectives => format!("SPECIFIC OBJECTIVES — {}", sc.title.to_uppercase()),
+            BriefingTab::Story => {
+                let ch = &NOVELLA_CHAPTERS[self.story_chapter_index.min(NOVELLA_CHAPTERS.len() - 1)];
+                format!("STORY — {}", ch.title.to_uppercase())
+            }
+        };
+        let _ = ctx.fill_text(&tab_title, content_x + 16.0, content_y + 21.0);
 
-        // Title and Subtitle
-        ctx.set_font("bold 18px system-ui, sans-serif");
-        ctx.set_fill_style_str("#f8fafc");
-        let _ = ctx.fill_text(&sc.title, px + 110.0, py + 85.0);
+        // Tab Content Display
+        match self.briefing_tab {
+            BriefingTab::Briefing => {
+                // 320x240 Technical Briefing Preview Image (assets/original_ui/briefing/bmp_400.png .. bmp_423.png)
+                let preview_w = 320.0;
+                let preview_h = 240.0;
+                let preview_x = content_x + 16.0;
+                let preview_y = content_y + 45.0;
 
-        ctx.set_font("12px system-ui, sans-serif");
+                self.render_minimap_preview(ctx, &sc, preview_x, preview_y, preview_w, preview_h);
+
+                // Narrative Transcript Box (Next to preview or below)
+                let trans_x = preview_x + preview_w + 16.0;
+                let trans_w = content_w - preview_w - 48.0;
+                if trans_w > 180.0 {
+                    ctx.set_font("bold 11px 'MS Sans Serif', Tahoma, sans-serif");
+                    ctx.set_fill_style_str("#00d4ff");
+                    let _ = ctx.fill_text(&format!("THEATER: {}", sc.subtitle), trans_x, preview_y + 16.0);
+
+                    ctx.set_font("11px 'Courier New', Courier, monospace");
+                    ctx.set_fill_style_str("#00ff00");
+                    self.render_multiline_text(ctx, &sc.transcript, trans_x, preview_y + 40.0, trans_w, 16.0);
+                } else {
+                    let trans_y = preview_y + preview_h + 16.0;
+                    ctx.set_font("11px 'Courier New', Courier, monospace");
+                    ctx.set_fill_style_str("#00ff00");
+                    self.render_multiline_text(ctx, &sc.transcript, preview_x, trans_y, content_w - 32.0, 16.0);
+                }
+            }
+            BriefingTab::Objectives => {
+                let obj_x = content_x + 24.0;
+                let mut obj_y = content_y + 55.0;
+
+                ctx.set_font("bold 12px 'MS Sans Serif', Tahoma, sans-serif");
+                ctx.set_fill_style_str("#ddff22");
+                let _ = ctx.fill_text("PRIMARY MISSION OBJECTIVES:", obj_x, obj_y);
+                obj_y += 24.0;
+
+                ctx.set_font("11px 'MS Sans Serif', Tahoma, sans-serif");
+                for (i, dir) in sc.primary_directives.iter().enumerate() {
+                    ctx.set_fill_style_str("#00ff00");
+                    let _ = ctx.fill_text(&format!("  [ ]  {}. {}", i + 1, dir), obj_x, obj_y);
+                    obj_y += 24.0;
+                }
+
+                obj_y += 16.0;
+                ctx.set_font("bold 12px 'MS Sans Serif', Tahoma, sans-serif");
+                ctx.set_fill_style_str("#ddff22");
+                let _ = ctx.fill_text("SECONDARY OBJECTIVES:", obj_x, obj_y);
+                obj_y += 24.0;
+
+                ctx.set_font("11px 'MS Sans Serif', Tahoma, sans-serif");
+                for sec in &sc.secondary_directives {
+                    ctx.set_fill_style_str("#00d4ff");
+                    let _ = ctx.fill_text(&format!("  [ ]  {}", sec), obj_x, obj_y);
+                    obj_y += 24.0;
+                }
+
+                obj_y += 16.0;
+                ctx.set_font("bold 11px 'MS Sans Serif', Tahoma, sans-serif");
+                ctx.set_fill_style_str("#fc0000");
+                let _ = ctx.fill_text(&format!("HAZARDS: {}", sc.hazard_summary), obj_x, obj_y);
+            }
+            BriefingTab::Story => {
+                let story_x = content_x + 24.0;
+                let story_y = content_y + 55.0;
+                let story_w = content_w - 48.0;
+
+                let ch = &NOVELLA_CHAPTERS[self.story_chapter_index.min(NOVELLA_CHAPTERS.len() - 1)];
+
+                ctx.set_font("bold 12px 'MS Sans Serif', Tahoma, sans-serif");
+                ctx.set_fill_style_str("#ddff22");
+                let _ = ctx.fill_text(&format!("OUTPOST 2 NOVELLA BY J. STEVEN YORK // {}", ch.title), story_x, story_y);
+
+                ctx.set_font("11px 'Courier New', Courier, monospace");
+                ctx.set_fill_style_str("#00ff00");
+                self.render_multiline_text(ctx, ch.text, story_x, story_y + 24.0, story_w, 15.0);
+            }
+        }
+    }
+
+    /// Render Dialog 269 ("TUTORIALS")
+    fn render_tutorials(&self, ctx: &CanvasRenderingContext2d, w: f64, h: f64) {
+        let dlg_w = 480.0;
+        let dlg_h = 320.0;
+        let dx = (w - dlg_w) * 0.5;
+        let dy = (h - dlg_h) * 0.5;
+
+        // Window Frame
+        ctx.set_fill_style_str("#0a0a0a");
+        ctx.fill_rect(dx, dy, dlg_w, dlg_h);
+        ctx.set_stroke_style_str("#a01f10");
+        ctx.set_line_width(2.0);
+        ctx.stroke_rect(dx, dy, dlg_w, dlg_h);
+
+        // Title Bar
+        ctx.set_fill_style_str("#1c0402");
+        ctx.fill_rect(dx, dy, dlg_w, 28.0);
+        ctx.set_text_align("center");
+        ctx.set_font("bold 12px 'MS Sans Serif', Tahoma, sans-serif");
+        ctx.set_fill_style_str("#ddff22");
+        let _ = ctx.fill_text("TUTORIALS", dx + dlg_w * 0.5, dy + 18.0);
+
+        // Tutorial Description List
+        ctx.set_text_align("left");
+        ctx.set_font("bold 11px 'MS Sans Serif', Tahoma, sans-serif");
+        ctx.set_fill_style_str("#00ff00");
+        let _ = ctx.fill_text("Select a Tutorial Exercise:", dx + 24.0, dy + 55.0);
+
+        let tut_sc = BriefingScenario::get(2);
+        ctx.set_fill_style_str("#00d4ff");
+        let _ = ctx.fill_text(&format!("1. {} ({})", tut_sc.title, tut_sc.subtitle), dx + 32.0, dy + 85.0);
+
+        ctx.set_font("10px 'Courier New', Courier, monospace");
         ctx.set_fill_style_str("#94a3b8");
-        let _ = ctx.fill_text(&sc.subtitle, px + 110.0, py + 105.0);
+        self.render_multiline_text(ctx, &tut_sc.transcript, dx + 32.0, dy + 110.0, dlg_w - 64.0, 15.0);
+    }
 
-        // Narrative Transcript Frame
-        let text_w = panel_w - 280.0;
-        let text_x = px + 20.0;
-        let text_y = py + 140.0;
+    /// Render Authentic Lore & Credits Dialog ("ABOUT OUTPOST 2")
+    fn render_about(&self, ctx: &CanvasRenderingContext2d, w: f64, h: f64) {
+        let dlg_w = 500.0;
+        let dlg_h = 340.0;
+        let dx = (w - dlg_w) * 0.5;
+        let dy = (h - dlg_h) * 0.5;
 
-        ctx.set_fill_style_str("#0f172a");
-        ctx.fill_rect(text_x, text_y, text_w, 160.0);
-        ctx.set_stroke_style_str("#334155");
-        ctx.set_line_width(1.0);
-        ctx.stroke_rect(text_x, text_y, text_w, 160.0);
+        // Window Frame
+        ctx.set_fill_style_str("#0a0a0a");
+        ctx.fill_rect(dx, dy, dlg_w, dlg_h);
+        ctx.set_stroke_style_str("#a01f10");
+        ctx.set_line_width(2.0);
+        ctx.stroke_rect(dx, dy, dlg_w, dlg_h);
 
-        ctx.set_font("12px 'Courier New', Courier, monospace");
-        ctx.set_fill_style_str("#e2e8f0");
-        self.render_multiline_text(ctx, &sc.transcript, text_x + 12.0, text_y + 22.0, text_w - 24.0, 18.0);
+        // Title Bar
+        ctx.set_fill_style_str("#1c0402");
+        ctx.fill_rect(dx, dy, dlg_w, 28.0);
+        ctx.set_text_align("center");
+        ctx.set_font("bold 12px 'MS Sans Serif', Tahoma, sans-serif");
+        ctx.set_fill_style_str("#ddff22");
+        let _ = ctx.fill_text("ABOUT OUTPOST 2: DIVIDED DESTINY", dx + dlg_w * 0.5, dy + 18.0);
 
-        // Satellite Reconnaissance Scan Preview (Right)
-        let map_preview_x = px + panel_w - 240.0;
-        let map_preview_y = py + 65.0;
-        self.render_minimap_preview(ctx, &sc, map_preview_x, map_preview_y, 220.0, 220.0);
+        ctx.set_text_align("left");
+        ctx.set_font("bold 11px 'MS Sans Serif', Tahoma, sans-serif");
+        ctx.set_fill_style_str("#00ff00");
+        let _ = ctx.fill_text("Outpost 2: Divided Destiny — Canonical 1997 Simulation Engine", dx + 24.0, dy + 55.0);
 
-        // Directives Checklist Frame (Bottom Left)
-        let dir_y = text_y + 175.0;
-        let dir_h = panel_h - (dir_y - py) - 75.0;
-
-        ctx.set_fill_style_str("#0f172a");
-        ctx.fill_rect(text_x, dir_y, panel_w - 40.0, dir_h);
-        ctx.set_stroke_style_str("#334155");
-        ctx.stroke_rect(text_x, dir_y, panel_w - 40.0, dir_h);
-
-        ctx.set_font("bold 12px system-ui, sans-serif");
-        ctx.set_fill_style_str("#facc15");
-        let _ = ctx.fill_text(dict.main_menu.operational_directives_checklist, text_x + 12.0, dir_y + 22.0);
-
-        ctx.set_font("12px system-ui, sans-serif");
-        let mut cur_dy = dir_y + 44.0;
-        for (i, dir) in sc.primary_directives.iter().enumerate() {
-            ctx.set_fill_style_str("#4ade80");
-            let _ = ctx.fill_text(&format!("  [DIRECTIVE {}]  {}", i + 1, dir), text_x + 12.0, cur_dy);
-            cur_dy += 22.0;
-        }
-
-        for sec in &sc.secondary_directives {
-            ctx.set_fill_style_str("#38bdf8");
-            let _ = ctx.fill_text(&format!("  [SECONDARY]   {}", sec), text_x + 12.0, cur_dy);
-            cur_dy += 22.0;
-        }
+        ctx.set_font("11px 'Courier New', Courier, monospace");
+        ctx.set_fill_style_str("#94a3b8");
+        let about_lore = "Developed by Dynamix / Sierra On-Line (1997).\nNovella & Campaign Narrative by J. Steven York.\nOriginal Art & Audio Assets preservation runtime.\nHigh-resolution vector Canvas 2D engine & WebAssembly lockstep architecture.\n\nTwo colonies divided on the dying world of New Terra: Eden and Plymouth.\nThe Blight is advancing.";
+        self.render_multiline_text(ctx, about_lore, dx + 24.0, dy + 80.0, dlg_w - 48.0, 16.0);
     }
 
     /// Render Satellite Minimap Reconnaissance Frame
@@ -2844,30 +3357,33 @@ impl MenuManager {
         }
     }
 
-    /// Render System Options & Audio Matrix
+    /// Render System Options & Preferences (Authentic Outpost 2 Dialog 142)
     fn render_options(&self, ctx: &CanvasRenderingContext2d, w: f64, h: f64) {
         let lang = crate::i18n::Language::from_code(&self.options.language);
         let dict = crate::i18n::get_dictionary(lang);
 
-        let panel_w = (w * 0.85).clamp(540.0, 740.0);
+        let panel_w = (w * 0.85).clamp(580.0, 760.0);
         let panel_h = (h * 0.85).clamp(480.0, 620.0);
         let px = (w - panel_w) * 0.5;
         let py = (h - panel_h) * 0.5;
 
-        ctx.set_fill_style_str("rgba(15, 23, 42, 0.96)");
+        // Dialog 142 Window Frame
+        ctx.set_fill_style_str("#0a0a0a");
         ctx.fill_rect(px, py, panel_w, panel_h);
 
-        ctx.set_stroke_style_str("#38bdf8");
+        ctx.set_stroke_style_str("#a01f10");
         ctx.set_line_width(2.0);
         ctx.stroke_rect(px, py, panel_w, panel_h);
 
-        // Header
-        ctx.set_fill_style_str("#1e293b");
-        ctx.fill_rect(px, py, panel_w, 42.0);
+        // Title Bar
+        ctx.set_fill_style_str("#1c0402");
+        ctx.fill_rect(px, py, panel_w, 32.0);
+        ctx.set_stroke_style_str("#720000");
+        ctx.stroke_rect(px, py, panel_w, 32.0);
 
-        ctx.set_font("bold 14px system-ui, sans-serif");
-        ctx.set_fill_style_str("#38bdf8");
-        let _ = ctx.fill_text(dict.options.title, px + 16.0, py + 26.0);
+        ctx.set_font("bold 12px 'MS Sans Serif', Tahoma, sans-serif");
+        ctx.set_fill_style_str("#ddff22");
+        let _ = ctx.fill_text("GAME PREFERENCES (DIALOG 142)", px + 16.0, py + 21.0);
 
         // Helper closure to render a sci-fi segmented volume slider bar
         let draw_slider = |label: &str, row_y: f64, vol: f32, color: &str| {
@@ -3114,135 +3630,85 @@ impl MenuManager {
     /// Render all cached buttons with hover highlights
     fn render_cached_buttons(&self, ctx: &CanvasRenderingContext2d) {
         let (mx, my) = self.mouse_pos;
-        let chamfer = 7.0;
 
         for btn in &self.cached_buttons {
+            let is_disabled = !btn.enabled;
             let hovered = btn.contains(mx, my);
+            let is_pressed = self.active_pressed_btn_id.as_deref() == Some(&btn.id);
 
-            // Draw chamfered futuristic button geometry
-            ctx.begin_path();
-            ctx.move_to(btn.x + chamfer, btn.y);
-            ctx.line_to(btn.x + btn.w, btn.y);
-            ctx.line_to(btn.x + btn.w, btn.y + btn.h - chamfer);
-            ctx.line_to(btn.x + btn.w - chamfer, btn.y + btn.h);
-            ctx.line_to(btn.x, btn.y + btn.h);
-            ctx.line_to(btn.x, btn.y + chamfer);
-            ctx.close_path();
+            let offset_x = if is_pressed { 1.0 } else { 0.0 };
+            let offset_y = if is_pressed { 1.0 } else { 0.0 };
+            let bx = btn.x + offset_x;
+            let by = btn.y + offset_y;
+            let bw = btn.w;
+            let bh = btn.h;
 
-            // Outer Neon Glow Aura when hovered
-            if hovered {
-                let _ = ctx.save();
-                ctx.set_stroke_style_str(&btn.accent_color);
-                ctx.set_line_width(5.0);
-                let _ = ctx.save();
-                ctx.stroke();
-                let _ = ctx.restore();
-                let _ = ctx.restore();
-            }
+            if is_disabled {
+                // Disabled Button Styling (ui_styles.json: border #444444 / #222222, text #646464, bg #000000)
+                ctx.set_fill_style_str("#000000");
+                ctx.fill_rect(bx, by, bw, bh);
 
-            // Glass gradient fill
-            let bg_grad = ctx.create_linear_gradient(btn.x, btn.y, btn.x, btn.y + btn.h);
-            if hovered {
-                let _ = bg_grad.add_color_stop(0.0, "rgba(22, 38, 66, 0.96)");
-                let _ = bg_grad.add_color_stop(1.0, "rgba(13, 22, 38, 0.98)");
-            } else {
-                let _ = bg_grad.add_color_stop(0.0, "rgba(13, 20, 32, 0.88)");
-                let _ = bg_grad.add_color_stop(1.0, "rgba(8, 12, 20, 0.94)");
-            }
-            ctx.set_fill_style_canvas_gradient(&bg_grad);
-            ctx.fill();
-
-            // Border
-            ctx.set_stroke_style_str(if hovered { "#ffffff" } else { &btn.accent_color });
-            ctx.set_line_width(if hovered { 2.0 } else { 1.2 });
-            ctx.stroke();
-
-            // Left Glowing Energy Bar
-            let bar_w = if hovered { 6.0 } else { 4.0 };
-            ctx.set_fill_style_str(if hovered { "#ffffff" } else { &btn.accent_color });
-            ctx.fill_rect(btn.x, btn.y + chamfer, bar_w, (btn.h - chamfer * 2.0).max(1.0));
-
-            // Animated light sweep on hover
-            if hovered && btn.w > 60.0 {
-                let sweep = ((self.anim_time * 260.0) % (btn.w * 1.5)) - btn.w * 0.25;
-                if sweep >= 0.0 && sweep <= btn.w {
-                    ctx.set_stroke_style_str("rgba(255, 255, 255, 0.35)");
-                    ctx.set_line_width(1.5);
-                    ctx.begin_path();
-                    ctx.move_to(btn.x + sweep, btn.y + 1.0);
-                    ctx.line_to(btn.x + sweep.min(btn.w - 1.0), btn.y + btn.h - 1.0);
-                    ctx.stroke();
-                }
-            }
-
-            // Tactical Index Tag and structured label layout
-            let text_y = btn.y + btn.h * 0.5 + 4.5;
-            let index_tag = if btn.w >= 260.0 {
-                match btn.id.as_str() {
-                    "btn_resume" => "● RESUME",
-                    "btn_campaign" => "// 01",
-                    "btn_skirmish" => "// 02",
-                    "btn_multiplayer" => "// 03",
-                    "btn_load" => "// 04",
-                    "btn_options" => "// 05",
-                    _ => "",
-                }
-            } else {
-                ""
-            };
-
-            if !index_tag.is_empty() {
-                // Index tag on left
-                ctx.set_text_align("left");
-                ctx.set_font("bold 10px 'Courier New', Courier, monospace");
-                ctx.set_fill_style_str(if hovered { "#ffffff" } else { &btn.accent_color });
-                let _ = ctx.fill_text(index_tag, btn.x + 18.0, text_y);
-
-                // Small vertical divider line
-                ctx.set_stroke_style_str("rgba(255, 255, 255, 0.18)");
+                ctx.set_stroke_style_str("#444444");
                 ctx.set_line_width(1.0);
+                ctx.stroke_rect(bx + 0.5, by + 0.5, bw - 1.0, bh - 1.0);
+
+                ctx.set_stroke_style_str("#222222");
+                ctx.stroke_rect(bx + 1.5, by + 1.5, bw - 3.0, bh - 3.0);
+
+                ctx.set_text_align("center");
+                ctx.set_font("bold 11px 'MS Sans Serif', Tahoma, sans-serif");
+                ctx.set_fill_style_str("#646464");
+                let text_y = by + bh * 0.5 + 4.0;
+                let _ = ctx.fill_text(&btn.label, bx + bw * 0.5, text_y);
+            } else {
+                // Authentic Outpost 2 Red Beveled Metallic Button:
+                // Border light: #fc0000 (outer highlight/hover) / #a01f10 (normal top/left)
+                // Border dark: #720000 / #840000 (normal bottom/right)
+                // When pressed: borders invert (#720000 light, #fc0000 dark)
+                let (border_top_left, border_bot_right, bg_color, text_color) = if is_pressed {
+                    ("#720000", "#fc0000", "#080808", "#00ff00")
+                } else if hovered {
+                    ("#fc0000", "#840000", "#111111", "#ddff22")
+                } else {
+                    ("#a01f10", "#720000", "#050505", "#00ff00")
+                };
+
+                // Solid background interior
+                ctx.set_fill_style_str(bg_color);
+                ctx.fill_rect(bx, by, bw, bh);
+
+                // Outer 3D Bevel Rim (Top & Left)
+                ctx.set_stroke_style_str(border_top_left);
+                ctx.set_line_width(2.0);
                 ctx.begin_path();
-                ctx.move_to(btn.x + 82.0, btn.y + 10.0);
-                ctx.line_to(btn.x + 82.0, btn.y + btn.h - 10.0);
+                ctx.move_to(bx + bw, by);
+                ctx.line_to(bx, by);
+                ctx.line_to(bx, by + bh);
                 ctx.stroke();
 
-                // Button label left-aligned
-                ctx.set_font(if btn.h > 45.0 {
-                    "bold 13px system-ui, -apple-system, sans-serif"
-                } else {
-                    "bold 12px system-ui, -apple-system, sans-serif"
-                });
-                ctx.set_fill_style_str(if hovered { "#ffffff" } else { "#e2e8f0" });
-                let _ = ctx.fill_text(&btn.label, btn.x + 94.0, text_y);
-            } else {
-                // Button label text centered
-                ctx.set_text_align("center");
-                ctx.set_font(if btn.h > 45.0 {
-                    "bold 13px system-ui, -apple-system, sans-serif"
-                } else {
-                    "bold 12px system-ui, -apple-system, sans-serif"
-                });
-                ctx.set_fill_style_str(if hovered {
-                    "#ffffff"
-                } else {
-                    "#e2e8f0"
-                });
-                let _ = ctx.fill_text(&btn.label, btn.x + btn.w * 0.5, text_y);
-            }
+                // Outer 3D Bevel Rim (Bottom & Right)
+                ctx.set_stroke_style_str(border_bot_right);
+                ctx.set_line_width(2.0);
+                ctx.begin_path();
+                ctx.move_to(bx + bw, by);
+                ctx.line_to(bx + bw, by + bh);
+                ctx.line_to(bx, by + bh);
+                ctx.stroke();
 
-            // Right Forward Kinetic Chevron indicator (for wide buttons)
-            if btn.w >= 200.0 {
-                let arrow_x = if hovered { btn.x + btn.w - 16.0 } else { btn.x + btn.w - 20.0 };
-                ctx.set_text_align("center");
-                ctx.set_font("bold 11px system-ui, sans-serif");
-                ctx.set_fill_style_str(if hovered { "#ffffff" } else { &btn.accent_color });
-                let _ = ctx.fill_text("▶", arrow_x, text_y);
-            }
+                // Inner Metallic Highlight line
+                if hovered && !is_pressed {
+                    ctx.set_stroke_style_str("#fc0000");
+                    ctx.set_line_width(1.0);
+                    ctx.stroke_rect(bx + 2.0, by + 2.0, bw - 4.0, bh - 4.0);
+                }
 
-            // Technical micro tick-marks on corners
-            ctx.set_fill_style_str(&btn.accent_color);
-            ctx.fill_rect(btn.x + btn.w - 3.0, btn.y + 1.0, 2.0, 2.0);
-            ctx.fill_rect(btn.x + 1.0, btn.y + btn.h - 3.0, 2.0, 2.0);
+                // Phosphor Green Text with optional Hover Glow
+                ctx.set_text_align("center");
+                ctx.set_font("bold 11px 'MS Sans Serif', Tahoma, sans-serif");
+                ctx.set_fill_style_str(text_color);
+                let text_y = by + bh * 0.5 + 4.0;
+                let _ = ctx.fill_text(&btn.label, bx + bw * 0.5, text_y);
+            }
         }
 
         ctx.set_text_align("left");
@@ -3360,23 +3826,76 @@ mod tests {
     fn test_menu_screen_navigation_transitions() {
         let mut mgr = MenuManager::new();
 
-        // Navigate to Campaign Select
+        // 1. Navigate from Main Menu (Dialog 137) to New Campaign (Dialog 140)
         let action = mgr.execute_button_action("btn_campaign");
         assert_eq!(action, MenuAction::PlayBeep);
         assert_eq!(mgr.current_screen, MenuScreen::CampaignSelect);
         assert_eq!(mgr.previous_screen, MenuScreen::MainMenu);
 
-        // Select Eden Mission 2 (scenario_3)
+        // 2. Dialog 140: Select Plymouth faction and Hard difficulty
+        let act = mgr.execute_button_action("btn_d140_fac_plymouth");
+        assert_eq!(act, MenuAction::PlayBeep);
+        assert_eq!(mgr.selected_faction, Faction::Plymouth);
+
+        let act = mgr.execute_button_action("btn_d140_diff_hard");
+        assert_eq!(act, MenuAction::PlayBeep);
+        assert_eq!(mgr.campaign_difficulty, CampaignDifficulty::Hard);
+
+        // Press OK in Dialog 140 -> opens Dialog 219 Mission Briefing
+        let act = mgr.execute_button_action("btn_d140_ok");
+        assert_eq!(act, MenuAction::PlayBeep);
+        assert_eq!(mgr.current_screen, MenuScreen::CampaignBriefing);
+        assert_eq!(mgr.selected_scenario_id, 1); // Plymouth Campaign Mission 1
+
+        // 3. Dialog 219: Switch Tabs (Briefing -> Objectives -> Story)
+        let act = mgr.execute_button_action("btn_d219_objectives");
+        assert_eq!(act, MenuAction::PlayBeep);
+        assert_eq!(mgr.briefing_tab, BriefingTab::Objectives);
+
+        let act = mgr.execute_button_action("btn_d219_story");
+        assert_eq!(act, MenuAction::PlayBeep);
+        assert_eq!(mgr.briefing_tab, BriefingTab::Story);
+
+        // Story chapter navigation
+        let act = mgr.execute_button_action("btn_story_next");
+        assert_eq!(act, MenuAction::PlayBeep);
+        assert_eq!(mgr.story_chapter_index, 1);
+
+        // Start Mission from Dialog 219
+        let action = mgr.execute_button_action("btn_d219_start_mission");
+        assert_eq!(action, MenuAction::StartScenario(1));
+        assert_eq!(mgr.current_screen, MenuScreen::None);
+        assert!(mgr.is_in_game());
+
+        // 4. Test Tutorials (Dialog 269)
+        mgr.switch_screen(MenuScreen::MainMenu);
+        let act = mgr.execute_button_action("btn_tutorials");
+        assert_eq!(act, MenuAction::PlayBeep);
+        assert_eq!(mgr.current_screen, MenuScreen::Tutorials);
+
+        // 5. Test About Dialog
+        mgr.switch_screen(MenuScreen::MainMenu);
+        let act = mgr.execute_button_action("btn_about");
+        assert_eq!(act, MenuAction::PlayBeep);
+        assert_eq!(mgr.current_screen, MenuScreen::About);
+
+        // 6. Test Help button (Disabled)
+        let act = mgr.execute_button_action("btn_help");
+        assert_eq!(act, MenuAction::None);
+
+        // 7. Test Quit action
+        let act = mgr.execute_button_action("btn_quit");
+        assert_eq!(act, MenuAction::Quit);
+
+        // Direct Scenario 3 briefing test (backwards compatibility)
         let action = mgr.execute_button_action("scenario_3");
         assert_eq!(action, MenuAction::PlayBeep);
         assert_eq!(mgr.current_screen, MenuScreen::CampaignBriefing);
         assert_eq!(mgr.selected_scenario_id, 3);
 
-        // Begin Operation
         let action = mgr.execute_button_action("btn_begin_operation");
         assert_eq!(action, MenuAction::StartScenario(3));
         assert_eq!(mgr.current_screen, MenuScreen::None);
-        assert!(mgr.is_in_game());
 
         // Verify smooth transition alpha progression
         mgr.switch_screen(MenuScreen::MainMenu);
@@ -3484,6 +4003,31 @@ mod tests {
         assert!(btn.contains(300.0, 150.0)); // Bottom-Right
         assert!(!btn.contains(99.0, 100.0)); // Outside Left
         assert!(!btn.contains(150.0, 151.0)); // Outside Bottom
+
+        // Test hover state detection
+        let mut mgr = MenuManager::new();
+        mgr.cached_buttons = vec![btn];
+        assert_eq!(mgr.hovered_btn_id, None);
+
+        // Hover outside -> returns false
+        let changed = mgr.handle_mouse_move(50.0, 50.0);
+        assert!(!changed);
+        assert_eq!(mgr.hovered_btn_id, None);
+
+        // Hover inside -> returns true
+        let changed = mgr.handle_mouse_move(150.0, 125.0);
+        assert!(changed);
+        assert_eq!(mgr.hovered_btn_id, Some("test_btn".to_string()));
+
+        // Move inside same button -> returns false (no duplicate hover sound)
+        let changed = mgr.handle_mouse_move(160.0, 130.0);
+        assert!(!changed);
+        assert_eq!(mgr.hovered_btn_id, Some("test_btn".to_string()));
+
+        // Leave button -> returns false (unhover)
+        let changed = mgr.handle_mouse_move(50.0, 50.0);
+        assert!(!changed);
+        assert_eq!(mgr.hovered_btn_id, None);
     }
 
     #[test]

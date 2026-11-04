@@ -1,0 +1,88 @@
+{
+  "buttons": {
+    "normal": {
+      "text_color": "#00ff00",
+      "font_family": "MS Sans Serif, Tahoma, sans-serif",
+      "font_weight": "bold",
+      "font_size_px": 11,
+      "align": "center",
+      "bg_color": "#000000",
+      "border_light": "#a01f10",
+      "border_dark": "#720000",
+      "highlight_outer": "#fc0000"
+    },
+    "hover": {
+      "text_color": "#ddff22",
+      "font_family": "MS Sans Serif, Tahoma, sans-serif",
+      "font_weight": "bold",
+      "font_size_px": 11,
+      "align": "center",
+      "bg_color": "#111111",
+      "border_light": "#fc0000",
+      "border_dark": "#840000"
+    },
+    "pressed": {
+      "text_color": "#00ff00",
+      "font_family": "MS Sans Serif, Tahoma, sans-serif",
+      "font_weight": "bold",
+      "font_size_px": 11,
+      "align": "center",
+      "bg_color": "#080808",
+      "border_light": "#720000",
+      "border_dark": "#fc0000",
+      "offset_x": 1,
+      "offset_y": 1
+    },
+    "disabled": {
+      "text_color": "#646464",
+      "font_family": "MS Sans Serif, Tahoma, sans-serif",
+      "font_weight": "bold",
+      "font_size_px": 11,
+      "align": "center",
+      "bg_color": "#000000",
+      "border_light": "#444444",
+      "border_dark": "#222222"
+    }
+  },
+  "labels": {
+    "normal": {
+      "text_color": "#00ff00",
+      "font_family": "Arial, sans-serif",
+      "font_weight": "normal",
+      "font_size_px": 9,
+      "align": "left"
+    },
+    "heading": {
+      "text_color": "#ddff22",
+      "font_family": "Arial, sans-serif",
+      "font_weight": "bold",
+      "font_size_px": 9,
+      "align": "left",
+      "shadow_color": "#3c3c3c",
+      "shadow_offset": [
+        1,
+        1
+      ]
+    }
+  },
+  "screen_bounds": {
+    "width": 640,
+    "height": 480
+  },
+  "logo_plate": {
+    "res_id": 145,
+    "src": "assets/original_ui/title_plate_logo_544x122.png",
+    "width": 544,
+    "height": 122,
+    "x": 48,
+    "y": 16
+  },
+  "shell_backdrop": {
+    "res_id": 190,
+    "src": "assets/original_ui/shell_background_640x480.png",
+    "width": 640,
+    "height": 480,
+    "x": 0,
+    "y": 0
+  }
+}

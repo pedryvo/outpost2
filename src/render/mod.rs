@@ -2,6 +2,7 @@
 
 pub mod hud;
 pub mod menu;
+pub mod novella;
 pub mod palette;
 pub mod sprites;
 pub mod touch;
