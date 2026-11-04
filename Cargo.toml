@@ -35,6 +35,7 @@ features = [
   "DomRect",
   "CanvasRenderingContext2d",
   "ImageData",
+  "CanvasGradient",
   "Performance",
   "MouseEvent",
   "KeyboardEvent",

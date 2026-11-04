@@ -1163,10 +1163,11 @@ impl MenuManager {
             MenuScreen::None => {}
 
             MenuScreen::MainMenu => {
-                let btn_w = 340.0;
-                let btn_h = 42.0;
+                let btn_w = (screen_w * 0.38).clamp(360.0, 440.0);
+                let btn_h = 44.0;
                 let cx = (screen_w - btn_w) * 0.5;
-                let mut start_y = if has_game { 240.0 } else { 260.0 };
+                let mut start_y = if has_game { 238.0 } else { 252.0 };
+                let spacing = 52.0;
 
                 if has_game {
                     btns.push(MenuButton::new(
@@ -1178,7 +1179,7 @@ impl MenuManager {
                         dict.main_menu.resume_operation,
                         "#4ade80",
                     ));
-                    start_y += 50.0;
+                    start_y += spacing;
                 }
 
                 btns.push(MenuButton::new(
@@ -1190,7 +1191,7 @@ impl MenuManager {
                     dict.main_menu.campaign_missions,
                     "#38bdf8",
                 ));
-                start_y += 50.0;
+                start_y += spacing;
 
                 btns.push(MenuButton::new(
                     "btn_skirmish",
@@ -1201,7 +1202,7 @@ impl MenuManager {
                     dict.main_menu.skirmish_battle,
                     "#f97316",
                 ));
-                start_y += 50.0;
+                start_y += spacing;
 
                 btns.push(MenuButton::new(
                     "btn_multiplayer",
@@ -1212,7 +1213,7 @@ impl MenuManager {
                     dict.main_menu.multiplayer_lobby,
                     "#818cf8",
                 ));
-                start_y += 50.0;
+                start_y += spacing;
 
                 btns.push(MenuButton::new(
                     "btn_load",
@@ -1223,7 +1224,7 @@ impl MenuManager {
                     dict.main_menu.load_archive,
                     "#facc15",
                 ));
-                start_y += 50.0;
+                start_y += spacing;
 
                 btns.push(MenuButton::new(
                     "btn_options",
@@ -2046,63 +2047,351 @@ impl MenuManager {
 
     /// Render animated starfield, planet horizon, and perspective grid
     fn render_retro_background(&self, ctx: &CanvasRenderingContext2d, w: f64, h: f64) {
-        // Deep space void
-        ctx.set_fill_style_str("#06080d");
+        // Deep space void with vertical celestial gradient
+        let grad = ctx.create_linear_gradient(0.0, 0.0, 0.0, h);
+        let _ = grad.add_color_stop(0.0, "#020409");
+        let _ = grad.add_color_stop(0.38, "#060d1d");
+        let _ = grad.add_color_stop(0.72, "#080c18");
+        let _ = grad.add_color_stop(1.0, "#020307");
+        ctx.set_fill_style_canvas_gradient(&grad);
         ctx.fill_rect(0.0, 0.0, w, h);
 
-        // Animated drifting stars
-        let star_count = 100;
-        ctx.set_fill_style_str("#94a3b8");
+        // Luminous Cosmic Nebulae
+        // Nebula 1: The Cygnus Cyan Rift (Upper Left / Mid)
+        let n1_x = w * 0.22 + (self.anim_time * 0.15).sin() * 15.0;
+        let n1_y = h * 0.30 + (self.anim_time * 0.12).cos() * 10.0;
+        let n1_r = (w * 0.38).clamp(220.0, 480.0);
+        if let Ok(n1_grad) = ctx.create_radial_gradient(n1_x, n1_y, 0.0, n1_x, n1_y, n1_r) {
+            let _ = n1_grad.add_color_stop(0.0, "rgba(6, 182, 212, 0.12)");
+            let _ = n1_grad.add_color_stop(0.45, "rgba(14, 116, 144, 0.05)");
+            let _ = n1_grad.add_color_stop(1.0, "rgba(2, 4, 9, 0.0)");
+            ctx.set_fill_style_canvas_gradient(&n1_grad);
+            ctx.fill_rect(0.0, 0.0, w, h);
+        }
+
+        // Nebula 2: Deep Violet / Magenta Stellar Nursery (Lower Right)
+        let n2_x = w * 0.74;
+        let n2_y = h * 0.68;
+        let n2_r = (w * 0.42).clamp(260.0, 520.0);
+        if let Ok(n2_grad) = ctx.create_radial_gradient(n2_x, n2_y, 0.0, n2_x, n2_y, n2_r) {
+            let _ = n2_grad.add_color_stop(0.0, "rgba(139, 92, 246, 0.09)");
+            let _ = n2_grad.add_color_stop(0.50, "rgba(91, 33, 182, 0.03)");
+            let _ = n2_grad.add_color_stop(1.0, "rgba(2, 4, 9, 0.0)");
+            ctx.set_fill_style_canvas_gradient(&n2_grad);
+            ctx.fill_rect(0.0, 0.0, w, h);
+        }
+
+        // High-Density Procedural Starfield (160 stars in 3 parallax depth layers)
+        let star_count = 160;
         for i in 0..star_count {
             let fi = i as f64;
             let seed_x = ((fi * 9301.0 + 49297.0) % 233280.0) / 233280.0;
             let seed_y = ((fi * 49297.0 + 9301.0) % 233280.0) / 233280.0;
-            let speed = 6.0 + (fi % 5.0) * 4.0;
+            let layer = i % 3;
+            let speed = match layer {
+                0 => 2.5 + (fi % 3.0),
+                1 => 5.0 + (fi % 4.0),
+                _ => 8.5 + (fi % 5.0),
+            };
             let sx = (seed_x * w + self.anim_time * speed) % w;
             let sy = seed_y * h;
-            let size = if i % 7 == 0 { 2.0 } else { 1.2 };
-            ctx.fill_rect(sx, sy, size, size);
+
+            let twinkle = ((self.anim_time * (1.8 + (fi % 5.0) * 0.6) + fi * 1.5).sin() * 0.5 + 0.5).clamp(0.0, 1.0);
+            let alpha = 0.25 + 0.65 * twinkle;
+
+            match layer {
+                0 => {
+                    ctx.set_fill_style_str(&format!("rgba(226, 232, 240, {:.2})", alpha * 0.6));
+                    ctx.fill_rect(sx, sy, 1.0, 1.0);
+                }
+                1 => {
+                    let col = match i % 5 {
+                        0 => format!("rgba(56, 189, 248, {:.2})", alpha),
+                        1 => format!("rgba(250, 204, 21, {:.2})", alpha),
+                        2 => format!("rgba(147, 197, 253, {:.2})", alpha),
+                        3 => format!("rgba(248, 113, 113, {:.2})", alpha),
+                        _ => format!("rgba(255, 255, 255, {:.2})", alpha),
+                    };
+                    ctx.set_fill_style_str(&col);
+                    ctx.fill_rect(sx, sy, 1.5, 1.5);
+                }
+                _ => {
+                    ctx.set_fill_style_str(&format!("rgba(255, 255, 255, {:.2})", alpha * 0.9));
+                    ctx.fill_rect(sx, sy, 2.0, 2.0);
+                }
+            }
         }
 
-        // Planet Tethys in the upper-right quadrant
-        let px = w * 0.85;
+        // Hero Stars with 4-point cross diffraction lens flares
+        let hero_count = 8;
+        for h_idx in 0..hero_count {
+            let fh = h_idx as f64;
+            let hx = (((fh * 67867.0 + 12345.0) % 233280.0) / 233280.0) * w;
+            let hy = (((fh * 23456.0 + 87654.0) % 233280.0) / 233280.0) * (h * 0.65);
+            let h_twinkle = ((self.anim_time * 2.2 + fh * 2.1).sin() * 0.5 + 0.5).clamp(0.0, 1.0);
+
+            ctx.set_fill_style_str(&format!("rgba(255, 255, 255, {:.2})", 0.7 + 0.3 * h_twinkle));
+            ctx.fill_rect(hx - 1.0, hy - 1.0, 2.5, 2.5);
+
+            let spike_len = 10.0 + h_twinkle * 6.0;
+            ctx.set_stroke_style_str(&format!("rgba(56, 189, 248, {:.2})", 0.35 + 0.35 * h_twinkle));
+            ctx.set_line_width(0.75);
+            ctx.begin_path();
+            ctx.move_to(hx - spike_len, hy);
+            ctx.line_to(hx + spike_len, hy);
+            ctx.move_to(hx, hy - spike_len);
+            ctx.line_to(hx, hy + spike_len);
+            ctx.stroke();
+        }
+
+        // Dynamic Shooting Star (Meteor Trail)
+        let meteor_period = 6.5;
+        let meteor_t = self.anim_time % meteor_period;
+        if meteor_t < 0.75 {
+            let m_progress = meteor_t / 0.75;
+            let mx_start = w * 0.18 + (((self.anim_time / meteor_period) as u32 * 197) % 300) as f64;
+            let my_start = h * 0.05 + (((self.anim_time / meteor_period) as u32 * 79) % 120) as f64;
+            let m_dist = 240.0 * m_progress;
+            let cur_x = mx_start + m_dist * 0.88;
+            let cur_y = my_start + m_dist * 0.47;
+            let tail_len = 80.0_f64.min(m_dist);
+            let tail_x = cur_x - tail_len * 0.88;
+            let tail_y = cur_y - tail_len * 0.47;
+
+            let m_grad = ctx.create_linear_gradient(tail_x, tail_y, cur_x, cur_y);
+            let _ = m_grad.add_color_stop(0.0, "rgba(56, 189, 248, 0.0)");
+            let _ = m_grad.add_color_stop(0.7, "rgba(56, 189, 248, 0.6)");
+            let _ = m_grad.add_color_stop(1.0, "rgba(255, 255, 255, 0.95)");
+            ctx.set_stroke_style_canvas_gradient(&m_grad);
+            ctx.set_line_width(2.0);
+            ctx.begin_path();
+            ctx.move_to(tail_x, tail_y);
+            ctx.line_to(cur_x, cur_y);
+            ctx.stroke();
+        }
+
+        // Planet New Terra / Tethys with 3D Tilted Rings
+        let px = w * 0.88;
         let py = h * 0.22;
-        let radius = (w * 0.14).clamp(90.0, 180.0);
+        let radius = (w * 0.135).clamp(95.0, 160.0);
+        let ring_angle = -0.38; // ~ -22 degrees tilt
+        let rx_outer = radius * 2.35;
+        let ry_outer = radius * 0.58;
+        let rx_inner = radius * 1.48;
 
-        // Atmospheric corona glow
-        ctx.set_fill_style_str("rgba(56, 189, 248, 0.06)");
-        ctx.begin_path();
-        let _ = ctx.arc(px, py, radius * 1.25, 0.0, std::f64::consts::PI * 2.0);
-        ctx.fill();
+        // Step A: Back half of planetary rings (behind planet)
+        let _ = ctx.save();
+        let _ = ctx.translate(px, py);
+        let _ = ctx.rotate(ring_angle);
+        let _ = ctx.scale(1.0, ry_outer / rx_outer);
 
-        // Planet body
-        ctx.set_fill_style_str("#131722");
+        let mid_r = (rx_outer + rx_inner) * 0.5;
+        ctx.set_stroke_style_str("rgba(186, 230, 253, 0.20)");
+        ctx.set_line_width(12.0);
         ctx.begin_path();
-        let _ = ctx.arc(px, py, radius, 0.0, std::f64::consts::PI * 2.0);
-        ctx.fill();
-
-        // Illuminated crescent rim
-        ctx.set_stroke_style_str("rgba(56, 189, 248, 0.7)");
-        ctx.set_line_width(4.0);
-        ctx.begin_path();
-        let _ = ctx.arc(px, py, radius, std::f64::consts::PI * 0.8, std::f64::consts::PI * 1.7);
+        let _ = ctx.arc(0.0, 0.0, mid_r, std::f64::consts::PI, std::f64::consts::PI * 2.0);
         ctx.stroke();
 
-        // Lower perspective horizon grid
-        let grid_top = h * 0.75;
-        ctx.set_stroke_style_str("rgba(30, 41, 59, 0.6)");
-        ctx.set_line_width(1.0);
+        ctx.set_stroke_style_str("rgba(56, 189, 248, 0.35)");
+        ctx.set_line_width(5.0);
+        ctx.begin_path();
+        let _ = ctx.arc(0.0, 0.0, mid_r * 1.05, std::f64::consts::PI, std::f64::consts::PI * 2.0);
+        ctx.stroke();
+        let _ = ctx.restore();
 
-        // Horizontal perspective lines
+        // Step B: Atmosphere Outer Corona Glow
+        if let Ok(corona) = ctx.create_radial_gradient(px, py, radius * 0.75, px, py, radius * 1.45) {
+            let _ = corona.add_color_stop(0.0, "rgba(0, 212, 255, 0.24)");
+            let _ = corona.add_color_stop(0.40, "rgba(2, 132, 199, 0.10)");
+            let _ = corona.add_color_stop(1.0, "rgba(2, 4, 9, 0.0)");
+            ctx.set_fill_style_canvas_gradient(&corona);
+            ctx.begin_path();
+            let _ = ctx.arc(px, py, radius * 1.45, 0.0, std::f64::consts::PI * 2.0);
+            ctx.fill();
+        }
+
+        // Step C: Planet Spherical Light Falloff Body
+        let lx = px - radius * 0.38;
+        let ly = py - radius * 0.38;
+        if let Ok(p_grad) = ctx.create_radial_gradient(lx, ly, radius * 0.05, px, py, radius * 1.02) {
+            let _ = p_grad.add_color_stop(0.0, "#38bdf8"); // sunlit polar cap
+            let _ = p_grad.add_color_stop(0.25, "#0369a1"); // nitrogen atmosphere / ocean
+            let _ = p_grad.add_color_stop(0.50, "#0c2847"); // twilight terminator
+            let _ = p_grad.add_color_stop(0.78, "#071322"); // dark night side
+            let _ = p_grad.add_color_stop(1.0, "#020409"); // deep planetary shadow
+            ctx.set_fill_style_canvas_gradient(&p_grad);
+            ctx.begin_path();
+            let _ = ctx.arc(px, py, radius, 0.0, std::f64::consts::PI * 2.0);
+            ctx.fill();
+        } else {
+            ctx.set_fill_style_str("#131722");
+            ctx.begin_path();
+            let _ = ctx.arc(px, py, radius, 0.0, std::f64::consts::PI * 2.0);
+            ctx.fill();
+        }
+
+        // Volcanic hot spots on dark hemisphere (New Terra tectonic lore)
+        ctx.set_fill_style_str("rgba(249, 115, 22, 0.35)");
+        ctx.fill_rect(px + radius * 0.35, py + radius * 0.20, 3.0, 3.0);
+        ctx.fill_rect(px + radius * 0.50, py - radius * 0.10, 2.0, 2.0);
+        ctx.fill_rect(px + radius * 0.20, py + radius * 0.55, 2.5, 2.5);
+
+        // Step D: Illuminated Crescent Rim
+        ctx.set_stroke_style_str("rgba(255, 255, 255, 0.85)");
+        ctx.set_line_width(2.5);
+        ctx.begin_path();
+        let _ = ctx.arc(px, py, radius, std::f64::consts::PI * 1.05, std::f64::consts::PI * 1.78);
+        ctx.stroke();
+
+        ctx.set_stroke_style_str("rgba(56, 189, 248, 0.55)");
+        ctx.set_line_width(6.0);
+        ctx.stroke();
+
+        // Step E: Front half of planetary rings (in front of planet)
+        let _ = ctx.save();
+        let _ = ctx.translate(px, py);
+        let _ = ctx.rotate(ring_angle);
+        let _ = ctx.scale(1.0, ry_outer / rx_outer);
+
+        // Lower ring arc (0.0 to PI)
+        ctx.set_stroke_style_str("rgba(186, 230, 253, 0.26)");
+        ctx.set_line_width(12.0);
+        ctx.begin_path();
+        let _ = ctx.arc(0.0, 0.0, mid_r, 0.0, std::f64::consts::PI);
+        ctx.stroke();
+
+        ctx.set_stroke_style_str("rgba(56, 189, 248, 0.42)");
+        ctx.set_line_width(5.0);
+        ctx.begin_path();
+        let _ = ctx.arc(0.0, 0.0, mid_r * 1.05, 0.0, std::f64::consts::PI);
+        ctx.stroke();
+
+        // Planet shadow cast onto rings (dark sector on lower right)
+        ctx.set_stroke_style_str("rgba(2, 4, 9, 0.75)");
+        ctx.set_line_width(18.0);
+        ctx.begin_path();
+        let _ = ctx.arc(0.0, 0.0, mid_r, 0.18, 0.82);
+        ctx.stroke();
+
+        let _ = ctx.restore();
+
+        // Step F: Orbiting Conestoga Recon Satellite / Colony Station
+        let sx = px - radius * 1.25;
+        let sy = py + radius * 0.60;
+        ctx.set_fill_style_str("#64748b");
+        ctx.fill_rect(sx - 3.0, sy - 1.0, 6.0, 2.0);
+        ctx.fill_rect(sx - 1.0, sy - 4.0, 2.0, 8.0);
+
+        let strobe_flash = ((self.anim_time * 3.5).sin() * 0.5 + 0.5) > 0.6;
+        if strobe_flash {
+            ctx.set_fill_style_str("#10b981");
+            ctx.fill_rect(sx - 1.0, sy - 1.0, 2.0, 2.0);
+        }
+
+        // Perspective Hologram Grid
+        let grid_top = h * 0.72;
+
+        // Horizon glow line
+        let h_grad = ctx.create_linear_gradient(0.0, grid_top, w, grid_top);
+        let _ = h_grad.add_color_stop(0.0, "rgba(56, 189, 248, 0.0)");
+        let _ = h_grad.add_color_stop(0.5, "rgba(56, 189, 248, 0.45)");
+        let _ = h_grad.add_color_stop(1.0, "rgba(56, 189, 248, 0.0)");
+        ctx.set_stroke_style_canvas_gradient(&h_grad);
+        ctx.set_line_width(1.5);
+        ctx.begin_path();
+        ctx.move_to(0.0, grid_top);
+        ctx.line_to(w, grid_top);
+        ctx.stroke();
+
+        // Perspective radiating lines
+        let ray_count = 14;
+        ctx.set_stroke_style_str("rgba(30, 58, 95, 0.35)");
+        ctx.set_line_width(1.0);
+        for k in 0..=ray_count {
+            let fraction = k as f64 / ray_count as f64;
+            let bx = w * fraction;
+            ctx.begin_path();
+            ctx.move_to(w * 0.5 + (bx - w * 0.5) * 0.15, grid_top);
+            ctx.line_to(bx, h);
+            ctx.stroke();
+        }
+
+        // Horizontal perspective lines with quadratic distance spacing
         let steps = 8;
-        for s in 0..steps {
-            let t = (s as f64) / (steps as f64);
+        for s in 1..=steps {
+            let t = s as f64 / steps as f64;
             let y = grid_top + t * t * (h - grid_top);
+            let line_alpha = 0.15 + t * 0.35;
+            ctx.set_stroke_style_str(&format!("rgba(56, 189, 248, {:.2})", line_alpha));
+            ctx.set_line_width(1.0);
             ctx.begin_path();
             ctx.move_to(0.0, y);
             ctx.line_to(w, y);
             ctx.stroke();
         }
+
+        // Laser scanwave traveling forward along the grid
+        let wave_p = (self.anim_time * 0.3) % 1.0;
+        let wave_y = grid_top + wave_p * wave_p * (h - grid_top);
+        let wave_alpha = (1.0 - wave_p) * 0.6;
+        ctx.set_stroke_style_str(&format!("rgba(0, 212, 255, {:.2})", wave_alpha));
+        ctx.set_line_width(2.0);
+        ctx.begin_path();
+        ctx.move_to(0.0, wave_y);
+        ctx.line_to(w, wave_y);
+        ctx.stroke();
+
+        // Futuristic HUD Corner Framing & Telemetry Calipers
+        // Top-Left
+        ctx.set_stroke_style_str("rgba(56, 189, 248, 0.55)");
+        ctx.set_line_width(1.5);
+        ctx.begin_path();
+        ctx.move_to(20.0, 42.0);
+        ctx.line_to(20.0, 20.0);
+        ctx.line_to(65.0, 20.0);
+        ctx.stroke();
+
+        ctx.set_font("bold 9px 'Courier New', Courier, monospace");
+        ctx.set_fill_style_str("#38bdf8");
+        let _ = ctx.fill_text("ORBITAL SECTOR: 04 // LAT -28.44 LON +114.82", 28.0, 32.0);
+        ctx.set_fill_style_str("#64748b");
+        let _ = ctx.fill_text("COLONIAL FREQ: 1420.405 MHz [SYNCHRONIZED]", 28.0, 44.0);
+
+        // Top-Right
+        ctx.begin_path();
+        ctx.move_to(w - 65.0, 20.0);
+        ctx.line_to(w - 20.0, 20.0);
+        ctx.line_to(w - 20.0, 42.0);
+        ctx.stroke();
+
+        ctx.set_text_align("right");
+        ctx.set_fill_style_str("#10b981");
+        let _ = ctx.fill_text("● CORE INTEGRITY: NOMINAL", w - 28.0, 32.0);
+        ctx.set_fill_style_str("#94a3b8");
+        let _ = ctx.fill_text("DEFENSE MATRIX ACTIVE // V1.3.0.8", w - 28.0, 44.0);
+        ctx.set_text_align("left");
+
+        // Bottom-Left
+        ctx.begin_path();
+        ctx.move_to(20.0, h - 42.0);
+        ctx.line_to(20.0, h - 20.0);
+        ctx.line_to(65.0, h - 20.0);
+        ctx.stroke();
+
+        ctx.set_fill_style_str("#64748b");
+        let _ = ctx.fill_text("ARCHIVE: CONESTOGA RECON // SECTOR NEW TERRA", 28.0, h - 26.0);
+
+        // Bottom-Right
+        ctx.begin_path();
+        ctx.move_to(w - 65.0, h - 20.0);
+        ctx.line_to(w - 20.0, h - 20.0);
+        ctx.line_to(w - 20.0, h - 42.0);
+        ctx.stroke();
+
+        ctx.set_text_align("right");
+        ctx.set_fill_style_str("#64748b");
+        let _ = ctx.fill_text("SURFACE SIMULATION KERNEL // STANDBY", w - 28.0, h - 26.0);
+        ctx.set_text_align("left");
     }
 
     /// Render Outpost 2 Main Menu splash with authentic retro typography
@@ -2116,28 +2405,102 @@ impl MenuManager {
         let lang = crate::i18n::Language::from_code(&self.options.language);
         let dict = crate::i18n::get_dictionary(lang);
 
-        // Tactical Colony Designation
+        // Central Holographic Energy Bloom backing title
+        if let Ok(bloom) = ctx.create_radial_gradient(cx, 130.0, 10.0, cx, 130.0, 260.0) {
+            let _ = bloom.add_color_stop(0.0, "rgba(0, 212, 255, 0.16)");
+            let _ = bloom.add_color_stop(0.45, "rgba(14, 116, 144, 0.06)");
+            let _ = bloom.add_color_stop(1.0, "rgba(0, 0, 0, 0.0)");
+            ctx.set_fill_style_canvas_gradient(&bloom);
+            ctx.fill_rect(cx - 300.0, 20.0, 600.0, 220.0);
+        }
+
+        // Top Tactical Command Eyebrow
         ctx.set_text_align("center");
-        ctx.set_font("bold 11px 'Courier New', Courier, monospace");
+        ctx.set_font("bold 10px 'Courier New', Courier, monospace");
         ctx.set_fill_style_str("#38bdf8");
-        let _ = ctx.fill_text(dict.main_menu.title_tagline, cx, 80.0);
+        let _ = ctx.fill_text("[ COMMAND ARCHIVE TERMINAL // HIGH-ORBIT LINK ]", cx, 68.0);
 
-        // Primary Outpost 2 Title Logo
-        ctx.set_font("bold 52px system-ui, -apple-system, sans-serif");
-        ctx.set_fill_style_str("#0f172a");
-        let _ = ctx.fill_text("OUTPOST 2", cx + 3.0, 143.0);
-        ctx.set_fill_style_str("#e2e8f0");
-        let _ = ctx.fill_text("OUTPOST 2", cx, 140.0);
+        // Faction Crests flanking the title
+        let badge_dist = (w * 0.23).clamp(195.0, 240.0);
 
-        // Subtitle: DIVIDED DESTINY
-        ctx.set_font("bold 16px 'Courier New', Courier, monospace");
-        ctx.set_fill_style_str("#facc15");
-        let _ = ctx.fill_text(dict.main_menu.subtitle, cx, 175.0);
+        // Connecting tactical data bus between faction insignias (drawn behind title)
+        ctx.set_stroke_style_str("rgba(56, 189, 248, 0.22)");
+        ctx.set_line_width(1.0);
+        ctx.begin_path();
+        ctx.move_to(cx - badge_dist + 36.0, 130.0);
+        ctx.line_to(cx + badge_dist - 36.0, 130.0);
+        ctx.stroke();
+
+        self.render_faction_logo(ctx, Faction::Eden, cx - badge_dist, 130.0, 22.0);
+        ctx.set_font("bold 9px 'Courier New', Courier, monospace");
+        ctx.set_fill_style_str("#38bdf8");
+        let _ = ctx.fill_text("EDEN FOUNDATION", cx - badge_dist, 164.0);
+
+        self.render_faction_logo(ctx, Faction::Plymouth, cx + badge_dist, 130.0, 22.0);
+        ctx.set_font("bold 9px 'Courier New', Courier, monospace");
+        ctx.set_fill_style_str("#f97316");
+        let _ = ctx.fill_text("PLYMOUTH COLONY", cx + badge_dist, 164.0);
+
+        // Primary Outpost 2 Wordmark
+        ctx.set_font("900 56px system-ui, -apple-system, sans-serif");
+
+        // Pass 1: Cosmic drop shadow
+        ctx.set_fill_style_str("rgba(2, 6, 23, 0.90)");
+        let _ = ctx.fill_text("OUTPOST 2", cx + 3.0, 138.0);
+
+        // Pass 2: Outer neon cyan stroke
+        ctx.set_stroke_style_str("rgba(56, 189, 248, 0.40)");
+        ctx.set_line_width(6.0);
+        let _ = ctx.stroke_text("OUTPOST 2", cx, 134.0);
+
+        // Pass 3: Inner crisp highlight stroke
+        ctx.set_stroke_style_str("rgba(255, 255, 255, 0.75)");
+        ctx.set_line_width(1.5);
+        let _ = ctx.stroke_text("OUTPOST 2", cx, 134.0);
+
+        // Pass 4: Metallic vertical gradient face fill
+        let title_grad = ctx.create_linear_gradient(cx, 85.0, cx, 138.0);
+        let _ = title_grad.add_color_stop(0.0, "#ffffff");
+        let _ = title_grad.add_color_stop(0.35, "#bae6fd");
+        let _ = title_grad.add_color_stop(0.70, "#38bdf8");
+        let _ = title_grad.add_color_stop(1.0, "#1e3a8a");
+        ctx.set_fill_style_canvas_gradient(&title_grad);
+        let _ = ctx.fill_text("OUTPOST 2", cx, 134.0);
+
+        // Subtitle: DIVIDED DESTINY inside tactical chamfered badge
+        let badge_w = 270.0;
+        let badge_h = 24.0;
+        let bx = cx - badge_w * 0.5;
+        let by = 156.0;
+        let b_chamfer = 4.0;
+
+        ctx.begin_path();
+        ctx.move_to(bx + b_chamfer, by);
+        ctx.line_to(bx + badge_w, by);
+        ctx.line_to(bx + badge_w, by + badge_h - b_chamfer);
+        ctx.line_to(bx + badge_w - b_chamfer, by + badge_h);
+        ctx.line_to(bx, by + badge_h);
+        ctx.line_to(bx, by + b_chamfer);
+        ctx.close_path();
+
+        ctx.set_fill_style_str("rgba(15, 23, 42, 0.88)");
+        ctx.fill();
+        ctx.set_stroke_style_str("#f59e0b");
+        ctx.set_line_width(1.5);
+        ctx.stroke();
+
+        ctx.set_font("bold 12px 'Courier New', Courier, monospace");
+        ctx.set_fill_style_str("#fbbf24");
+        let _ = ctx.fill_text(&format!("❖  {}  ❖", dict.main_menu.subtitle), cx, 172.5);
 
         // Version & Technology Stamp
-        ctx.set_font("11px system-ui, sans-serif");
-        ctx.set_fill_style_str("#64748b");
-        let _ = ctx.fill_text("WebAssembly Port • HTML5 Canvas Isometric Pipeline • v1.3.0.8", cx, 205.0);
+        ctx.set_font("10px system-ui, -apple-system, sans-serif");
+        ctx.set_fill_style_str("#94a3b8");
+        let _ = ctx.fill_text(
+            "WebAssembly RTS Engine • Canvas 2D Pipeline • 6-Language Localization",
+            cx,
+            204.0,
+        );
 
         ctx.set_text_align("left");
     }
@@ -2751,41 +3114,135 @@ impl MenuManager {
     /// Render all cached buttons with hover highlights
     fn render_cached_buttons(&self, ctx: &CanvasRenderingContext2d) {
         let (mx, my) = self.mouse_pos;
+        let chamfer = 7.0;
 
         for btn in &self.cached_buttons {
             let hovered = btn.contains(mx, my);
 
-            // Fill background
-            ctx.set_fill_style_str(if hovered {
-                "#1e293b"
+            // Draw chamfered futuristic button geometry
+            ctx.begin_path();
+            ctx.move_to(btn.x + chamfer, btn.y);
+            ctx.line_to(btn.x + btn.w, btn.y);
+            ctx.line_to(btn.x + btn.w, btn.y + btn.h - chamfer);
+            ctx.line_to(btn.x + btn.w - chamfer, btn.y + btn.h);
+            ctx.line_to(btn.x, btn.y + btn.h);
+            ctx.line_to(btn.x, btn.y + chamfer);
+            ctx.close_path();
+
+            // Outer Neon Glow Aura when hovered
+            if hovered {
+                let _ = ctx.save();
+                ctx.set_stroke_style_str(&btn.accent_color);
+                ctx.set_line_width(5.0);
+                let _ = ctx.save();
+                ctx.stroke();
+                let _ = ctx.restore();
+                let _ = ctx.restore();
+            }
+
+            // Glass gradient fill
+            let bg_grad = ctx.create_linear_gradient(btn.x, btn.y, btn.x, btn.y + btn.h);
+            if hovered {
+                let _ = bg_grad.add_color_stop(0.0, "rgba(22, 38, 66, 0.96)");
+                let _ = bg_grad.add_color_stop(1.0, "rgba(13, 22, 38, 0.98)");
             } else {
-                "#0f172a"
-            });
-            ctx.fill_rect(btn.x, btn.y, btn.w, btn.h);
+                let _ = bg_grad.add_color_stop(0.0, "rgba(13, 20, 32, 0.88)");
+                let _ = bg_grad.add_color_stop(1.0, "rgba(8, 12, 20, 0.94)");
+            }
+            ctx.set_fill_style_canvas_gradient(&bg_grad);
+            ctx.fill();
 
             // Border
-            ctx.set_stroke_style_str(if hovered {
-                "#ffffff"
-            } else {
-                &btn.accent_color
-            });
-            ctx.set_line_width(if hovered { 2.0 } else { 1.0 });
-            ctx.stroke_rect(btn.x, btn.y, btn.w, btn.h);
+            ctx.set_stroke_style_str(if hovered { "#ffffff" } else { &btn.accent_color });
+            ctx.set_line_width(if hovered { 2.0 } else { 1.2 });
+            ctx.stroke();
 
-            // Button label text
-            ctx.set_text_align("center");
-            ctx.set_font(if btn.h > 45.0 {
-                "bold 13px system-ui, sans-serif"
+            // Left Glowing Energy Bar
+            let bar_w = if hovered { 6.0 } else { 4.0 };
+            ctx.set_fill_style_str(if hovered { "#ffffff" } else { &btn.accent_color });
+            ctx.fill_rect(btn.x, btn.y + chamfer, bar_w, (btn.h - chamfer * 2.0).max(1.0));
+
+            // Animated light sweep on hover
+            if hovered && btn.w > 60.0 {
+                let sweep = ((self.anim_time * 260.0) % (btn.w * 1.5)) - btn.w * 0.25;
+                if sweep >= 0.0 && sweep <= btn.w {
+                    ctx.set_stroke_style_str("rgba(255, 255, 255, 0.35)");
+                    ctx.set_line_width(1.5);
+                    ctx.begin_path();
+                    ctx.move_to(btn.x + sweep, btn.y + 1.0);
+                    ctx.line_to(btn.x + sweep.min(btn.w - 1.0), btn.y + btn.h - 1.0);
+                    ctx.stroke();
+                }
+            }
+
+            // Tactical Index Tag and structured label layout
+            let text_y = btn.y + btn.h * 0.5 + 4.5;
+            let index_tag = if btn.w >= 260.0 {
+                match btn.id.as_str() {
+                    "btn_resume" => "● RESUME",
+                    "btn_campaign" => "// 01",
+                    "btn_skirmish" => "// 02",
+                    "btn_multiplayer" => "// 03",
+                    "btn_load" => "// 04",
+                    "btn_options" => "// 05",
+                    _ => "",
+                }
             } else {
-                "bold 11px system-ui, sans-serif"
-            });
-            ctx.set_fill_style_str(if hovered {
-                "#ffffff"
+                ""
+            };
+
+            if !index_tag.is_empty() {
+                // Index tag on left
+                ctx.set_text_align("left");
+                ctx.set_font("bold 10px 'Courier New', Courier, monospace");
+                ctx.set_fill_style_str(if hovered { "#ffffff" } else { &btn.accent_color });
+                let _ = ctx.fill_text(index_tag, btn.x + 18.0, text_y);
+
+                // Small vertical divider line
+                ctx.set_stroke_style_str("rgba(255, 255, 255, 0.18)");
+                ctx.set_line_width(1.0);
+                ctx.begin_path();
+                ctx.move_to(btn.x + 82.0, btn.y + 10.0);
+                ctx.line_to(btn.x + 82.0, btn.y + btn.h - 10.0);
+                ctx.stroke();
+
+                // Button label left-aligned
+                ctx.set_font(if btn.h > 45.0 {
+                    "bold 13px system-ui, -apple-system, sans-serif"
+                } else {
+                    "bold 12px system-ui, -apple-system, sans-serif"
+                });
+                ctx.set_fill_style_str(if hovered { "#ffffff" } else { "#e2e8f0" });
+                let _ = ctx.fill_text(&btn.label, btn.x + 94.0, text_y);
             } else {
-                &btn.accent_color
-            });
-            let text_y = btn.y + btn.h * 0.5 + 4.0;
-            let _ = ctx.fill_text(&btn.label, btn.x + btn.w * 0.5, text_y);
+                // Button label text centered
+                ctx.set_text_align("center");
+                ctx.set_font(if btn.h > 45.0 {
+                    "bold 13px system-ui, -apple-system, sans-serif"
+                } else {
+                    "bold 12px system-ui, -apple-system, sans-serif"
+                });
+                ctx.set_fill_style_str(if hovered {
+                    "#ffffff"
+                } else {
+                    "#e2e8f0"
+                });
+                let _ = ctx.fill_text(&btn.label, btn.x + btn.w * 0.5, text_y);
+            }
+
+            // Right Forward Kinetic Chevron indicator (for wide buttons)
+            if btn.w >= 200.0 {
+                let arrow_x = if hovered { btn.x + btn.w - 16.0 } else { btn.x + btn.w - 20.0 };
+                ctx.set_text_align("center");
+                ctx.set_font("bold 11px system-ui, sans-serif");
+                ctx.set_fill_style_str(if hovered { "#ffffff" } else { &btn.accent_color });
+                let _ = ctx.fill_text("▶", arrow_x, text_y);
+            }
+
+            // Technical micro tick-marks on corners
+            ctx.set_fill_style_str(&btn.accent_color);
+            ctx.fill_rect(btn.x + btn.w - 3.0, btn.y + 1.0, 2.0, 2.0);
+            ctx.fill_rect(btn.x + 1.0, btn.y + btn.h - 3.0, 2.0, 2.0);
         }
 
         ctx.set_text_align("left");
@@ -2857,11 +3314,11 @@ impl MenuManager {
 
     /// Render CRT TV retro horizontal scanlines
     fn render_crt_scanlines(&self, ctx: &CanvasRenderingContext2d, w: f64, h: f64) {
-        ctx.set_fill_style_str("rgba(0, 0, 0, 0.12)");
+        ctx.set_fill_style_str("rgba(0, 0, 0, 0.05)");
         let mut y = 0.0;
         while y < h {
             ctx.fill_rect(0.0, y, w, 1.0);
-            y += 3.0;
+            y += 4.0;
         }
     }
 

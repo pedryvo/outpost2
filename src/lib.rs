@@ -2796,7 +2796,13 @@ pub fn start() -> Result<(), JsValue> {
         ctx.set_image_smoothing_enabled(false);
 
         if !app_borrow.menu.is_in_game() {
-            let summary = Some(render::ColonySummary::from_colony(&app_borrow.colony));
+            let has_active_game = app_borrow.playtime_seconds > 0
+                || app_borrow.menu.previous_screen != render::MenuScreen::None;
+            let summary = if has_active_game {
+                Some(render::ColonySummary::from_colony(&app_borrow.colony))
+            } else {
+                None
+            };
             if app_borrow.menu.current_screen == render::MenuScreen::PauseMenu {
                 // Render game viewport in background
                 app_borrow.viewport.render(
