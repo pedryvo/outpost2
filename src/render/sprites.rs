@@ -473,18 +473,10 @@ impl SpriteAtlas {
                 Some(layers) if !layers.is_empty() => layers.clone(),
                 _ => return Ok(false),
             };
-            let mut bounds = (i32::MAX, i32::MAX, i32::MIN, i32::MIN);
-            for layer in &layers {
-                if let Some(meta) = self.get_sprite_meta(layer.bitmap_index as u32) {
-                    bounds.0 = bounds.0.min(layer.x as i32);
-                    bounds.1 = bounds.1.min(layer.y as i32);
-                    bounds.2 = bounds.2.max(layer.x as i32 + meta.width as i32);
-                    bounds.3 = bounds.3.max(layer.y as i32 + meta.height as i32);
-                }
-            }
-            if bounds.0 >= bounds.2 || bounds.1 >= bounds.3 {
-                return Ok(false);
-            }
+            let bounds = match self.prt.as_ref().and_then(|prt| prt.animation_bounds(group_id as usize)) {
+                Some(bounds) => bounds,
+                None => return Ok(false),
+            };
             let canvas = web_sys::window().unwrap().document().unwrap()
                 .create_element("canvas")?.dyn_into::<HtmlCanvasElement>()?;
             canvas.set_width((bounds.2 - bounds.0) as u32);
@@ -675,17 +667,18 @@ impl UnitSpriteManager {
     }
 
     /// The PRT groups are arranged in directional runs of 8 or 16 entries.
-    pub fn calculate_sprite_frame(
+    /// In 16-entry runs, the animated vehicle groups occupy the even IDs;
+    /// movement frames live inside each group, not at the following ID.
+    pub fn calculate_sprite_group(
         vehicle_type: VehicleType,
         faction: Faction,
         direction: Direction8,
-        tread_frame: usize,
     ) -> u32 {
         let base = Self::get_base_frame(vehicle_type, faction);
         let direction = direction.frame_offset() as u32;
         let has_sixteen = matches!(vehicle_type, VehicleType::Lynx | VehicleType::CargoTruck
             | VehicleType::ConVec | VehicleType::RoboMiner | VehicleType::RepairVehicle);
-        if has_sixteen { base + direction * 2 + (tread_frame as u32 % 2) }
+        if has_sixteen { base + direction * 2 }
         else { base + direction }
     }
 
@@ -749,9 +742,9 @@ impl UnitSpriteManager {
             // Tread animation ticking
             if state.is_moving {
                 state.tread_timer += dt;
-                if state.tread_timer >= 0.12 {
-                    state.tread_timer = 0.0;
-                    state.tread_frame = (state.tread_frame + 1) % 2;
+                while state.tread_timer >= 0.12 {
+                    state.tread_timer -= 0.12;
+                    state.tread_frame = state.tread_frame.wrapping_add(1);
                 }
             } else {
                 state.tread_frame = 0;
@@ -770,8 +763,8 @@ impl UnitSpriteManager {
                 state.is_drilling = unit.hauler_state.is_some() || unit.name.contains("Subterranean");
                 if state.is_drilling {
                     state.drill_timer += dt;
-                    if state.drill_timer >= 0.08 {
-                        state.drill_timer = 0.0;
+                    while state.drill_timer >= 0.08 {
+                        state.drill_timer -= 0.08;
                         state.drill_frame = (state.drill_frame + 1) % 8;
                     }
                 } else {
@@ -796,16 +789,23 @@ impl UnitSpriteManager {
             UnitAnimationState::new(unit.id, v_type, (unit.tile_x, unit.tile_y))
         });
 
-        let sprite_frame = Self::calculate_sprite_frame(
+        let sprite_group = Self::calculate_sprite_group(
             v_type,
             unit.faction,
             anim_state.chassis_dir,
-            anim_state.tread_frame,
         );
 
         // Draw the complete original group (chassis, treads, turret and shadow).
         if self.atlas.raw_bitmap.is_some() && self.atlas.prt.is_some() {
-            if let Ok(true) = self.atlas.draw_group(ctx, sprite_frame, sx, sy + 16.0 * zoom, zoom, unit.faction == Faction::Eden) {
+            let frame_count = self.atlas.prt.as_ref()
+                .and_then(|prt| prt.animations.get(sprite_group as usize))
+                .map_or(0, |group| group.frames.len());
+            let frame = if anim_state.is_moving && frame_count > 0 {
+                anim_state.tread_frame % frame_count
+            } else {
+                0
+            };
+            if let Ok(true) = self.atlas.draw_group_frame(ctx, sprite_group, frame, sx, sy + 16.0 * zoom, zoom, unit.faction == Faction::Eden) {
                 return;
             }
         }
@@ -1203,6 +1203,33 @@ mod tests {
         assert_eq!(VehicleType::from_unit_name("Robo-Miner #5"), Some(VehicleType::RoboMiner));
         assert_eq!(VehicleType::from_unit_name("Earthworker #6"), Some(VehicleType::Earthworker));
         assert_eq!(VehicleType::from_unit_name("ConVec #7"), Some(VehicleType::ConVec));
+    }
+
+    #[test]
+    fn vehicle_tread_frames_are_inside_directional_prt_groups() {
+        let art = crate::archive::prt::PrtFile::parse(include_bytes!("../../assets/op2_art.prt")).unwrap();
+        let north = UnitSpriteManager::calculate_sprite_group(VehicleType::Lynx, Faction::Eden, Direction8::North);
+        let east = UnitSpriteManager::calculate_sprite_group(VehicleType::Lynx, Faction::Eden, Direction8::East);
+        assert_eq!(north, 1202);
+        assert_eq!(east, 1206);
+        assert_eq!(art.animations[north as usize].frames.len(), 6);
+        assert_eq!(art.animations[east as usize].frames.len(), 6);
+        assert_eq!(art.animations[north as usize + 1].frames.len(), 1);
+    }
+
+    #[test]
+    fn unit_animation_uses_elapsed_time_and_preserves_fractional_remainder() {
+        let mut colony = crate::sim::ColonyState::new(Faction::Eden);
+        let mut unit = colony.units.iter_mut().find(|u| u.name.contains("Lynx")).unwrap().clone();
+        unit.path.push((unit.tile_x + 1, unit.tile_y));
+        let mut manager = UnitSpriteManager::new(SpriteAtlas::new());
+        manager.update(0.25, &[&unit]);
+        assert_eq!(manager.unit_states[&unit.id].tread_frame, 2);
+        manager.update(0.11, &[&unit]);
+        assert_eq!(manager.unit_states[&unit.id].tread_frame, 3);
+        unit.path.clear();
+        manager.update(0.0, &[&unit]);
+        assert_eq!(manager.unit_states[&unit.id].tread_frame, 0);
     }
 
     #[test]

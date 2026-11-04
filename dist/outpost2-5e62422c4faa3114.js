@@ -121,6 +121,9 @@ function __wbg_get_imports() {
             const ret = arg0.clientY;
             return ret;
         },
+        __wbg_clip_26239db7c0b67972: function(arg0) {
+            arg0.clip();
+        },
         __wbg_clipboard_047ad3d952a13066: function(arg0) {
             const ret = arg0.clipboard;
             return ret;
@@ -580,6 +583,9 @@ function __wbg_get_imports() {
         __wbg_readyState_9363a615898534d8: function(arg0) {
             const ret = arg0.readyState;
             return (__wbindgen_enum_RtcDataChannelState.indexOf(ret) + 1 || 5) - 1;
+        },
+        __wbg_rect_ab5601e64afdbc33: function(arg0, arg1, arg2, arg3, arg4) {
+            arg0.rect(arg1, arg2, arg3, arg4);
         },
         __wbg_removeChild_d2dc6fc1d6db896b: function() { return handleError(function (arg0, arg1) {
             const ret = arg0.removeChild(arg1);

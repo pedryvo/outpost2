@@ -2843,6 +2843,7 @@ pub fn start() -> Result<(), JsValue> {
                 app_borrow.viewport.render(
                     &ctx,
                     &app_borrow.colony,
+                    0.0,
                     canvas_w,
                     canvas_h,
                     None,
@@ -2859,6 +2860,7 @@ pub fn start() -> Result<(), JsValue> {
             app_borrow.viewport.render(
                 &ctx,
                 &app_borrow.colony,
+                effective_dt,
                 canvas_w,
                 canvas_h,
                 ghost_data,

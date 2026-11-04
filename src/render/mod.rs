@@ -112,6 +112,7 @@ impl Viewport {
         &self,
         ctx: &CanvasRenderingContext2d,
         colony: &ColonyState,
+        frame_dt: f64,
         width: f64,
         height: f64,
         ghost_placement: Option<(crate::sim::structures::StructureType, (i32, i32), bool)>,
@@ -362,6 +363,26 @@ impl Viewport {
                 ctx.set_stroke_style_str("#b8c7ce");
                 ctx.set_line_width(2.0 * self.zoom);
                 ctx.stroke_rect(sx, sy, width, height);
+                if b.construction_progress > 0.0 {
+                    if let Ok(mut sprite_mgr) = self.sprite_mgr.try_borrow_mut() {
+                        let faction = b.faction.unwrap_or(colony.faction);
+                        let group = building_sprite_frame(&b.name, faction);
+                        if let Some((left, top, right, bottom)) = sprite_mgr.atlas.prt.as_ref()
+                            .and_then(|prt| prt.animation_bounds(group as usize)) {
+                            let sprite_width = (right - left) as f64 * self.zoom;
+                            let sprite_height = (bottom - top) as f64 * self.zoom;
+                            let center_x = sx + width * 0.5;
+                            let bottom_y = sy + height;
+                            let revealed_height = sprite_height * (b.construction_progress / 100.0).clamp(0.0, 1.0);
+                            let _ = ctx.save();
+                            ctx.begin_path();
+                            ctx.rect(center_x - sprite_width * 0.5, bottom_y - revealed_height, sprite_width, revealed_height);
+                            ctx.clip();
+                            let _ = sprite_mgr.atlas.draw_group_frame(ctx, group, 0, center_x, bottom_y, self.zoom, faction == Faction::Eden);
+                            let _ = ctx.restore();
+                        }
+                    }
+                }
                 ctx.set_fill_style_str("#0f172a");
                 ctx.fill_rect(sx, sy - 8.0 * self.zoom, width, 5.0 * self.zoom);
                 ctx.set_fill_style_str("#e2d39a");
@@ -607,7 +628,7 @@ impl Viewport {
         // Update Unit Sprite & Animation Pipeline
         let unit_ptrs: Vec<&crate::sim::Unit> = colony.units.iter().collect();
         if let Ok(mut sprite_mgr) = self.sprite_mgr.try_borrow_mut() {
-            sprite_mgr.update(0.016, &unit_ptrs);
+            sprite_mgr.update(frame_dt.clamp(0.0, 0.25), &unit_ptrs);
         }
 
         // Render Units (Only visible when active in sensor range)

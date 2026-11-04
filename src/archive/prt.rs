@@ -67,6 +67,23 @@ pub struct PrtFile {
 }
 
 impl PrtFile {
+    /// Common canvas bounds for every frame of an animation. Keeping these
+    /// bounds fixed prevents moving layers from shifting the whole sprite.
+    pub fn animation_bounds(&self, group_id: usize) -> Option<(i32, i32, i32, i32)> {
+        let animation = self.animations.get(group_id)?;
+        let mut bounds = (i32::MAX, i32::MAX, i32::MIN, i32::MIN);
+        for frame in &animation.frames {
+            for layer in frame {
+                let sprite = self.sprites.get(layer.bitmap_index as usize)?;
+                bounds.0 = bounds.0.min(layer.x as i32);
+                bounds.1 = bounds.1.min(layer.y as i32);
+                bounds.2 = bounds.2.max(layer.x as i32 + sprite.width as i32);
+                bounds.3 = bounds.3.max(layer.y as i32 + sprite.height as i32);
+            }
+        }
+        (bounds.0 < bounds.2 && bounds.1 < bounds.3).then_some(bounds)
+    }
+
     /// Parse raw bytes of an op2_art.prt file
     pub fn parse(data: &[u8]) -> Result<Self, String> {
         if data.len() < 36 {
@@ -186,5 +203,20 @@ mod tests {
         assert_eq!(art.animations.len(), 2079);
         assert!(art.animations[1845].frames[0].len() > 1);
         assert!(art.animations[1202].frames[0].len() > 1);
+    }
+
+    #[test]
+    fn animated_building_bounds_contain_every_frame() {
+        let art = PrtFile::parse(include_bytes!("../../assets/op2_art.prt")).unwrap();
+        let (left, top, right, bottom) = art.animation_bounds(1845).unwrap();
+        for frame in &art.animations[1845].frames {
+            for layer in frame {
+                let sprite = &art.sprites[layer.bitmap_index as usize];
+                assert!(layer.x as i32 >= left);
+                assert!(layer.y as i32 >= top);
+                assert!(layer.x as i32 + sprite.width as i32 <= right);
+                assert!(layer.y as i32 + sprite.height as i32 <= bottom);
+            }
+        }
     }
 }
