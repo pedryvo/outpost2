@@ -128,3 +128,16 @@ impl GameMap {
         x >= 0 && x < self.width as i32 && y >= 0 && y < self.height as i32
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn original_campaign_maps_include_wide_and_tall_maps() {
+        let wide = GameMap::parse(include_bytes!("../../assets/eden02.map")).unwrap();
+        let tall = GameMap::parse(include_bytes!("../../assets/ply03.map")).unwrap();
+        assert_eq!((wide.width, wide.height), (128, 64));
+        assert_eq!((tall.width, tall.height), (64, 128));
+    }
+}

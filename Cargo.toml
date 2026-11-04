@@ -38,6 +38,7 @@ features = [
   "CanvasGradient",
   "Performance",
   "MouseEvent",
+  "WheelEvent",
   "KeyboardEvent",
   "TouchEvent",
   "TouchList",

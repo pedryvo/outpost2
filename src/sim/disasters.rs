@@ -86,25 +86,6 @@ impl DisasterSimulator {
         }
         self.pending_meteors.retain(|m| !m.has_impacted);
 
-        // Spawn meteor shower barrage every ~65 seconds
-        let mut meteor_notice = None;
-        if self.meteor_timer > 65.0 {
-            self.meteor_timer = 0.0;
-            for i in 0..4 {
-                let mx = 12.0 + ((self.eruption_count as f64 * 11.0 + i as f64 * 7.3) % 40.0);
-                let my = 10.0 + ((self.eruption_count as f64 * 8.0 + i as f64 * 5.7) % 35.0);
-                self.pending_meteors.push(MeteorImpact {
-                    x: mx,
-                    y: my,
-                    delay: 1.2 + i as f64 * 0.8,
-                    max_delay: 1.2 + i as f64 * 0.8,
-                    radius: 2.8,
-                    has_impacted: false,
-                });
-            }
-            meteor_notice = Some("ASTRONOMICAL ALERT: Meteor shower trajectory on collision course with New Terra!");
-        }
-
         // Spawn rotary dust vortex every ~50 seconds
         let mut vortex_notice = None;
         if self.vortex_timer > 50.0 {
@@ -164,7 +145,7 @@ impl DisasterSimulator {
             return Some("SEISMIC WARNING: Volcanic fissure erupted on New Terra! Magma is advancing.");
         }
 
-        meteor_notice.or(vortex_notice)
+        vortex_notice
     }
 
     /// Creep microbial blight to neighboring tiles
@@ -223,5 +204,26 @@ impl DisasterSimulator {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn meteors_only_appear_when_scheduled_by_a_mission() {
+        let mut disasters = DisasterSimulator::new();
+        let mut map = GameMap::new_blank(64, 64);
+        disasters.meteor_timer = 64.0;
+        disasters.update(&mut map, 2.0);
+        assert!(disasters.pending_meteors.is_empty());
+
+        disasters.pending_meteors.push(MeteorImpact {
+            x: 10.0, y: 12.0, delay: 1.0, max_delay: 1.0,
+            radius: 2.0, has_impacted: false,
+        });
+        disasters.update(&mut map, 1.0);
+        assert_eq!(disasters.detonation_queue, vec![(10.0, 12.0, 2.0)]);
     }
 }

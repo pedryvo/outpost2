@@ -2542,32 +2542,6 @@ impl MenuManager {
             ctx.stroke();
         }
 
-        // Dynamic Shooting Star (Meteor Trail)
-        let meteor_period = 6.5;
-        let meteor_t = self.anim_time % meteor_period;
-        if meteor_t < 0.75 {
-            let m_progress = meteor_t / 0.75;
-            let mx_start = w * 0.18 + (((self.anim_time / meteor_period) as u32 * 197) % 300) as f64;
-            let my_start = h * 0.05 + (((self.anim_time / meteor_period) as u32 * 79) % 120) as f64;
-            let m_dist = 240.0 * m_progress;
-            let cur_x = mx_start + m_dist * 0.88;
-            let cur_y = my_start + m_dist * 0.47;
-            let tail_len = 80.0_f64.min(m_dist);
-            let tail_x = cur_x - tail_len * 0.88;
-            let tail_y = cur_y - tail_len * 0.47;
-
-            let m_grad = ctx.create_linear_gradient(tail_x, tail_y, cur_x, cur_y);
-            let _ = m_grad.add_color_stop(0.0, "rgba(56, 189, 248, 0.0)");
-            let _ = m_grad.add_color_stop(0.7, "rgba(56, 189, 248, 0.6)");
-            let _ = m_grad.add_color_stop(1.0, "rgba(255, 255, 255, 0.95)");
-            ctx.set_stroke_style_canvas_gradient(&m_grad);
-            ctx.set_line_width(2.0);
-            ctx.begin_path();
-            ctx.move_to(tail_x, tail_y);
-            ctx.line_to(cur_x, cur_y);
-            ctx.stroke();
-        }
-
         // Planet New Terra / Tethys with 3D Tilted Rings
         let px = w * 0.88;
         let py = h * 0.22;

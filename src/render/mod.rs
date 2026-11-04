@@ -59,6 +59,15 @@ fn building_animation_frame(sol: f64, frame_count: usize) -> usize {
     if frame_count == 0 { 0 } else { ((sol * 160.0).max(0.0) as usize) % frame_count }
 }
 
+fn covered_tile_rect(x: f64, y: f64, size: f64, dpr: f64) -> (f64, f64, f64, f64) {
+    let scale = dpr.max(1.0);
+    let left = (x * scale).floor() / scale;
+    let top = (y * scale).floor() / scale;
+    let right = ((x + size) * scale).ceil() / scale;
+    let bottom = ((y + size) * scale).ceil() / scale;
+    (left, top, right - left, bottom - top)
+}
+
 /// Chimney positions relative to the original sprite canvas.
 fn building_exhaust_sources(name: &str, faction: Faction) -> &'static [(f64, f64)] {
     if name.contains("Rare Ore Smelter") {
@@ -132,6 +141,64 @@ mod building_animation_tests {
     }
 }
 
+#[cfg(test)]
+mod camera_tests {
+    use super::*;
+
+    fn test_viewport() -> Viewport {
+        Viewport {
+            camera_x: 0.0, camera_y: 0.0, zoom: 1.0,
+            tile_width: 32.0, tile_height: 32.0,
+            map_cols: 64, map_rows: 64,
+            sprite_mgr: std::cell::RefCell::new(sprites::UnitSpriteManager::new(sprites::SpriteAtlas::new())),
+            terrain: None,
+        }
+    }
+
+    #[test]
+    fn wheel_zoom_keeps_the_point_under_the_pointer() {
+        let mut viewport = test_viewport();
+        viewport.camera_x = -400.0;
+        viewport.camera_y = -300.0;
+        let before_x = (250.0 - viewport.camera_x) / (viewport.tile_width * viewport.zoom);
+        let before_y = (180.0 - viewport.camera_y) / (viewport.tile_height * viewport.zoom);
+        viewport.zoom_at(250.0, 180.0, 1.25, 800.0, 600.0);
+        let after_x = (250.0 - viewport.camera_x) / (viewport.tile_width * viewport.zoom);
+        let after_y = (180.0 - viewport.camera_y) / (viewport.tile_height * viewport.zoom);
+        assert!((before_x - after_x).abs() < 1e-9);
+        assert!((before_y - after_y).abs() < 1e-9);
+    }
+
+    #[test]
+    fn panning_stays_inside_the_map_and_centers_small_maps() {
+        let mut viewport = test_viewport();
+        viewport.pan_by(10_000.0, 10_000.0, 800.0, 600.0);
+        assert_eq!((viewport.camera_x, viewport.camera_y), (0.0, 0.0));
+        viewport.map_cols = 10;
+        viewport.map_rows = 10;
+        viewport.clamp_camera(800.0, 600.0);
+        assert_eq!((viewport.camera_x, viewport.camera_y), (240.0, 140.0));
+    }
+
+    #[test]
+    fn neighboring_tiles_cover_the_same_hidpi_edge() {
+        let a = covered_tile_rect(13.2, 7.4, 36.8, 1.5);
+        let b = covered_tile_rect(50.0, 7.4, 36.8, 1.5);
+        assert!(a.0 + a.2 >= b.0);
+        assert!(a.1 + a.3 >= b.1);
+    }
+
+    #[test]
+    fn wide_original_map_tiles_remain_reachable() {
+        let mut viewport = test_viewport();
+        viewport.map_cols = 128;
+        viewport.camera_x = -2500.0;
+        let (left, right, _, _) = viewport.visible_tile_bounds(800.0, 600.0, 128, 64);
+        assert!(left > 64);
+        assert!(right <= 128 && right > left);
+    }
+}
+
 impl Viewport {
     pub fn new() -> Self {
         let terrain = HtmlImageElement::new().ok();
@@ -165,6 +232,46 @@ impl Viewport {
         (tx, ty)
     }
 
+    pub fn clamp_camera(&mut self, view_width: f64, view_height: f64) {
+        let map_width = self.map_cols as f64 * self.tile_width * self.zoom;
+        let map_height = self.map_rows as f64 * self.tile_height * self.zoom;
+        self.camera_x = if map_width <= view_width {
+            (view_width - map_width) * 0.5
+        } else {
+            self.camera_x.clamp(view_width - map_width, 0.0)
+        };
+        self.camera_y = if map_height <= view_height {
+            (view_height - map_height) * 0.5
+        } else {
+            self.camera_y.clamp(view_height - map_height, 0.0)
+        };
+    }
+
+    pub fn pan_by(&mut self, dx: f64, dy: f64, view_width: f64, view_height: f64) {
+        self.camera_x += dx;
+        self.camera_y += dy;
+        self.clamp_camera(view_width, view_height);
+    }
+
+    pub fn zoom_at(&mut self, x: f64, y: f64, factor: f64, view_width: f64, view_height: f64) {
+        let old_zoom = self.zoom;
+        self.zoom = (self.zoom * factor).clamp(0.4, 2.5);
+        let ratio = self.zoom / old_zoom;
+        self.camera_x = x - (x - self.camera_x) * ratio;
+        self.camera_y = y - (y - self.camera_y) * ratio;
+        self.clamp_camera(view_width, view_height);
+    }
+
+    fn visible_tile_bounds(&self, view_width: f64, view_height: f64, map_width: i32, map_height: i32) -> (i32, i32, i32, i32) {
+        let tile_w = self.tile_width * self.zoom;
+        let tile_h = self.tile_height * self.zoom;
+        let left = ((-self.camera_x / tile_w).floor() as i32 - 1).clamp(0, map_width);
+        let right = (((view_width - self.camera_x) / tile_w).ceil() as i32 + 1).clamp(0, map_width);
+        let top = ((-self.camera_y / tile_h).floor() as i32 - 1).clamp(0, map_height);
+        let bottom = (((view_height - self.camera_y) / tile_h).ceil() as i32 + 1).clamp(0, map_height);
+        (left, right, top, bottom)
+    }
+
     /// Render the terrain, colony buildings, units, and active tactical overlays
     pub fn render(
         &self,
@@ -188,23 +295,24 @@ impl Viewport {
         let half_h = self.tile_height * 0.5 * self.zoom;
 
         // Render visible isometric terrain tiles
-        let start_col = 0;
-        let end_col = (colony.game_map.width as i32).min(self.map_cols);
-        let start_row = 0;
-        let end_row = (colony.game_map.height as i32).min(self.map_rows);
+        let (start_col, end_col, start_row, end_row) = self.visible_tile_bounds(
+            width, height, colony.game_map.width as i32, colony.game_map.height as i32,
+        );
 
         if let Some(terrain) = self.terrain.as_ref().filter(|image| image.natural_width() > 0) {
             let tile_size = 32.0 * self.zoom;
+            let dpr = web_sys::window().map_or(1.0, |window| window.device_pixel_ratio());
             for r in start_row..end_row {
                 for c in start_col..end_col {
                     let (sx, sy) = self.tile_to_screen(c as f64, r as f64);
                     if sx + tile_size < 0.0 || sx > width || sy + tile_size < 0.0 || sy > height {
                         continue;
                     }
+                    let (draw_x, draw_y, draw_w, draw_h) = covered_tile_rect(sx, sy, tile_size, dpr);
                     let fog = colony.fog.get(c as usize, r as usize);
                     if fog == FogState::Unexplored {
                         ctx.set_fill_style_str("#050505");
-                        ctx.fill_rect(sx, sy, tile_size, tile_size);
+                        ctx.fill_rect(draw_x, draw_y, draw_w, draw_h);
                         continue;
                     }
                     let mapping = colony.game_map.get_tile(c as u32, r as u32)
@@ -212,11 +320,20 @@ impl Viewport {
                     let source_x = (mapping % 64 * 32) as f64;
                     let source_y = (mapping / 64 * 32) as f64;
                     let _ = ctx.draw_image_with_html_image_element_and_sw_and_sh_and_dx_and_dy_and_dw_and_dh(
-                        terrain, source_x, source_y, 32.0, 32.0, sx, sy, tile_size, tile_size,
+                        terrain, source_x, source_y, 32.0, 32.0, draw_x, draw_y, draw_w, draw_h,
                     );
+                    if let Some(tile) = colony.game_map.get_tile(c as u32, r as u32) {
+                        if tile.is_lava {
+                            ctx.set_fill_style_str("rgba(229, 73, 29, 0.48)");
+                            ctx.fill_rect(draw_x, draw_y, draw_w, draw_h);
+                        } else if tile.is_blight {
+                            ctx.set_fill_style_str("rgba(119, 47, 139, 0.34)");
+                            ctx.fill_rect(draw_x, draw_y, draw_w, draw_h);
+                        }
+                    }
                     if fog == FogState::Explored {
                         ctx.set_fill_style_str("rgba(0, 0, 0, 0.55)");
-                        ctx.fill_rect(sx, sy, tile_size, tile_size);
+                        ctx.fill_rect(draw_x, draw_y, draw_w, draw_h);
                     }
                 }
             }
@@ -319,24 +436,6 @@ impl Viewport {
                         ctx.fill();
                     }
 
-                    // Atmospheric hazard particle drift: volcanic embers and blight spores
-                    if t.is_blight && fog != FogState::Unexplored {
-                        let spore_t = colony.sol * 2.0 + (c as f64 * 3.7) + (r as f64 * 5.3);
-                        let spore_dy = (spore_t % 1.0) * 16.0 * self.zoom;
-                        let spore_dx = spore_t.sin() * 6.0 * self.zoom;
-                        ctx.set_fill_style_str("rgba(216, 180, 254, 0.75)");
-                        ctx.begin_path();
-                        let _ = ctx.arc(sx + spore_dx, sy - spore_dy, 2.0 * self.zoom, 0.0, std::f64::consts::TAU);
-                        ctx.fill();
-                    } else if t.is_lava && fog != FogState::Unexplored {
-                        let ember_t = colony.sol * 4.0 + (c as f64 * 2.1) + (r as f64 * 4.7);
-                        let ember_dy = (ember_t % 1.0) * 18.0 * self.zoom;
-                        let ember_dx = ember_t.cos() * 4.0 * self.zoom;
-                        ctx.set_fill_style_str("rgba(254, 215, 170, 0.85)");
-                        ctx.begin_path();
-                        let _ = ctx.arc(sx + ember_dx, sy - ember_dy, 1.8 * self.zoom, 0.0, std::f64::consts::TAU);
-                        ctx.fill();
-                    }
                 }
             }
         }
@@ -879,46 +978,6 @@ impl Viewport {
                 let _ = ctx.arc(sx + pa.cos() * pd, sy + pa.sin() * pd, 1.5 * self.zoom, 0.0, std::f64::consts::TAU);
                 ctx.fill();
             }
-        }
-
-        // Render Incoming Meteor Fireball Streaks & Kinetic Impact Reticles
-        for m in &colony.disasters.pending_meteors {
-            let progress = (1.0 - (m.delay / m.max_delay)).clamp(0.0, 1.0);
-            let (target_sx, target_sy) = self.tile_to_screen(m.x, m.y);
-            let start_sx = target_sx + 240.0 * (1.0 - progress);
-            let start_sy = target_sy - 320.0 * (1.0 - progress);
-
-            let head_x = start_sx;
-            let head_y = start_sy;
-            let tail_x = head_x + 35.0;
-            let tail_y = head_y - 45.0;
-
-            // Fiery plasma trail
-            ctx.set_stroke_style_str("#fbbf24");
-            ctx.set_line_width(3.0 * self.zoom);
-            ctx.begin_path();
-            ctx.move_to(tail_x, tail_y);
-            ctx.line_to(head_x, head_y);
-            ctx.stroke();
-
-            // Meteorite core
-            ctx.set_fill_style_str("#ef4444");
-            ctx.begin_path();
-            let _ = ctx.arc(head_x, head_y, 5.0 * self.zoom, 0.0, std::f64::consts::TAU);
-            ctx.fill();
-
-            // Blazing white center
-            ctx.set_fill_style_str("#ffffff");
-            ctx.begin_path();
-            let _ = ctx.arc(head_x, head_y, 2.5 * self.zoom, 0.0, std::f64::consts::TAU);
-            ctx.fill();
-
-            // Ground kinetic target ring
-            ctx.set_stroke_style_str("rgba(239, 68, 68, 0.65)");
-            ctx.set_line_width(1.5);
-            ctx.begin_path();
-            let _ = ctx.arc(target_sx, target_sy, (m.radius * 6.0 * self.zoom) * (1.2 - progress * 0.4), 0.0, std::f64::consts::TAU);
-            ctx.stroke();
         }
 
         // Render Ascending Evacuation Starship & Ignition Plumes

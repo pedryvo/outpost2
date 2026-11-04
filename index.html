@@ -291,6 +291,12 @@
 
     /* The original game keeps its controls in a fixed right-hand console. */
     #game-container.playing { background: #777b7b; font-family: Arial, sans-serif; }
+    #game-container.playing {
+      --console-width: clamp(197px, 18vw, 280px);
+      --radar-height: clamp(133px, 14vh, 205px);
+      --detail-top: calc(18px + var(--radar-height) + 68px);
+      font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+    }
     #game-container.playing #top-bar {
       height: 18px;
       min-height: 18px;
@@ -318,21 +324,22 @@
       font: bold 12px/12px Arial, sans-serif;
     }
     #game-container.playing #viewport-container {
-      margin: 0 208px 0 8px;
+      margin: 0 calc(var(--console-width) + 11px) 0 8px;
       border: 3px ridge #babeba;
-      cursor: default;
+      cursor: grab;
     }
+    #game-container.playing #viewport-container:active { cursor: grabbing; }
     #game-container.playing #minimap-card {
       top: 18px;
       right: 7px;
       bottom: 5px;
-      width: 197px;
+      width: var(--console-width);
       border: 3px ridge #b4b8b4;
       background: #777b7b;
     }
     #game-container.playing #minimap-header { display: none; }
     #game-container.playing #minimap-canvas {
-      height: 133px;
+      height: var(--radar-height);
       border: 2px inset #969a96;
       background: #181713;
     }
@@ -353,7 +360,7 @@
       color: #d5d9d5;
       background: #454a47;
       border: 2px outset #9ea49e;
-      font: bold 8px Arial, sans-serif;
+      font: bold clamp(9px, 0.9vh, 12px) "MS Sans Serif", Tahoma, Arial, sans-serif;
       text-align: center;
       line-height: 1.05;
     }
@@ -365,7 +372,7 @@
       border: 2px inset #999;
       background: #020502;
       color: #5df327;
-      font: 11px/1.3 Arial, sans-serif;
+      font: clamp(11px, 1vh, 14px)/1.3 "MS Sans Serif", Tahoma, Arial, sans-serif;
     }
     #classic-detail h3 { color: #46e600; font: bold 12px Arial, sans-serif; }
     #classic-detail .sidebar-label {
@@ -382,11 +389,11 @@
     #game-container.playing #inspector-card,
     #game-container.playing #build-drawer {
       position: fixed !important;
-      top: 219px !important;
+      top: var(--detail-top) !important;
       right: 10px !important;
       bottom: 8px !important;
       left: auto !important;
-      width: 185px !important;
+      width: calc(var(--console-width) - 12px) !important;
       height: auto !important;
       padding: 5px !important;
       overflow-y: auto !important;
@@ -395,7 +402,7 @@
       box-shadow: none !important;
       background: #020502 !important;
       color: #6bed39 !important;
-      font: 10px Arial, sans-serif !important;
+      font: clamp(10px, 0.9vh, 13px) "MS Sans Serif", Tahoma, Arial, sans-serif !important;
       z-index: 20 !important;
     }
     #game-container.playing #unit-card .action-btn,
@@ -427,25 +434,22 @@
     #game-container.playing #bottom-bar {
       height: 27px;
       min-height: 27px;
-      margin: 0 208px 4px 8px;
+      margin: 0 calc(var(--console-width) + 11px) 4px 8px;
       padding: 1px 5px;
       justify-content: start;
       gap: 12px;
       border: 2px inset #aeb3ae;
       background: #101810;
       color: #d5d8d1;
-      font: 10px Arial, sans-serif;
+      font: clamp(10px, 0.9vh, 13px) "MS Sans Serif", Tahoma, Arial, sans-serif;
     }
     #classic-status { white-space: nowrap; }
     @media (max-width: 560px) {
-      #game-container.playing #viewport-container { margin-right: 170px; }
-      #game-container.playing #minimap-card { width: 160px; }
-      #game-container.playing #bottom-bar { margin-right: 170px; }
-      #game-container.playing #minimap-canvas { height: 110px; }
+      #game-container.playing { --console-width: 160px; --radar-height: 110px; }
       #game-container.playing #classic-controls .action-btn { font-size: 7px; }
       #game-container.playing #unit-card,
       #game-container.playing #inspector-card,
-      #game-container.playing #build-drawer { top: 196px !important; width: 149px !important; }
+      #game-container.playing #build-drawer { width: 149px !important; }
     }
   </style>
 </head>

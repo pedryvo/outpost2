@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, KeyboardEvent, MouseEvent, Window};
+use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, KeyboardEvent, MouseEvent, WheelEvent, Window};
 
 mod archive;
 mod audio;
@@ -40,6 +40,7 @@ struct GameApp {
     hover_tile: (i32, i32),
     drag_select_start: Option<(f64, f64)>,
     drag_select_current: Option<(f64, f64)>,
+    pan_candidate: bool,
     net_session: Option<net::WebRtcSession>,
     last_autosave_sol: u32,
     playtime_seconds: u32,
@@ -89,6 +90,7 @@ pub fn start() -> Result<(), JsValue> {
         hover_tile: (20, 20),
         drag_select_start: None,
         drag_select_current: None,
+        pan_candidate: false,
         net_session: None,
         last_autosave_sol: 0,
         playtime_seconds: 0,
@@ -309,6 +311,7 @@ pub fn start() -> Result<(), JsValue> {
                             g.hud.state.telemetry.host_faction = g.menu.mp_room.faction;
                             g.hud.state.telemetry.guest_faction = g.menu.mp_room.guest_faction.or(Some(Faction::Plymouth));
                             g.menu.switch_screen(render::MenuScreen::None);
+                            center_on_colony(&mut g, &canvas_clone);
                             g.audio.play_build_confirm();
                         }
                         render::MenuAction::ApplyOptions(opts) => {
@@ -441,7 +444,8 @@ pub fn start() -> Result<(), JsValue> {
                 g.drag_select_current = Some((click_x, click_y));
                 g.last_mouse_x = click_x;
                 g.last_mouse_y = click_y;
-                g.is_dragging = true;
+                g.is_dragging = false;
+                g.pan_candidate = !e.shift_key();
             } else if e.button() == 2 {
                 // Right Click = Cancel Placement/Engineering or issue Tactical Command
                 if g.pending_placement.is_some() || g.pending_engineering.is_some() || g.pending_convec_deploy || g.pending_patrol {
@@ -549,12 +553,29 @@ pub fn start() -> Result<(), JsValue> {
             g.hover_tile = (tx, ty);
 
             if g.drag_select_start.is_some() {
-                g.drag_select_current = Some((cur_x, cur_y));
+                if g.pan_candidate {
+                    let (start_x, start_y) = g.drag_select_start.unwrap();
+                    if (cur_x - start_x).hypot(cur_y - start_y) > 8.0 {
+                        g.drag_select_start = None;
+                        g.drag_select_current = None;
+                        g.pan_candidate = false;
+                        g.is_dragging = true;
+                        let dx = cur_x - g.last_mouse_x;
+                        let dy = cur_y - g.last_mouse_y;
+                        g.viewport.pan_by(
+                            dx, dy,
+                            canvas_clone.client_width() as f64, canvas_clone.client_height() as f64,
+                        );
+                        g.last_mouse_x = cur_x;
+                        g.last_mouse_y = cur_y;
+                    }
+                } else {
+                    g.drag_select_current = Some((cur_x, cur_y));
+                }
             } else if g.is_dragging {
                 let dx = cur_x - g.last_mouse_x;
                 let dy = cur_y - g.last_mouse_y;
-                g.viewport.camera_x += dx;
-                g.viewport.camera_y += dy;
+                g.viewport.pan_by(dx, dy, canvas_clone.client_width() as f64, canvas_clone.client_height() as f64);
                 g.last_mouse_x = cur_x;
                 g.last_mouse_y = cur_y;
             }
@@ -572,6 +593,7 @@ pub fn start() -> Result<(), JsValue> {
                 g.drag_select_start = None;
                 g.drag_select_current = None;
                 g.is_dragging = false;
+                g.pan_candidate = false;
                 return;
             }
 
@@ -680,9 +702,31 @@ pub fn start() -> Result<(), JsValue> {
             g.drag_select_start = None;
             g.drag_select_current = None;
             g.is_dragging = false;
+            g.pan_candidate = false;
         }) as Box<dyn FnMut(MouseEvent)>);
         window.add_event_listener_with_callback("mouseup", on_mouse_up.as_ref().unchecked_ref())?;
         on_mouse_up.forget();
+    }
+
+    // Zoom toward the mouse pointer without changing the tile beneath it.
+    {
+        let app_clone = app.clone();
+        let canvas_clone = canvas.clone();
+        let on_wheel = Closure::wrap(Box::new(move |e: WheelEvent| {
+            let mut g = app_clone.borrow_mut();
+            if !g.menu.is_in_game() { return; }
+            e.prevent_default();
+            let (x, y) = canvas_position(&canvas_clone, e.client_x(), e.client_y());
+            let delta = match e.delta_mode() {
+                1 => e.delta_y() * 16.0,
+                2 => e.delta_y() * canvas_clone.client_height() as f64,
+                _ => e.delta_y(),
+            };
+            let factor = 1.15_f64.powf((-delta / 100.0).clamp(-2.0, 2.0));
+            g.viewport.zoom_at(x, y, factor, canvas_clone.client_width() as f64, canvas_clone.client_height() as f64);
+        }) as Box<dyn FnMut(WheelEvent)>);
+        canvas.add_event_listener_with_callback("wheel", on_wheel.as_ref().unchecked_ref())?;
+        on_wheel.forget();
     }
 
     // Disable context menu on canvas so right-click is exclusive to game commands
@@ -712,6 +756,7 @@ pub fn start() -> Result<(), JsValue> {
                     render::MenuAction::StartScenario(sc_id) => {
                         g.colony = ColonyState::new_scenario(sc_id);
                         g.menu.current_screen = render::MenuScreen::None;
+                        center_on_colony(&mut g, &canvas_clone);
                         g.audio.play_build_confirm();
                     }
                     _ => {}
@@ -763,12 +808,12 @@ pub fn start() -> Result<(), JsValue> {
             }
 
             match key.as_str() {
-                "ArrowLeft" | "a" | "A" => g.viewport.camera_x += step,
-                "ArrowRight" | "d" | "D" => g.viewport.camera_x -= step,
-                "ArrowUp" | "w" | "W" => g.viewport.camera_y += step,
-                "ArrowDown" | "s" | "S" => g.viewport.camera_y -= step,
-                "+" | "=" => g.viewport.zoom = (g.viewport.zoom * 1.15).min(2.5),
-                "-" | "_" => g.viewport.zoom = (g.viewport.zoom / 1.15).max(0.4),
+                "ArrowLeft" | "a" | "A" => g.viewport.pan_by(step, 0.0, canvas_clone.client_width() as f64, canvas_clone.client_height() as f64),
+                "ArrowRight" | "d" | "D" => g.viewport.pan_by(-step, 0.0, canvas_clone.client_width() as f64, canvas_clone.client_height() as f64),
+                "ArrowUp" | "w" | "W" => g.viewport.pan_by(0.0, step, canvas_clone.client_width() as f64, canvas_clone.client_height() as f64),
+                "ArrowDown" | "s" | "S" => g.viewport.pan_by(0.0, -step, canvas_clone.client_width() as f64, canvas_clone.client_height() as f64),
+                "+" | "=" => g.viewport.zoom_at(canvas_clone.client_width() as f64 * 0.5, canvas_clone.client_height() as f64 * 0.5, 1.15, canvas_clone.client_width() as f64, canvas_clone.client_height() as f64),
+                "-" | "_" => g.viewport.zoom_at(canvas_clone.client_width() as f64 * 0.5, canvas_clone.client_height() as f64 * 0.5, 1.0 / 1.15, canvas_clone.client_width() as f64, canvas_clone.client_height() as f64),
                 "Escape" => {
                     if g.pending_placement.is_some()
                         || g.pending_engineering.is_some()
@@ -1047,11 +1092,14 @@ pub fn start() -> Result<(), JsValue> {
     // Zoom Buttons
     if let Some(btn_in) = document.get_element_by_id("btn-zoom-in") {
         let app_clone = app.clone();
+        let canvas_clone = canvas.clone();
         let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
             let mut g = app_clone.borrow_mut();
             let _ = g.audio.init();
             g.audio.play_ui_beep();
-            g.viewport.zoom = (g.viewport.zoom * 1.25).min(2.5);
+            let w = canvas_clone.client_width() as f64;
+            let h = canvas_clone.client_height() as f64;
+            g.viewport.zoom_at(w * 0.5, h * 0.5, 1.25, w, h);
         }) as Box<dyn FnMut(_)>);
         btn_in.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
         cb.forget();
@@ -1059,11 +1107,14 @@ pub fn start() -> Result<(), JsValue> {
 
     if let Some(btn_out) = document.get_element_by_id("btn-zoom-out") {
         let app_clone = app.clone();
+        let canvas_clone = canvas.clone();
         let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
             let mut g = app_clone.borrow_mut();
             let _ = g.audio.init();
             g.audio.play_ui_beep();
-            g.viewport.zoom = (g.viewport.zoom / 1.25).max(0.4);
+            let w = canvas_clone.client_width() as f64;
+            let h = canvas_clone.client_height() as f64;
+            g.viewport.zoom_at(w * 0.5, h * 0.5, 1.0 / 1.25, w, h);
         }) as Box<dyn FnMut(_)>);
         btn_out.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
         cb.forget();
@@ -2273,6 +2324,15 @@ pub fn start() -> Result<(), JsValue> {
 
         // Resize canvas to match display window and high-DPI scaling
         let dpr = window_clone.device_pixel_ratio().max(1.0);
+        if let Some(container) = document.get_element_by_id("game-container") {
+            let playing = app_borrow.menu.is_in_game()
+                || app_borrow.menu.current_screen == render::MenuScreen::PauseMenu;
+            let current = container.get_attribute("class").as_deref() == Some("playing");
+            if playing != current {
+                if playing { let _ = container.set_attribute("class", "playing"); }
+                else { let _ = container.remove_attribute("class"); }
+            }
+        }
         let win_w = window_clone.inner_width().ok().and_then(|v| v.as_f64()).unwrap_or(800.0);
         let win_h = window_clone.inner_height().ok().and_then(|v| v.as_f64()).unwrap_or(600.0);
         let client_w = if canvas.client_width() > 0 { canvas.client_width() as f64 } else { win_w };
@@ -2826,6 +2886,12 @@ pub fn start() -> Result<(), JsValue> {
         let mini_w = if minimap_canvas.client_width() > 0 { minimap_canvas.client_width() as f64 } else { 180.0 };
         let mini_h = if minimap_canvas.client_height() > 0 { minimap_canvas.client_height() as f64 } else { 180.0 };
 
+        app_borrow.viewport.map_cols = app_borrow.colony.game_map.width as i32;
+        app_borrow.viewport.map_rows = app_borrow.colony.game_map.height as i32;
+        app_borrow.hud.state.radar.map_cols = app_borrow.colony.game_map.width as i32;
+        app_borrow.hud.state.radar.map_rows = app_borrow.colony.game_map.height as i32;
+        app_borrow.viewport.clamp_camera(canvas_w, canvas_h);
+
         let _ = ctx.save();
         let _ = ctx.scale(dpr, dpr);
         ctx.set_image_smoothing_enabled(false);
@@ -2921,6 +2987,10 @@ async fn fetch_art_bytes(path: &str) -> Result<Vec<u8>, JsValue> {
 }
 
 fn center_on_colony(app: &mut GameApp, canvas: &HtmlCanvasElement) {
+    app.viewport.map_cols = app.colony.game_map.width as i32;
+    app.viewport.map_rows = app.colony.game_map.height as i32;
+    app.hud.state.radar.map_cols = app.colony.game_map.width as i32;
+    app.hud.state.radar.map_rows = app.colony.game_map.height as i32;
     if app.menu.is_in_game() {
         if let Some(container) = web_sys::window().unwrap().document().unwrap().get_element_by_id("game-container") {
             let _ = container.set_attribute("class", "playing");
@@ -2935,6 +3005,7 @@ fn center_on_colony(app: &mut GameApp, canvas: &HtmlCanvasElement) {
         app.viewport.camera_x = canvas.client_width() as f64 * 0.5 - x * app.viewport.tile_width * app.viewport.zoom;
         app.viewport.camera_y = canvas.client_height() as f64 * 0.5 - y * app.viewport.tile_height * app.viewport.zoom;
     }
+    app.viewport.clamp_camera(canvas.client_width() as f64, canvas.client_height() as f64);
 }
 
 fn canvas_position(canvas: &HtmlCanvasElement, client_x: i32, client_y: i32) -> (f64, f64) {
