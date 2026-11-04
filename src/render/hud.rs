@@ -11,7 +11,23 @@
 #![allow(dead_code)]
 
 use serde::{Deserialize, Serialize};
+use std::sync::OnceLock;
 use web_sys::CanvasRenderingContext2d;
+
+const TERRAIN_MINIMAP_COLORS: &[u8] = include_bytes!("../../assets/terrain_colors.bin");
+static MINIMAP_COLORS: OnceLock<(Vec<String>, Vec<String>)> = OnceLock::new();
+
+fn minimap_colors() -> &'static (Vec<String>, Vec<String>) {
+    MINIMAP_COLORS.get_or_init(|| {
+        let visible = TERRAIN_MINIMAP_COLORS.chunks_exact(3)
+            .map(|rgb| format!("rgb({},{},{})", rgb[0] as u16 * 3 / 4, rgb[1] as u16 * 3 / 4, rgb[2] as u16 * 3 / 4))
+            .collect();
+        let explored = TERRAIN_MINIMAP_COLORS.chunks_exact(3)
+            .map(|rgb| format!("rgb({},{},{})", rgb[0] / 2, rgb[1] / 2, rgb[2] / 2))
+            .collect();
+        (visible, explored)
+    })
+}
 
 use crate::sim::{
     combat::WeaponType,
@@ -1500,6 +1516,7 @@ impl HudRenderer {
 
         let scale_x = radar_w / (self.state.radar.map_cols as f64);
         let scale_y = radar_h / (self.state.radar.map_rows as f64);
+        let colors = minimap_colors();
 
         // 1. Miniaturized terrain render respecting Fog of War
         for y in 0..self.state.radar.map_rows {
@@ -1508,10 +1525,12 @@ impl HudRenderer {
                 if fog == FogState::Unexplored {
                     continue;
                 }
+                let mapping = colony.game_map.get_tile(x as u32, y as u32)
+                    .map(|tile| tile.tile_mapping as usize).unwrap_or(0);
                 let color = if fog == FogState::Visible {
-                    "#334155"
+                    colors.0.get(mapping).map(String::as_str).unwrap_or("#555")
                 } else {
-                    "#1e293b"
+                    colors.1.get(mapping).map(String::as_str).unwrap_or("#333")
                 };
                 ctx.set_fill_style_str(color);
                 ctx.fill_rect(

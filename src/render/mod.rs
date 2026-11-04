@@ -263,41 +263,31 @@ impl Viewport {
         }
         }
 
-        // Render Pressurized Colonial Transport Tubes
+        // The original transport network is a narrow, square conduit.
         for &(tx, ty) in &colony.tubes {
             let fog = colony.fog.get(tx as usize, ty as usize);
             if fog == FogState::Unexplored {
                 continue;
             }
 
-            let (sx, sy) = self.tile_to_screen(tx as f64, ty as f64);
+            let (tile_x, tile_y) = self.tile_to_screen(tx as f64, ty as f64);
+            let (sx, sy) = (tile_x + 16.0 * self.zoom, tile_y + 16.0 * self.zoom);
             if sx < -50.0 || sx > width + 50.0 || sy < -50.0 || sy > height + 50.0 {
                 continue;
             }
 
-            let tube_w = 10.0 * self.zoom;
-            let tube_h = 5.0 * self.zoom;
-
-            // Outer pressurized metallic conduit casing
-            ctx.set_fill_style_str(if fog == FogState::Explored { "#1e293b" } else { "#475569" });
-            ctx.begin_path();
-            ctx.move_to(sx, sy - tube_h);
-            ctx.line_to(sx + tube_w, sy);
-            ctx.line_to(sx, sy + tube_h);
-            ctx.line_to(sx - tube_w, sy);
-            ctx.close_path();
-            ctx.fill();
-
-            // Inner cyan luminous plasma life-support artery
-            if fog == FogState::Visible {
-                ctx.set_stroke_style_str("#38bdf8");
-                ctx.set_line_width(1.2 * self.zoom);
-                ctx.stroke();
-
-                ctx.set_fill_style_str("#0ea5e9");
-                ctx.begin_path();
-                let _ = ctx.arc(sx, sy, 2.0 * self.zoom, 0.0, std::f64::consts::PI * 2.0);
-                ctx.fill();
+            ctx.set_fill_style_str(if fog == FogState::Explored { "#4a4947" } else { "#8d8d89" });
+            ctx.fill_rect(sx - 2.0 * self.zoom, sy - 2.0 * self.zoom, 4.0 * self.zoom, 4.0 * self.zoom);
+            for (dx, dy) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
+                if colony.tubes.contains(&(tx + dx, ty + dy)) {
+                    if dx != 0 {
+                        ctx.fill_rect(sx.min(sx + dx as f64 * 16.0 * self.zoom), sy - 2.0 * self.zoom,
+                            16.0 * self.zoom, 4.0 * self.zoom);
+                    } else {
+                        ctx.fill_rect(sx - 2.0 * self.zoom, sy.min(sy + dy as f64 * 16.0 * self.zoom),
+                            4.0 * self.zoom, 16.0 * self.zoom);
+                    }
+                }
             }
         }
 
@@ -308,77 +298,31 @@ impl Viewport {
                 continue;
             }
 
-            let (sx, sy) = self.tile_to_screen(dep.tile_x as f64, dep.tile_y as f64);
-            let color = match dep.ore_type {
-                crate::sim::mining::OreType::Common => "#cbd5e1", // Hematite ore
-                crate::sim::mining::OreType::Rare => "#38bdf8",   // Titanium vein
-            };
+            let (tile_x, tile_y) = self.tile_to_screen(dep.tile_x as f64, dep.tile_y as f64);
+            let (sx, sy) = (tile_x + 16.0 * self.zoom, tile_y + 16.0 * self.zoom);
 
             if dep.has_miner {
-                // Active Industrial Mine Head Superstructure
-                let head_w = 18.0 * self.zoom;
-                let head_h = 14.0 * self.zoom;
-
-                // Shaft base foundation
-                ctx.set_fill_style_str("#1e293b");
-                ctx.set_stroke_style_str("#475569");
-                ctx.set_line_width(1.5 * self.zoom);
-                ctx.fill_rect(sx - head_w * 0.5, sy - head_h * 0.5, head_w, head_h);
-                ctx.stroke_rect(sx - head_w * 0.5, sy - head_h * 0.5, head_w, head_h);
-
-                // Gantry drill tower
-                ctx.set_stroke_style_str("#eab308");
-                ctx.set_line_width(1.2 * self.zoom);
-                ctx.begin_path();
-                ctx.move_to(sx - head_w * 0.35, sy - head_h * 0.5);
-                ctx.line_to(sx, sy - head_h * 1.2);
-                ctx.line_to(sx + head_w * 0.35, sy - head_h * 0.5);
-                ctx.stroke();
-
-                // Extraction drill indicator light
-                let drill_pulse = (colony.sol * 8.0).sin().abs();
-                ctx.set_fill_style_str(&format!("rgba(56, 189, 248, {:.2})", 0.4 + 0.5 * drill_pulse));
-                ctx.begin_path();
-                let _ = ctx.arc(sx, sy - head_h * 1.2, 2.5 * self.zoom, 0.0, std::f64::consts::TAU);
-                ctx.fill();
-
-                if fog == FogState::Visible {
-                    ctx.set_fill_style_str(color);
-                    ctx.set_font(&format!("bold {}px monospace", (8.0 * self.zoom).max(7.0)));
-                    let label = format!("🏭 Mine ({})", match dep.ore_type {
-                        crate::sim::mining::OreType::Common => "Common",
-                        crate::sim::mining::OreType::Rare => "Rare",
-                    });
-                    let _ = ctx.fill_text(&label, sx - 22.0 * self.zoom, sy - head_h * 1.35);
+                let group = match dep.ore_type {
+                    crate::sim::mining::OreType::Common => if colony.faction == Faction::Eden { 1001 } else { 1848 },
+                    crate::sim::mining::OreType::Rare => if colony.faction == Faction::Eden { 407 } else { 594 },
+                };
+                if let Ok(mut sprite_mgr) = self.sprite_mgr.try_borrow_mut() {
+                    let _ = sprite_mgr.atlas.draw_group(ctx, group, sx, sy + 16.0 * self.zoom,
+                        self.zoom, colony.faction == Faction::Eden);
                 }
             } else {
-                // Unmined Ore Beacon Spire
-                ctx.set_fill_style_str(color);
-                ctx.set_stroke_style_str("#0f172a");
-                ctx.set_line_width(1.0);
+                // Ore beacons are small surface markers, without floating labels.
+                ctx.set_stroke_style_str("#d3c29a");
+                ctx.set_line_width(2.0 * self.zoom);
                 ctx.begin_path();
-                let _ = ctx.arc(sx, sy, 5.0 * self.zoom, 0.0, std::f64::consts::TAU);
-                ctx.fill();
+                let _ = ctx.arc(sx, sy, 7.0 * self.zoom, 0.0, std::f64::consts::TAU);
                 ctx.stroke();
-
-                // Pulsing survey beacon rings
-                let ring_pulse = (colony.sol * 3.0).sin().abs();
-                ctx.set_stroke_style_str(&format!("rgba(245, 158, 11, {:.2})", 0.4 + 0.4 * ring_pulse));
-                ctx.set_line_width(1.0 * self.zoom);
                 ctx.begin_path();
-                let _ = ctx.arc(sx, sy, (8.0 + 4.0 * ring_pulse) * self.zoom, 0.0, std::f64::consts::TAU);
+                ctx.move_to(sx - 4.0 * self.zoom, sy);
+                ctx.line_to(sx + 4.0 * self.zoom, sy);
+                ctx.move_to(sx, sy - 4.0 * self.zoom);
+                ctx.line_to(sx, sy + 4.0 * self.zoom);
                 ctx.stroke();
-
-                // Label
-                if fog == FogState::Visible {
-                    ctx.set_fill_style_str("#facc15");
-                    ctx.set_font(&format!("bold {}px sans-serif", (9.0 * self.zoom).max(8.0)));
-                    let desc = match dep.ore_type {
-                        crate::sim::mining::OreType::Common => "📡 Beacon (Common)",
-                        crate::sim::mining::OreType::Rare => "📡 Beacon (Rare)",
-                    };
-                    let _ = ctx.fill_text(desc, sx - 28.0 * self.zoom, sy - 10.0 * self.zoom);
-                }
             }
         }
 
@@ -394,7 +338,10 @@ impl Viewport {
                 let frame = building_sprite_frame(&b.name, b.faction.unwrap_or(colony.faction));
                 let center_x = sx + b.width as f64 * self.tile_width * self.zoom * 0.5;
                 let bottom_y = sy + b.height as f64 * self.tile_height * self.zoom;
-                if let Ok(true) = sprite_mgr.atlas.draw_group(ctx, frame, center_x, bottom_y, self.zoom) {
+                if let Ok(true) = sprite_mgr.atlas.draw_group(
+                    ctx, frame, center_x, bottom_y, self.zoom,
+                    b.faction.unwrap_or(colony.faction) == Faction::Eden,
+                ) {
                         if b.is_selected {
                             ctx.set_stroke_style_str("#b8e868");
                             ctx.set_line_width(1.0);
@@ -671,12 +618,22 @@ impl Viewport {
             }
             }
 
-            // Unit selection ring
+            // Four corner brackets match the original unit selection marker.
             if u.is_selected {
-                ctx.set_stroke_style_str("#4ade80");
-                ctx.set_line_width(2.0);
+                let cx = sx + 16.0 * self.zoom;
+                let cy = sy + 16.0 * self.zoom;
+                let extent = 13.0 * self.zoom;
+                let corner = 5.0 * self.zoom;
+                ctx.set_stroke_style_str("#eeeeea");
+                ctx.set_line_width(1.0 * self.zoom);
                 ctx.begin_path();
-                let _ = ctx.arc(sx + 16.0 * self.zoom, sy + 16.0 * self.zoom, 12.0 * self.zoom, 0.0, std::f64::consts::PI * 2.0);
+                for (side_x, side_y) in [(-1.0, -1.0), (1.0, -1.0), (-1.0, 1.0), (1.0, 1.0)] {
+                    let x = cx + side_x * extent;
+                    let y = cy + side_y * extent;
+                    ctx.move_to(x - side_x * corner, y);
+                    ctx.line_to(x, y);
+                    ctx.line_to(x, y - side_y * corner);
+                }
                 ctx.stroke();
             }
 

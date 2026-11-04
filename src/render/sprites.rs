@@ -230,7 +230,7 @@ pub struct SpriteAtlas {
     pub bitmap_pixel_offset: usize,
     pub decoded_cache: HashMap<u32, DecodedSprite>,
     canvas_cache: HashMap<u32, HtmlCanvasElement>,
-    group_cache: HashMap<u32, HtmlCanvasElement>,
+    group_cache: HashMap<(u32, bool), HtmlCanvasElement>,
 }
 
 impl SpriteAtlas {
@@ -450,8 +450,10 @@ impl SpriteAtlas {
         center_x: f64,
         bottom_y: f64,
         scale: f64,
+        blue_team: bool,
     ) -> Result<bool, JsValue> {
-        if !self.group_cache.contains_key(&group_id) {
+        let cache_key = (group_id, blue_team);
+        if !self.group_cache.contains_key(&cache_key) {
             let layers = match self.prt.as_ref()
                 .and_then(|prt| prt.animations.get(group_id as usize))
                 .and_then(|group| group.frames.first()) {
@@ -485,9 +487,31 @@ impl SpriteAtlas {
                     1.0,
                 )?;
             }
-            self.group_cache.insert(group_id, canvas);
+            // OP2 stores player-color pixels in palette slots 1..=23. The
+            // stock art uses red; Eden's blue team palette is applied at draw time.
+            if blue_team {
+                if let Some(palette) = self.prt.as_ref().and_then(|prt| prt.palettes.get(1)) {
+                    let red_ramp = &palette[1..24];
+                    let image = offscreen.get_image_data(0.0, 0.0, canvas.width() as f64, canvas.height() as f64)?;
+                    let mut pixels = image.data().to_vec();
+                    for pixel in pixels.chunks_exact_mut(4) {
+                        if pixel[3] > 0 && red_ramp.iter().any(|color| pixel[..3] == color[..]) {
+                            let red = pixel[0];
+                            let green = pixel[1];
+                            pixel[0] = green / 3;
+                            pixel[1] = green / 2 + 15;
+                            pixel[2] = red;
+                        }
+                    }
+                    let recolored = web_sys::ImageData::new_with_u8_clamped_array_and_sh(
+                        wasm_bindgen::Clamped(&pixels[..]), canvas.width(), canvas.height(),
+                    )?;
+                    offscreen.put_image_data(&recolored, 0.0, 0.0)?;
+                }
+            }
+            self.group_cache.insert(cache_key, canvas);
         }
-        let canvas = &self.group_cache[&group_id];
+        let canvas = &self.group_cache[&cache_key];
         let w = canvas.width() as f64 * scale;
         let h = canvas.height() as f64 * scale;
         ctx.draw_image_with_html_canvas_element_and_dw_and_dh(
@@ -765,7 +789,7 @@ impl UnitSpriteManager {
 
         // Draw the complete original group (chassis, treads, turret and shadow).
         if self.atlas.raw_bitmap.is_some() && self.atlas.prt.is_some() {
-            if let Ok(true) = self.atlas.draw_group(ctx, sprite_frame, sx, sy + 16.0 * zoom, zoom) {
+            if let Ok(true) = self.atlas.draw_group(ctx, sprite_frame, sx, sy + 16.0 * zoom, zoom, unit.faction == Faction::Eden) {
                 return;
             }
         }

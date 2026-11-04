@@ -1132,35 +1132,29 @@ pub fn start() -> Result<(), JsValue> {
 
     if let Some(btn_units) = document.get_element_by_id("btn-units") {
         let app_clone = app.clone();
+        let canvas_clone = canvas.clone();
         let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
             let mut g = app_clone.borrow_mut();
             let _ = g.audio.init();
-            g.audio.play_unit_ack();
-            let next_id = g.colony.units.len() as u32 + 1;
-            let (name, hp, weapon) = if next_id % 2 == 0 {
-                ("Panther Battle Tank (Railgun)", 240, Some(sim::combat::WeaponType::Railgun))
-            } else {
-                ("Lynx Combat Scout (Laser)", 140, Some(sim::combat::WeaponType::Laser))
-            };
-
-            g.colony.units.push(sim::Unit {
-                id: next_id,
-                name: format!("{} #{}", name, next_id),
-                faction: sim::Faction::Eden,
-                tile_x: 21 + (next_id as i32) % 6,
-                tile_y: 25 + (next_id as i32) % 6,
-                hp,
-                max_hp: hp,
-                is_selected: false,
-                current_order: sim::pathfinding::UnitOrder::Idle,
-                path: Vec::new(),
-                move_cooldown: 0.0,
-                weapon,
-                attack_cooldown: 0.0,
-                cargo: None,
-                hauler_state: None,
-                cargo_kit: None,
-            });
+            let faction = g.colony.faction;
+            let count = g.colony.units.len();
+            if count == 0 { return; }
+            let current = g.colony.units.iter()
+                .position(|unit| unit.is_selected && unit.faction == faction)
+                .map(|index| index + 1).unwrap_or(0);
+            if let Some(next) = (0..count).map(|offset| (current + offset) % count)
+                .find(|&index| g.colony.units[index].faction == faction) {
+                for unit in &mut g.colony.units { unit.is_selected = false; }
+                for building in &mut g.colony.buildings { building.is_selected = false; }
+                g.colony.units[next].is_selected = true;
+                let (x, y) = (g.colony.units[next].tile_x as f64 + 0.5,
+                    g.colony.units[next].tile_y as f64 + 0.5);
+                g.viewport.camera_x = canvas_clone.client_width() as f64 * 0.5
+                    - x * g.viewport.tile_width * g.viewport.zoom;
+                g.viewport.camera_y = canvas_clone.client_height() as f64 * 0.5
+                    - y * g.viewport.tile_height * g.viewport.zoom;
+                g.audio.play_unit_ack();
+            }
         }) as Box<dyn FnMut(_)>);
         btn_units.add_event_listener_with_callback("click", cb.as_ref().unchecked_ref())?;
         cb.forget();
@@ -2347,6 +2341,17 @@ pub fn start() -> Result<(), JsValue> {
             let _ = mc.set_attribute("style", if in_game { "" } else { "display: none;" });
         }
         if in_game {
+            if let Some(status) = document.get_element_by_id("classic-status") {
+                let morale = if app_borrow.colony.morale_pct >= 80 { "EXCELLENT" }
+                    else if app_borrow.colony.morale_pct >= 50 { "FAIR" } else { "POOR" };
+                status.set_text_content(Some(&format!(
+                    "SOL {:.2}  MORALE {}  POP {}  C {}  R {}  FOOD {}  PWR {}/{}",
+                    app_borrow.colony.sol, morale, app_borrow.colony.population,
+                    app_borrow.colony.common_ore, app_borrow.colony.rare_ore,
+                    app_borrow.colony.food_units, app_borrow.colony.power_produced,
+                    app_borrow.colony.power_consumed,
+                )));
+            }
             if let Some(label) = document.get_element_by_id("sidebar-mission") {
                 label.set_text_content(Some(&app_borrow.colony.mission.codename));
             }
@@ -2360,6 +2365,11 @@ pub fn start() -> Result<(), JsValue> {
                 }
             }
             if let Some(selection) = document.get_element_by_id("sidebar-selection") {
+                let has_selection = app_borrow.colony.units.iter().any(|unit| unit.is_selected)
+                    || app_borrow.colony.buildings.iter().any(|building| building.is_selected);
+                if let Some(detail) = document.get_element_by_id("classic-detail") {
+                    let _ = detail.set_attribute("class", if has_selection { "has-selection" } else { "" });
+                }
                 let selected = app_borrow.colony.units.iter().find(|unit| unit.is_selected)
                     .map(|unit| format!("{} — {}/{} HP", unit.name, unit.hp, unit.max_hp))
                     .or_else(|| app_borrow.colony.buildings.iter().find(|building| building.is_selected)

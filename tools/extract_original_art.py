@@ -7,7 +7,7 @@ from io import BytesIO
 from pathlib import Path
 import struct
 
-from PIL import Image
+from PIL import Image, ImageStat
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -53,4 +53,10 @@ for index in range(mapping_count):
     atlas.paste(image.crop((0, tile * 32, 32, (tile + 1) * 32)),
                 ((index % 64) * 32, (index // 64) * 32))
 atlas.save(ASSETS / "terrain.png", optimize=True)
+colors = bytearray()
+for index in range(mapping_count):
+    tile = atlas.crop(((index % 64) * 32, (index // 64) * 32,
+                       (index % 64 + 1) * 32, (index // 64 + 1) * 32))
+    colors.extend(round(channel) for channel in ImageStat.Stat(tile).mean[:3])
+(ASSETS / "terrain_colors.bin").write_bytes(colors)
 print(f"Extracted {mapping_count} original terrain tiles and sprite data")
