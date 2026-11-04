@@ -11,7 +11,7 @@
  * Ensures full offline playability on Desktop Chrome/Firefox/Edge/Safari, iOS Safari, and Android Chrome.
  */
 
-const CACHE_VERSION = 'outpost2-v1.3.0.9';
+const CACHE_VERSION = 'outpost2-authentic-art-v1';
 const CACHE_NAME = `outpost2-cache-${CACHE_VERSION}`;
 
 // Pre-cached core assets
@@ -21,6 +21,9 @@ const PRECACHE_ASSETS = [
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
+  './assets/terrain.png',
+  './assets/op2_art.prt',
+  './assets/OP2_ART.BMP',
   // Audio Sound Bank WAV assets (96 legacy samples)
   'assets/audio/acid2.wav',
   'assets/audio/ag_sel.wav',
@@ -215,6 +218,8 @@ self.addEventListener('fetch', (event) => {
           url.pathname.endsWith('.js') ||
           url.pathname.endsWith('.wav') ||
           url.pathname.endsWith('.map') ||
+          url.pathname.endsWith('.prt') ||
+          url.pathname.toLowerCase().endsWith('.bmp') ||
           url.pathname.endsWith('.json') ||
           event.request.mode === 'navigate';
 

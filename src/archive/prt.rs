@@ -47,10 +47,23 @@ pub struct PrtFrame {
 
 pub type SpriteMeta = PrtFrame;
 
+#[derive(Debug, Clone, Copy)]
+pub struct PrtLayer {
+    pub bitmap_index: u16,
+    pub x: i16,
+    pub y: i16,
+}
+
+#[derive(Debug, Clone)]
+pub struct PrtAnimation {
+    pub frames: Vec<Vec<PrtLayer>>,
+}
+
 #[derive(Debug, Clone)]
 pub struct PrtFile {
     pub palettes: Vec<[[u8; 3]; 256]>,
     pub sprites: Vec<SpriteMeta>,
+    pub animations: Vec<PrtAnimation>,
 }
 
 impl PrtFile {
@@ -114,10 +127,64 @@ impl PrtFile {
             });
         }
 
-        Ok(Self { palettes, sprites })
+        // The numbered building and vehicle IDs refer to animations. Each frame
+        // contains several bitmap layers, including shadows and moving parts.
+        let animation_count = cursor.read_u32::<LittleEndian>().map_err(|e| e.to_string())? as usize;
+        let _frame_count = cursor.read_u32::<LittleEndian>().map_err(|e| e.to_string())?;
+        let _layer_count = cursor.read_u32::<LittleEndian>().map_err(|e| e.to_string())?;
+        let _unknown_count = cursor.read_u32::<LittleEndian>().map_err(|e| e.to_string())?;
+        let mut animations = Vec::with_capacity(animation_count);
+        for _ in 0..animation_count {
+            let mut header = [0u8; 32];
+            cursor.read_exact(&mut header).map_err(|e| e.to_string())?;
+            let frame_count = cursor.read_u32::<LittleEndian>().map_err(|e| e.to_string())? as usize;
+            let mut frames = Vec::with_capacity(frame_count);
+            for _ in 0..frame_count {
+                let layer_flags = cursor.read_u8().map_err(|e| e.to_string())?;
+                let other_flags = cursor.read_u8().map_err(|e| e.to_string())?;
+                if layer_flags & 0x80 != 0 {
+                    let mut optional = [0u8; 2];
+                    cursor.read_exact(&mut optional).map_err(|e| e.to_string())?;
+                }
+                if other_flags & 0x80 != 0 {
+                    let mut optional = [0u8; 2];
+                    cursor.read_exact(&mut optional).map_err(|e| e.to_string())?;
+                }
+                let mut layers = Vec::with_capacity((layer_flags & 0x7f) as usize);
+                for _ in 0..layer_flags & 0x7f {
+                    let bitmap_index = cursor.read_u16::<LittleEndian>().map_err(|e| e.to_string())?;
+                    let mut unused = [0u8; 2];
+                    cursor.read_exact(&mut unused).map_err(|e| e.to_string())?;
+                    let x = cursor.read_i16::<LittleEndian>().map_err(|e| e.to_string())?;
+                    let y = cursor.read_i16::<LittleEndian>().map_err(|e| e.to_string())?;
+                    layers.push(PrtLayer { bitmap_index, x, y });
+                }
+                frames.push(layers);
+            }
+            let unknown_items = cursor.read_u32::<LittleEndian>().map_err(|e| e.to_string())? as usize;
+            let mut unused = vec![0u8; unknown_items * 16];
+            cursor.read_exact(&mut unused).map_err(|e| e.to_string())?;
+            animations.push(PrtAnimation { frames });
+        }
+
+        Ok(Self { palettes, sprites, animations })
     }
 
     pub fn get_sprite(&self, id: usize) -> Option<&SpriteMeta> {
         self.sprites.get(id)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::PrtFile;
+
+    #[test]
+    fn parses_original_composite_art_groups() {
+        let art = PrtFile::parse(include_bytes!("../../assets/op2_art.prt")).unwrap();
+        assert_eq!(art.sprites.len(), 5390);
+        assert_eq!(art.animations.len(), 2079);
+        assert!(art.animations[1845].frames[0].len() > 1);
+        assert!(art.animations[1202].frames[0].len() > 1);
     }
 }

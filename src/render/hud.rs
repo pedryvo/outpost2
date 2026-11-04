@@ -82,11 +82,8 @@ impl RadarProjection {
         let target_tx = norm_x * (cols as f64);
         let target_ty = norm_y * (rows as f64);
 
-        let half_w = tile_w * 0.5 * zoom;
-        let half_h = tile_h * 0.5 * zoom;
-
-        let camera_x = screen_w * 0.5 - (target_tx - target_ty) * half_w;
-        let camera_y = screen_h * 0.5 - (target_tx + target_ty) * half_h;
+        let camera_x = screen_w * 0.5 - target_tx * tile_w * zoom;
+        let camera_y = screen_h * 0.5 - target_ty * tile_h * zoom;
 
         (camera_x, camera_y)
     }
@@ -105,27 +102,10 @@ impl RadarProjection {
         cols: i32,
         rows: i32,
     ) -> (f64, f64, f64, f64) {
-        let half_w = tile_w * 0.5 * zoom;
-        let half_h = tile_h * 0.5 * zoom;
-
-        // Invert screen corners (0,0), (w,0), (w,h), (0,h) to isometric grid coordinates
-        let corners = [(0.0, 0.0), (screen_w, 0.0), (screen_w, screen_h), (0.0, screen_h)];
-        let mut min_tx = f64::MAX;
-        let mut max_tx = f64::MIN;
-        let mut min_ty = f64::MAX;
-        let mut max_ty = f64::MIN;
-
-        for (sx, sy) in corners {
-            let rel_x = (sx - camera_x) / half_w;
-            let rel_y = (sy - camera_y) / half_h;
-            let tx = (rel_y + rel_x) * 0.5;
-            let ty = (rel_y - rel_x) * 0.5;
-
-            min_tx = min_tx.min(tx);
-            max_tx = max_tx.max(tx);
-            min_ty = min_ty.min(ty);
-            max_ty = max_ty.max(ty);
-        }
+        let min_tx = -camera_x / (tile_w * zoom);
+        let min_ty = -camera_y / (tile_h * zoom);
+        let max_tx = (screen_w - camera_x) / (tile_w * zoom);
+        let max_ty = (screen_h - camera_y) / (tile_h * zoom);
 
         let scale_x = radar_w / (cols as f64);
         let scale_y = radar_h / (rows as f64);
@@ -2164,13 +2144,11 @@ mod tests {
         let (cam_x, cam_y) = RadarProjection::calculate_camera_pan(
             64.0, 64.0, // clicked center of 128x128 radar
             128.0, 128.0, 800.0, 600.0, // screen 800x600
-            64.0, 32.0, 1.0, 64, 64,
+            32.0, 32.0, 1.0, 64, 64,
         );
 
         // Center tile for 64x64 is (32, 32).
-        // (32 - 32) * half_w = 0, so cam_x should equal 400.0
-        assert!((cam_x - 400.0).abs() < 1e-4);
-        // (32 + 32) * 16.0 = 1024.0. cam_y = 300.0 - 1024.0 = -724.0
+        assert!((cam_x - (-624.0)).abs() < 1e-4);
         assert!((cam_y - (-724.0)).abs() < 1e-4);
     }
 

@@ -1,4 +1,4 @@
-//! Isometric Viewport and HTML5 Canvas Renderer
+//! Top-down viewport and HTML5 Canvas renderer
 
 pub mod hud;
 pub mod menu;
@@ -19,7 +19,7 @@ pub use touch::{
     TouchGestureEvent, TouchGestureTracker,
 };
 
-use web_sys::CanvasRenderingContext2d;
+use web_sys::{CanvasRenderingContext2d, HtmlImageElement};
 use crate::sim::{fog::FogState, ColonyState, Faction};
 use palette::MASTER_PALETTE;
 
@@ -32,35 +32,58 @@ pub struct Viewport {
     pub map_cols: i32,
     pub map_rows: i32,
     pub sprite_mgr: std::cell::RefCell<sprites::UnitSpriteManager>,
+    terrain: Option<HtmlImageElement>,
+}
+
+fn building_sprite_frame(name: &str, faction: Faction) -> u32 {
+    let eden = faction == Faction::Eden;
+    if name.contains("Command Center") { if eden { 1845 } else { 1854 } }
+    else if name.contains("Solar") { if eden { 941 } else { 942 } }
+    else if name.contains("Rare Ore Smelter") { if eden { 1841 } else { 1010 } }
+    else if name.contains("Smelter") { if eden { 1855 } else { 1859 } }
+    else if name.contains("Tokamak") { if eden { 2035 } else { 652 } }
+    else if name.contains("Vehicle Factory") { if eden { 807 } else { 1853 } }
+    else if name.contains("Structure Factory") { if eden { 73 } else { 1860 } }
+    else if name.contains("Spaceport") || name.contains("Starship") { if eden { 963 } else { 965 } }
+    else if name.contains("Geothermal") { 427 }
+    else if name.contains("Guard") { if eden { 648 } else { 939 } }
+    else if name.contains("Standard Lab") { if eden { 669 } else { 671 } }
+    else if name.contains("Basic Lab") { if eden { 642 } else { 2034 } }
+    else if name.contains("Lab") { if eden { 600 } else { 643 } }
+    else if name.contains("Residence") { if eden { 610 } else { 612 } }
+    else if eden { 647 } else { 645 }
 }
 
 impl Viewport {
     pub fn new() -> Self {
+        let terrain = HtmlImageElement::new().ok();
+        if let Some(image) = &terrain {
+            image.set_src("assets/terrain.png");
+        }
         Self {
-            camera_x: 600.0,
-            camera_y: 200.0,
+            camera_x: 0.0,
+            camera_y: 0.0,
             zoom: 1.0,
-            tile_width: 64.0,
+            tile_width: 32.0,
             tile_height: 32.0,
             map_cols: 64,
             map_rows: 64,
             sprite_mgr: std::cell::RefCell::new(sprites::UnitSpriteManager::new(sprites::SpriteAtlas::new())),
+            terrain,
         }
     }
 
     /// Convert tile grid coordinate to screen pixel coordinates
     pub fn tile_to_screen(&self, tx: f64, ty: f64) -> (f64, f64) {
-        let sx = (tx - ty) * (self.tile_width * 0.5 * self.zoom) + self.camera_x;
-        let sy = (tx + ty) * (self.tile_height * 0.5 * self.zoom) + self.camera_y;
+        let sx = tx * self.tile_width * self.zoom + self.camera_x;
+        let sy = ty * self.tile_height * self.zoom + self.camera_y;
         (sx, sy)
     }
 
     /// Convert screen pixel coordinates (sx, sy) back to tile grid coordinates (tx, ty)
     pub fn screen_to_tile(&self, sx: f64, sy: f64) -> (i32, i32) {
-        let rel_x = (sx - self.camera_x) / (self.tile_width * 0.5 * self.zoom);
-        let rel_y = (sy - self.camera_y) / (self.tile_height * 0.5 * self.zoom);
-        let tx = ((rel_y + rel_x) * 0.5).round() as i32;
-        let ty = ((rel_y - rel_x) * 0.5).round() as i32;
+        let tx = ((sx - self.camera_x) / (self.tile_width * self.zoom)).floor() as i32;
+        let ty = ((sy - self.camera_y) / (self.tile_height * self.zoom)).floor() as i32;
         (tx, ty)
     }
 
@@ -91,6 +114,34 @@ impl Viewport {
         let start_row = 0;
         let end_row = (colony.game_map.height as i32).min(self.map_rows);
 
+        if let Some(terrain) = self.terrain.as_ref().filter(|image| image.natural_width() > 0) {
+            let tile_size = 32.0 * self.zoom;
+            for r in start_row..end_row {
+                for c in start_col..end_col {
+                    let (sx, sy) = self.tile_to_screen(c as f64, r as f64);
+                    if sx + tile_size < 0.0 || sx > width || sy + tile_size < 0.0 || sy > height {
+                        continue;
+                    }
+                    let fog = colony.fog.get(c as usize, r as usize);
+                    if fog == FogState::Unexplored {
+                        ctx.set_fill_style_str("#050505");
+                        ctx.fill_rect(sx, sy, tile_size, tile_size);
+                        continue;
+                    }
+                    let mapping = colony.game_map.get_tile(c as u32, r as u32)
+                        .map(|tile| tile.tile_mapping as u32).unwrap_or(0);
+                    let source_x = (mapping % 64 * 32) as f64;
+                    let source_y = (mapping / 64 * 32) as f64;
+                    let _ = ctx.draw_image_with_html_image_element_and_sw_and_sh_and_dx_and_dy_and_dw_and_dh(
+                        terrain, source_x, source_y, 32.0, 32.0, sx, sy, tile_size, tile_size,
+                    );
+                    if fog == FogState::Explored {
+                        ctx.set_fill_style_str("rgba(0, 0, 0, 0.55)");
+                        ctx.fill_rect(sx, sy, tile_size, tile_size);
+                    }
+                }
+            }
+        } else {
         for r in start_row..end_row {
             for c in start_col..end_col {
                 let (sx, sy) = self.tile_to_screen(c as f64, r as f64);
@@ -209,6 +260,7 @@ impl Viewport {
                     }
                 }
             }
+        }
         }
 
         // Render Pressurized Colonial Transport Tubes
@@ -338,6 +390,19 @@ impl Viewport {
             }
 
             let (sx, sy) = self.tile_to_screen(b.tile_x as f64, b.tile_y as f64);
+            if let Ok(mut sprite_mgr) = self.sprite_mgr.try_borrow_mut() {
+                let frame = building_sprite_frame(&b.name, b.faction.unwrap_or(colony.faction));
+                let center_x = sx + b.width as f64 * self.tile_width * self.zoom * 0.5;
+                let bottom_y = sy + b.height as f64 * self.tile_height * self.zoom;
+                if let Ok(true) = sprite_mgr.atlas.draw_group(ctx, frame, center_x, bottom_y, self.zoom) {
+                        if b.is_selected {
+                            ctx.set_stroke_style_str("#b8e868");
+                            ctx.set_line_width(1.0);
+                            ctx.stroke_rect(sx, sy, b.width as f64 * 32.0 * self.zoom, b.height as f64 * 32.0 * self.zoom);
+                        }
+                        continue;
+                }
+            }
             let b_w = half_w * (b.width as f64);
             let b_h = half_h * (b.height as f64);
 
@@ -565,9 +630,10 @@ impl Viewport {
 
             // Render Unit using authentic sprite blitting or directional vector rendering
             if let Ok(mut sprite_mgr) = self.sprite_mgr.try_borrow_mut() {
-                sprite_mgr.render_unit(ctx, u, sx, sy, self.zoom);
+                sprite_mgr.render_unit(ctx, u, sx + 16.0 * self.zoom, sy + 16.0 * self.zoom, self.zoom);
             }
 
+            if self.sprite_mgr.borrow().atlas.prt.is_none() {
             if u.name.contains("Repair") {
                 ctx.set_fill_style_str("#ecfdf5");
                 ctx.set_font(&format!("bold {}px sans-serif", (9.0 * self.zoom).max(8.0)));
@@ -603,24 +669,28 @@ impl Viewport {
                 }
                 _ => {}
             }
+            }
 
             // Unit selection ring
             if u.is_selected {
                 ctx.set_stroke_style_str("#4ade80");
                 ctx.set_line_width(2.0);
                 ctx.begin_path();
-                let _ = ctx.arc(sx, sy, 12.0 * self.zoom, 0.0, std::f64::consts::PI * 2.0);
+                let _ = ctx.arc(sx + 16.0 * self.zoom, sy + 16.0 * self.zoom, 12.0 * self.zoom, 0.0, std::f64::consts::PI * 2.0);
                 ctx.stroke();
             }
 
             // Health bar
-            let hp_pct = u.hp as f64 / u.max_hp as f64;
-            ctx.set_fill_style_str("#dc2626");
-            ctx.fill_rect(sx - 12.0, sy - 14.0 * self.zoom, 24.0, 3.0);
-            ctx.set_fill_style_str("#16a34a");
-            ctx.fill_rect(sx - 12.0, sy - 14.0 * self.zoom, 24.0 * hp_pct, 3.0);
+            if u.is_selected || u.hp < u.max_hp {
+                let hp_pct = u.hp as f64 / u.max_hp as f64;
+                ctx.set_fill_style_str("#dc2626");
+                ctx.fill_rect(sx + 4.0 * self.zoom, sy - 5.0 * self.zoom, 24.0 * self.zoom, 3.0);
+                ctx.set_fill_style_str("#16a34a");
+                ctx.fill_rect(sx + 4.0 * self.zoom, sy - 5.0 * self.zoom, 24.0 * self.zoom * hp_pct, 3.0);
+            }
 
             // Cargo hauler container payload
+            if self.sprite_mgr.borrow().atlas.prt.is_none() {
             if let Some((ore_type, _)) = u.cargo {
                 let cargo_col = match ore_type {
                     crate::sim::mining::OreType::Common => "#cbd5e1",
@@ -631,6 +701,7 @@ impl Viewport {
                 ctx.set_stroke_style_str("#0f172a");
                 ctx.set_line_width(1.0);
                 ctx.stroke_rect(sx - 3.5 * self.zoom, sy - 3.5 * self.zoom, 7.0 * self.zoom, 7.0 * self.zoom);
+            }
             }
         }
 
@@ -816,29 +887,17 @@ impl Viewport {
         if let Some((st, (gx, gy), is_valid)) = ghost_placement {
             let (sx, sy) = self.tile_to_screen(gx as f64, gy as f64);
             let (w, h) = st.dimensions();
-            let b_w = half_w * (w as f64);
-            let b_h = half_h * (h as f64);
+            let b_w = self.tile_width * self.zoom * w as f64;
+            let b_h = self.tile_height * self.zoom * h as f64;
 
             let fill_col = if is_valid { "rgba(56, 189, 248, 0.35)" } else { "rgba(239, 68, 68, 0.35)" };
             let stroke_col = if is_valid { "#38bdf8" } else { "#ef4444" };
 
-            // Isometric blueprint footprint
             ctx.set_fill_style_str(fill_col);
             ctx.set_stroke_style_str(stroke_col);
             ctx.set_line_width(2.0);
-
-            ctx.begin_path();
-            ctx.move_to(sx, sy - b_h);
-            ctx.line_to(sx + b_w, sy);
-            ctx.line_to(sx, sy + b_h);
-            ctx.line_to(sx - b_w, sy);
-            ctx.close_path();
-            ctx.fill();
-            ctx.stroke();
-
-            // 2.5D Holographic extrusion
-            ctx.set_fill_style_str(if is_valid { "rgba(56, 189, 248, 0.20)" } else { "rgba(239, 68, 68, 0.20)" });
-            ctx.fill_rect(sx - b_w * 0.5, sy - b_h - 20.0 * self.zoom, b_w, 20.0 * self.zoom);
+            ctx.fill_rect(sx, sy, b_w, b_h);
+            ctx.stroke_rect(sx, sy, b_w, b_h);
 
             // Projected transport tube connection to nearest structure
             if let Some(nearest) = colony.buildings.iter().min_by_key(|b| (b.tile_x - gx).abs() + (b.tile_y - gy).abs()) {
@@ -846,7 +905,7 @@ impl Viewport {
                 ctx.set_stroke_style_str("rgba(56, 189, 248, 0.7)");
                 ctx.set_line_width(1.5);
                 ctx.begin_path();
-                ctx.move_to(sx, sy);
+                ctx.move_to(sx + b_w * 0.5, sy + b_h * 0.5);
                 ctx.line_to(nx, ny);
                 ctx.stroke();
             }
@@ -856,7 +915,7 @@ impl Viewport {
             ctx.set_fill_style_str(if is_valid { "#4ade80" } else { "#ef4444" });
             ctx.set_font(&format!("bold {}px sans-serif", (11.0 * self.zoom).max(10.0)));
             let badge_text = format!("{} [{}]", st.name(), status_msg);
-            let _ = ctx.fill_text(&badge_text, sx - b_w * 0.5, sy - b_h - 26.0 * self.zoom);
+            let _ = ctx.fill_text(&badge_text, sx, sy - 7.0 * self.zoom);
         }
 
         let _ = ctx.restore();

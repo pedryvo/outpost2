@@ -19,8 +19,8 @@
   
   
 <script type="module">
-import init, * as bindings from '/outpost2-8f4283bdeddfd646.js';
-const wasm = await init({ module_or_path: '/outpost2-45165bf5359e2f67_bg.wasm' });
+import init, * as bindings from '/outpost2-2743ba1c450138eb.js';
+const wasm = await init({ module_or_path: '/outpost2-a601088d2e96bf85_bg.wasm' });
 
 
 window.wasmBindings = bindings;
@@ -200,8 +200,107 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
       width: 100%;
       height: calc(100% - 24px);
     }
+
+    #game-container.playing #top-bar {
+      height: 32px;
+      min-height: 32px;
+      background: #34383c;
+      border-color: #666b6e;
+      box-shadow: none;
+      padding: 0 8px;
+      overflow: hidden;
+      white-space: nowrap;
+      font: 11px Arial, sans-serif;
+    }
+
+    #game-container.playing .telemetry-group { gap: 8px; flex-shrink: 0; }
+    #game-container.playing .telemetry-item { gap: 3px; white-space: nowrap; }
+    #game-container.playing .telemetry-label { font-size: 9px; }
+    #game-container.playing .telemetry-val { font-size: 11px; }
+
+    #game-container.playing #viewport-container {
+      margin-right: 220px;
+    }
+
+    #game-container.playing #bottom-bar {
+      height: 58px;
+      min-height: 58px;
+      background: #44484a;
+      border-color: #777b7d;
+      padding: 0 6px;
+      gap: 8px;
+    }
+
+    #game-container.playing .action-btn {
+      border-radius: 0;
+      background: #555b5e;
+      border-color: #25292b #92989a #92989a #25292b;
+      color: #f3f3f3;
+      box-shadow: inset 1px 1px #72787a;
+      font: 11px Arial, sans-serif;
+      padding: 6px 8px;
+    }
+
+    #game-container.playing #minimap-card {
+      position: fixed;
+      top: 32px;
+      right: 0;
+      bottom: 58px;
+      width: 220px;
+      height: auto;
+      background: #464a4d;
+      border: 3px ridge #999d9f;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    #game-container.playing #minimap-header {
+      background: #292d30;
+      color: #e1e6e7;
+      font: bold 11px Arial, sans-serif;
+      border-bottom: 2px ridge #8b8e90;
+    }
+
+    #game-container.playing #minimap-canvas {
+      flex: none;
+      width: 100%;
+      height: 180px;
+      image-rendering: pixelated;
+      border-bottom: 3px ridge #999d9f;
+    }
+
+    #classic-detail {
+      padding: 9px;
+      color: #e3e6e6;
+      font: 11px Arial, sans-serif;
+      line-height: 1.35;
+      overflow-y: auto;
+    }
+
+    #classic-detail h3 {
+      margin: 0 0 7px;
+      font-size: 11px;
+      color: #fff;
+    }
+
+    #classic-detail .sidebar-label {
+      display: block;
+      margin: 13px 0 6px;
+      padding: 3px 4px;
+      background: #292d30;
+      font-weight: bold;
+    }
+
+    #sidebar-objectives { white-space: pre-line; }
+
+    @media (max-width: 900px) {
+      #game-container.playing #viewport-container { margin-right: 170px; }
+      #game-container.playing #minimap-card { width: 170px; }
+      #game-container.playing #minimap-canvas { height: 160px; }
+      #game-container.playing #bottom-bar { overflow-x: auto; }
+    }
   </style>
-<link rel="modulepreload" href="/outpost2-8f4283bdeddfd646.js" crossorigin="anonymous" integrity="sha384-ZdbnzvCH97IuvaEC3fWjI+hg9c3mUlVRP+zMj/IV+XV5+A5YcE28qlSP/RQ0U657"><link rel="modulepreload" href="/snippets/outpost2-ed27d32cf8b362b1/inline0.js" crossorigin="anonymous" integrity="sha384-REoRXzdWTZdjiD+EeQmTA5biuNWe8zvLocvTbLrRPZYrSP5yzmCEanHD2HUVWCBl"><link rel="preload" href="/outpost2-45165bf5359e2f67_bg.wasm" crossorigin="anonymous" integrity="sha384-edRMILs6K/XK7WgrZp5i5ih+iTdlpSkXJkj/4uEAcxHOsbXQ+B1VewR6XSTMyZHM" as="fetch" type="application/wasm"></head>
+<link rel="modulepreload" href="/outpost2-2743ba1c450138eb.js" crossorigin="anonymous" integrity="sha384-B2FUTx+sdzuB3e2xtvqJbKjU7Mj1oLaaNysp4m79rvVMkiToh0hfC4WomgJIaOpq"><link rel="modulepreload" href="/snippets/outpost2-ed27d32cf8b362b1/inline0.js" crossorigin="anonymous" integrity="sha384-REoRXzdWTZdjiD+EeQmTA5biuNWe8zvLocvTbLrRPZYrSP5yzmCEanHD2HUVWCBl"><link rel="preload" href="/outpost2-a601088d2e96bf85_bg.wasm" crossorigin="anonymous" integrity="sha384-UWdVNxyDiCtWdKOjntGEjNa4hAMvH3800+GKRTIjn2P8DA7RXHkXqLJO2uJid8b9" as="fetch" type="application/wasm"></head>
 <body>
   <div id="game-container">
     <!-- Top Command Telemetry -->
@@ -415,31 +514,38 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
           <span id="radar-sweep" style="color: #4ade80;">ACTIVE</span>
         </div>
         <canvas id="minimap-canvas"></canvas>
+        <section id="classic-detail" aria-label="Mission and selection details">
+          <h3 id="sidebar-mission"></h3>
+          <span class="sidebar-label">MISSION OBJECTIVES</span>
+          <div id="sidebar-objectives"></div>
+          <span class="sidebar-label">SELECTION</span>
+          <div id="sidebar-selection">Select a unit or building</div>
+        </section>
       </aside>
     </main>
 
     <!-- Bottom Command Controls -->
     <footer id="bottom-bar">
       <div style="display: flex; gap: 8px;">
-        <button class="action-btn" id="btn-build">🏗️ Build Base</button>
-        <button class="action-btn" id="btn-units">🚜 Units</button>
-        <button class="action-btn" id="btn-research">🔬 Research</button>
-        <button class="action-btn" id="btn-multiplayer" style="border-color: #818cf8; color: #c7d2fe;">📡 Multiplayer</button>
-        <button class="action-btn" id="btn-save">💾 Save</button>
-        <button class="action-btn" id="btn-load">📂 Load</button>
+        <button class="action-btn" id="btn-build">Build</button>
+        <button class="action-btn" id="btn-units">Units</button>
+        <button class="action-btn" id="btn-research">Research</button>
+        <button class="action-btn" id="btn-multiplayer">Multiplayer</button>
+        <button class="action-btn" id="btn-save">Save</button>
+        <button class="action-btn" id="btn-load">Load</button>
       </div>
 
       <!-- Live Research Status Toast -->
       <div id="research-toast" style="font-size: 11px; font-weight: 500; color: #38bdf8; display: none;"></div>
 
       <div style="display: flex; gap: 8px;">
-        <button class="action-btn" id="btn-zoom-in">🔍 +</button>
-        <button class="action-btn" id="btn-zoom-out">🔍 -</button>
-        <button class="action-btn" id="btn-briefing">📋 Briefing</button>
-        <button class="action-btn" id="btn-music">🎵 Music</button>
-        <button class="action-btn" id="btn-sfx">🔊 SFX: ON</button>
-        <button class="action-btn" id="btn-pause">⏸️ Pause</button>
-        <button class="action-btn" id="btn-fullscreen">⛶ Fullscreen</button>
+        <button class="action-btn" id="btn-zoom-in">Zoom +</button>
+        <button class="action-btn" id="btn-zoom-out">Zoom -</button>
+        <button class="action-btn" id="btn-briefing">Briefing</button>
+        <button class="action-btn" id="btn-music">Music</button>
+        <button class="action-btn" id="btn-sfx">SFX: ON</button>
+        <button class="action-btn" id="btn-pause">Pause</button>
+        <button class="action-btn" id="btn-fullscreen">Fullscreen</button>
       </div>
     </footer>
 

@@ -9,7 +9,8 @@
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::JsValue;
-use web_sys::CanvasRenderingContext2d;
+use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
+use wasm_bindgen::JsCast;
 
 use crate::archive::prt::{PrtFile, PrtFrame};
 use crate::render::palette::MASTER_PALETTE;
@@ -228,6 +229,8 @@ pub struct SpriteAtlas {
     pub raw_bitmap: Option<Vec<u8>>,
     pub bitmap_pixel_offset: usize,
     pub decoded_cache: HashMap<u32, DecodedSprite>,
+    canvas_cache: HashMap<u32, HtmlCanvasElement>,
+    group_cache: HashMap<u32, HtmlCanvasElement>,
 }
 
 impl SpriteAtlas {
@@ -238,6 +241,8 @@ impl SpriteAtlas {
             raw_bitmap: None,
             bitmap_pixel_offset: 1078,
             decoded_cache: HashMap::new(),
+            canvas_cache: HashMap::new(),
+            group_cache: HashMap::new(),
         }
     }
 
@@ -259,6 +264,7 @@ impl SpriteAtlas {
         }
         self.raw_bitmap = Some(data);
         self.decoded_cache.clear();
+        self.canvas_cache.clear();
     }
 
     /// Get sprite metadata by ID.
@@ -411,29 +417,83 @@ impl SpriteAtlas {
         palette_override: Option<usize>,
         scale: f64,
     ) -> Result<(), JsValue> {
-        let sprite = match self.extract_rgba(sprite_id, palette_override) {
-            Some(s) => s,
-            None => return Ok(()),
-        };
+        if !self.canvas_cache.contains_key(&sprite_id) {
+            let sprite = match self.extract_rgba(sprite_id, palette_override) {
+                Some(s) => s,
+                None => return Ok(()),
+            };
+            let canvas = web_sys::window().unwrap().document().unwrap()
+                .create_element("canvas")?.dyn_into::<HtmlCanvasElement>()?;
+            canvas.set_width(sprite.width);
+            canvas.set_height(sprite.height);
+            let offscreen = canvas.get_context("2d")?.unwrap().dyn_into::<CanvasRenderingContext2d>()?;
+            let data = web_sys::ImageData::new_with_u8_clamped_array_and_sh(
+                wasm_bindgen::Clamped(&sprite.pixels[..]), sprite.width, sprite.height,
+            )?;
+            offscreen.put_image_data(&data, 0.0, 0.0)?;
+            self.canvas_cache.insert(sprite_id, canvas);
+        }
 
-        let clamped_data = wasm_bindgen::Clamped(&sprite.pixels[..]);
-        let image_data = web_sys::ImageData::new_with_u8_clamped_array_and_sh(
-            clamped_data,
-            sprite.width,
-            sprite.height,
+        let canvas = &self.canvas_cache[&sprite_id];
+        ctx.draw_image_with_html_canvas_element_and_dw_and_dh(
+            canvas, x, y, canvas.width() as f64 * scale, canvas.height() as f64 * scale,
         )?;
 
-        let _ = ctx.save();
-        if (scale - 1.0).abs() > 1e-4 {
-            let _ = ctx.translate(x, y);
-            let _ = ctx.scale(scale, scale);
-            let _ = ctx.put_image_data(&image_data, 0.0, 0.0);
-        } else {
-            let _ = ctx.put_image_data(&image_data, x, y);
-        }
-        let _ = ctx.restore();
-
         Ok(())
+    }
+
+    /// Draw a complete original animation group, including its layered shadow.
+    pub fn draw_group(
+        &mut self,
+        ctx: &CanvasRenderingContext2d,
+        group_id: u32,
+        center_x: f64,
+        bottom_y: f64,
+        scale: f64,
+    ) -> Result<bool, JsValue> {
+        if !self.group_cache.contains_key(&group_id) {
+            let layers = match self.prt.as_ref()
+                .and_then(|prt| prt.animations.get(group_id as usize))
+                .and_then(|group| group.frames.first()) {
+                Some(layers) if !layers.is_empty() => layers.clone(),
+                _ => return Ok(false),
+            };
+            let mut bounds = (i32::MAX, i32::MAX, i32::MIN, i32::MIN);
+            for layer in &layers {
+                if let Some(meta) = self.get_sprite_meta(layer.bitmap_index as u32) {
+                    bounds.0 = bounds.0.min(layer.x as i32);
+                    bounds.1 = bounds.1.min(layer.y as i32);
+                    bounds.2 = bounds.2.max(layer.x as i32 + meta.width as i32);
+                    bounds.3 = bounds.3.max(layer.y as i32 + meta.height as i32);
+                }
+            }
+            if bounds.0 >= bounds.2 || bounds.1 >= bounds.3 {
+                return Ok(false);
+            }
+            let canvas = web_sys::window().unwrap().document().unwrap()
+                .create_element("canvas")?.dyn_into::<HtmlCanvasElement>()?;
+            canvas.set_width((bounds.2 - bounds.0) as u32);
+            canvas.set_height((bounds.3 - bounds.1) as u32);
+            let offscreen = canvas.get_context("2d")?.unwrap().dyn_into::<CanvasRenderingContext2d>()?;
+            for layer in layers {
+                self.draw_to_canvas(
+                    &offscreen,
+                    layer.bitmap_index as u32,
+                    (layer.x as i32 - bounds.0) as f64,
+                    (layer.y as i32 - bounds.1) as f64,
+                    None,
+                    1.0,
+                )?;
+            }
+            self.group_cache.insert(group_id, canvas);
+        }
+        let canvas = &self.group_cache[&group_id];
+        let w = canvas.width() as f64 * scale;
+        let h = canvas.height() as f64 * scale;
+        ctx.draw_image_with_html_canvas_element_and_dw_and_dh(
+            canvas, center_x - w / 2.0, bottom_y - h, w, h,
+        )?;
+        Ok(true)
     }
 }
 
@@ -562,27 +622,19 @@ impl UnitSpriteManager {
     /// Get base sprite frame ID for a given vehicle type and faction.
     pub fn get_base_frame(vehicle_type: VehicleType, faction: Faction) -> u32 {
         match vehicle_type {
-            VehicleType::Lynx => {
-                if faction == Faction::Eden { 264 } else { 3128 }
-            }
-            VehicleType::Panther => {
-                if faction == Faction::Eden { 1200 } else { 3112 }
-            }
-            VehicleType::Tiger => {
-                if faction == Faction::Eden { 1592 } else { 1608 }
-            }
-            VehicleType::CargoTruck => {
-                if faction == Faction::Eden { 4081 } else { 4097 }
-            }
-            VehicleType::RoboMiner => 4320,
-            VehicleType::Earthworker => 4776,
-            VehicleType::ConVec => 4344,
-            VehicleType::RoboSurveyor => 944,
-            VehicleType::RepairVehicle => 808,
+            VehicleType::Lynx => if faction == Faction::Eden { 1202 } else { 1227 },
+            VehicleType::Panther => if faction == Faction::Eden { 239 } else { 335 },
+            VehicleType::Tiger => if faction == Faction::Eden { 231 } else { 279 },
+            VehicleType::CargoTruck => if faction == Faction::Eden { 8 } else { 24 },
+            VehicleType::RoboMiner => if faction == Faction::Eden { 1170 } else { 1186 },
+            VehicleType::Earthworker => if faction == Faction::Eden { 1811 } else { 1819 },
+            VehicleType::ConVec => if faction == Faction::Eden { 287 } else { 319 },
+            VehicleType::RoboSurveyor => if faction == Faction::Eden { 247 } else { 255 },
+            VehicleType::RepairVehicle => 1130,
         }
     }
 
-    /// Calculate the exact sprite frame ID for a unit based on its orientation and tread animation.
+    /// The PRT groups are arranged in directional runs of 8 or 16 entries.
     pub fn calculate_sprite_frame(
         vehicle_type: VehicleType,
         faction: Faction,
@@ -590,9 +642,11 @@ impl UnitSpriteManager {
         tread_frame: usize,
     ) -> u32 {
         let base = Self::get_base_frame(vehicle_type, faction);
-        let dir_offset = direction.frame_offset() as u32;
-        let tread_offset = if tread_frame > 0 { 8 } else { 0 };
-        base + tread_offset + dir_offset
+        let direction = direction.frame_offset() as u32;
+        let has_sixteen = matches!(vehicle_type, VehicleType::Lynx | VehicleType::CargoTruck
+            | VehicleType::ConVec | VehicleType::RoboMiner | VehicleType::RepairVehicle);
+        if has_sixteen { base + direction * 2 + (tread_frame as u32 % 2) }
+        else { base + direction }
     }
 
     /// Get turret mount sprite frame ID for weapons (Laser, Railgun, Microwave, Acid).
@@ -709,23 +763,10 @@ impl UnitSpriteManager {
             anim_state.tread_frame,
         );
 
-        let pal_override = if unit.faction == Faction::Eden { Some(3) } else { Some(7) };
-
-        // Attempt direct bitmap blit if asset is loaded
+        // Draw the complete original group (chassis, treads, turret and shadow).
         if self.atlas.raw_bitmap.is_some() && self.atlas.prt.is_some() {
-            let meta = self.atlas.get_sprite_meta(sprite_frame);
-            if let Some(m) = meta {
-                let ox = sx - (m.width as f64 * 0.5 * zoom);
-                let oy = sy - (m.height as f64 * 0.5 * zoom);
-                if self.atlas.draw_to_canvas(ctx, sprite_frame, ox, oy, pal_override, zoom).is_ok() {
-                    // Render turret overlay if armed
-                    if let Some(t_dir) = anim_state.turret_dir {
-                        let is_heavy = v_type == VehicleType::Tiger;
-                        let turret_frame = Self::calculate_turret_frame(unit.faction, t_dir, is_heavy);
-                        let _ = self.atlas.draw_to_canvas(ctx, turret_frame, ox, oy, pal_override, zoom);
-                    }
-                    return;
-                }
+            if let Ok(true) = self.atlas.draw_group(ctx, sprite_frame, sx, sy + 16.0 * zoom, zoom) {
+                return;
             }
         }
 

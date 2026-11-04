@@ -31,6 +31,7 @@ features = [
   "Element",
   "HtmlElement",
   "HtmlCanvasElement",
+  "HtmlImageElement",
   "DomRect",
   "CanvasRenderingContext2d",
   "ImageData",

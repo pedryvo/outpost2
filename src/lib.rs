@@ -94,6 +94,25 @@ pub fn start() -> Result<(), JsValue> {
         playtime_seconds: 0,
     }));
 
+    {
+        let app_for_art = app.clone();
+        wasm_bindgen_futures::spawn_local(async move {
+            let art = async {
+                let prt = fetch_art_bytes("assets/op2_art.prt").await?;
+                let bitmap = fetch_art_bytes("assets/OP2_ART.BMP").await?;
+                render::sprites::SpriteAtlas::load_from_prt_and_bmp(&prt, &bitmap)
+                    .map_err(|error| JsValue::from_str(&error))
+            }.await;
+            match art {
+                Ok(atlas) => {
+                    let game = app_for_art.borrow();
+                    game.viewport.sprite_mgr.borrow_mut().atlas = atlas;
+                }
+                Err(error) => web_sys::console::error_1(&error),
+            }
+        });
+    }
+
     // Calibrate initial Canvas & Minimap Dimensions immediately on Boot
     {
         let dpr = window.device_pixel_ratio().max(1.0);
@@ -175,8 +194,8 @@ pub fn start() -> Result<(), JsValue> {
                     match action {
                         render::MenuAction::StartScenario(sc_id) => {
                             g.colony = ColonyState::new_scenario(sc_id);
-                            center_on_colony(&mut g, &canvas_clone);
                             g.menu.switch_screen(render::MenuScreen::None);
+                            center_on_colony(&mut g, &canvas_clone);
                             g.audio.play_build_confirm();
                         }
                         render::MenuAction::StartSkirmish(cfg) => {
@@ -187,8 +206,8 @@ pub fn start() -> Result<(), JsValue> {
                             new_colony.common_ore = c_ore;
                             new_colony.rare_ore = r_ore;
                             g.colony = new_colony;
-                            center_on_colony(&mut g, &canvas_clone);
                             g.menu.switch_screen(render::MenuScreen::None);
+                            center_on_colony(&mut g, &canvas_clone);
                             g.audio.play_build_confirm();
                         }
                         render::MenuAction::ResumeGame => {
@@ -243,8 +262,8 @@ pub fn start() -> Result<(), JsValue> {
                         }
                         render::MenuAction::RestartScenario => {
                             g.colony = ColonyState::new_scenario(g.colony.mission.scenario_id);
-                            center_on_colony(&mut g, &canvas_clone);
                             g.menu.switch_screen(render::MenuScreen::None);
+                            center_on_colony(&mut g, &canvas_clone);
                             g.audio.play_build_confirm();
                         }
                         render::MenuAction::SurrenderToMainMenu => {
@@ -441,7 +460,8 @@ pub fn start() -> Result<(), JsValue> {
                 let mut clicked_enemy = None;
                 let mut clicked_friendly_damaged = None;
                 for u in &g.colony.units {
-                    let (sx, sy) = g.viewport.tile_to_screen(u.tile_x as f64, u.tile_y as f64);
+                    let (tile_sx, tile_sy) = g.viewport.tile_to_screen(u.tile_x as f64, u.tile_y as f64);
+                    let (sx, sy) = (tile_sx + 16.0 * zoom, tile_sy + 16.0 * zoom);
                     let dist = ((click_x - sx).powi(2) + (click_y - sy).powi(2)).sqrt();
                     if dist < 24.0 * zoom {
                         if u.faction != g.colony.faction {
@@ -551,10 +571,11 @@ pub fn start() -> Result<(), JsValue> {
                     let unit_count = g.colony.units.len();
                     for i in 0..unit_count {
                         if g.colony.units[i].faction == player_faction {
-                            let (sx, sy) = g.viewport.tile_to_screen(
+                            let (tile_sx, tile_sy) = g.viewport.tile_to_screen(
                                 g.colony.units[i].tile_x as f64,
                                 g.colony.units[i].tile_y as f64,
                             );
+                            let (sx, sy) = (tile_sx + 16.0 * g.viewport.zoom, tile_sy + 16.0 * g.viewport.zoom);
                             if sx >= min_x && sx <= max_x && sy >= min_y && sy <= max_y {
                                 g.colony.units[i].is_selected = true;
                                 if first_selected_name.is_none() {
@@ -585,7 +606,8 @@ pub fn start() -> Result<(), JsValue> {
                     for i in 0..unit_count {
                         let tx = g.colony.units[i].tile_x as f64;
                         let ty = g.colony.units[i].tile_y as f64;
-                        let (sx, sy) = g.viewport.tile_to_screen(tx, ty);
+                        let (tile_sx, tile_sy) = g.viewport.tile_to_screen(tx, ty);
+                        let (sx, sy) = (tile_sx + 16.0 * zoom, tile_sy + 16.0 * zoom);
                         let d = ((click_x - sx).powi(2) + (click_y - sy).powi(2)).sqrt();
                         if d < 20.0 * zoom {
                             g.colony.units[i].is_selected = true;
@@ -761,10 +783,8 @@ pub fn start() -> Result<(), JsValue> {
                     if let Some((ax, ay)) = g.hud.state.notifications.jump_to_last_alert() {
                         let screen_w = canvas_clone.client_width() as f64;
                         let screen_h = canvas_clone.client_height() as f64;
-                        let half_w = g.viewport.tile_width * 0.5 * g.viewport.zoom;
-                        let half_h = g.viewport.tile_height * 0.5 * g.viewport.zoom;
-                        g.viewport.camera_x = screen_w * 0.5 - (ax as f64 - ay as f64) * half_w;
-                        g.viewport.camera_y = screen_h * 0.5 - (ax as f64 + ay as f64) * half_h;
+                        g.viewport.camera_x = screen_w * 0.5 - ax as f64 * g.viewport.tile_width * g.viewport.zoom;
+                        g.viewport.camera_y = screen_h * 0.5 - ay as f64 * g.viewport.tile_height * g.viewport.zoom;
                         g.audio.play_ui_beep();
                     }
                 }
@@ -831,12 +851,8 @@ pub fn start() -> Result<(), JsValue> {
                     if let Some((cc_x, cc_y)) = cc_pos {
                         let screen_w = canvas_clone.client_width() as f64;
                         let screen_h = canvas_clone.client_height() as f64;
-                        let half_w = g.viewport.tile_width * 0.5 * g.viewport.zoom;
-                        let half_h = g.viewport.tile_height * 0.5 * g.viewport.zoom;
-                        g.viewport.camera_x =
-                            screen_w * 0.5 - (cc_x as f64 - cc_y as f64) * half_w;
-                        g.viewport.camera_y =
-                            screen_h * 0.5 - (cc_x as f64 + cc_y as f64) * half_h;
+                        g.viewport.camera_x = screen_w * 0.5 - cc_x as f64 * g.viewport.tile_width * g.viewport.zoom;
+                        g.viewport.camera_y = screen_h * 0.5 - cc_y as f64 * g.viewport.tile_height * g.viewport.zoom;
                         g.audio.play_ui_beep();
                     }
                 }
@@ -2318,6 +2334,9 @@ pub fn start() -> Result<(), JsValue> {
 
         // Synchronize DOM interface visibility with menu state
         let in_game = app_borrow.menu.is_in_game();
+        if let Some(container) = document.get_element_by_id("game-container") {
+            let _ = container.set_attribute("class", if in_game { "playing" } else { "" });
+        }
         if let Some(tb) = document.get_element_by_id("top-bar") {
             let _ = tb.set_attribute("style", if in_game { "" } else { "display: none;" });
         }
@@ -2326,6 +2345,30 @@ pub fn start() -> Result<(), JsValue> {
         }
         if let Some(mc) = document.get_element_by_id("minimap-card") {
             let _ = mc.set_attribute("style", if in_game { "" } else { "display: none;" });
+        }
+        if in_game {
+            if let Some(label) = document.get_element_by_id("sidebar-mission") {
+                label.set_text_content(Some(&app_borrow.colony.mission.codename));
+            }
+            if let Some(list) = document.get_element_by_id("sidebar-objectives") {
+                let objectives = app_borrow.colony.mission.objectives.iter()
+                    .filter(|objective| objective.is_primary)
+                    .map(|objective| format!("{} {}", if objective.is_completed { "✓" } else { "□" }, objective.description))
+                    .collect::<Vec<_>>().join("\n\n");
+                if list.text_content().as_deref() != Some(&objectives) {
+                    list.set_text_content(Some(&objectives));
+                }
+            }
+            if let Some(selection) = document.get_element_by_id("sidebar-selection") {
+                let selected = app_borrow.colony.units.iter().find(|unit| unit.is_selected)
+                    .map(|unit| format!("{} — {}/{} HP", unit.name, unit.hp, unit.max_hp))
+                    .or_else(|| app_borrow.colony.buildings.iter().find(|building| building.is_selected)
+                        .map(|building| building.name.clone()))
+                    .unwrap_or_else(|| "Select a unit or building".into());
+                if selection.text_content().as_deref() != Some(&selected) {
+                    selection.set_text_content(Some(&selected));
+                }
+            }
         }
 
         // Update simulation (respecting pause state from 'P' hotkey or Menu)
@@ -2772,7 +2815,6 @@ pub fn start() -> Result<(), JsValue> {
             );
 
             // Render modern tactical HUD overlays (Command bar, alerts/chat, factory, research)
-            app_borrow.hud.render_command_bar(&ctx, &app_borrow.colony, canvas_w);
             app_borrow.hud.render_alerts_and_chat(&ctx, canvas_w, canvas_h);
             app_borrow.hud.render_factory_panel(&ctx, &app_borrow.colony, canvas_w, canvas_h);
             app_borrow.hud.render_research_browser(&ctx, &app_borrow.colony, canvas_w, canvas_h);
@@ -2814,17 +2856,31 @@ fn request_animation_frame(window: &Window, f: &Closure<dyn FnMut(f64)>) {
         .expect("should register `requestAnimationFrame` OK");
 }
 
+async fn fetch_art_bytes(path: &str) -> Result<Vec<u8>, JsValue> {
+    use wasm_bindgen_futures::JsFuture;
+    let response = JsFuture::from(web_sys::window().unwrap().fetch_with_str(path))
+        .await?.dyn_into::<web_sys::Response>()?;
+    if !response.ok() {
+        return Err(JsValue::from_str(&format!("Failed to load {path}: {}", response.status())));
+    }
+    let buffer = JsFuture::from(response.array_buffer()?).await?;
+    Ok(js_sys::Uint8Array::new(&buffer).to_vec())
+}
+
 fn center_on_colony(app: &mut GameApp, canvas: &HtmlCanvasElement) {
+    if app.menu.is_in_game() {
+        if let Some(container) = web_sys::window().unwrap().document().unwrap().get_element_by_id("game-container") {
+            let _ = container.set_attribute("class", "playing");
+        }
+    }
     let base = app.colony.buildings.iter()
         .find(|b| b.faction == Some(app.colony.faction) && b.name.contains("Command Center"))
         .or_else(|| app.colony.buildings.iter().find(|b| b.faction == Some(app.colony.faction)));
     if let Some(base) = base {
         let x = base.tile_x as f64 + base.width as f64 * 0.5;
         let y = base.tile_y as f64 + base.height as f64 * 0.5;
-        let half_w = app.viewport.tile_width * 0.5 * app.viewport.zoom;
-        let half_h = app.viewport.tile_height * 0.5 * app.viewport.zoom;
-        app.viewport.camera_x = canvas.client_width() as f64 * 0.5 - (x - y) * half_w;
-        app.viewport.camera_y = canvas.client_height() as f64 * 0.5 - (x + y) * half_h;
+        app.viewport.camera_x = canvas.client_width() as f64 * 0.5 - x * app.viewport.tile_width * app.viewport.zoom;
+        app.viewport.camera_y = canvas.client_height() as f64 * 0.5 - y * app.viewport.tile_height * app.viewport.zoom;
     }
 }
 
