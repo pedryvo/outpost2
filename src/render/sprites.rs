@@ -230,7 +230,7 @@ pub struct SpriteAtlas {
     pub bitmap_pixel_offset: usize,
     pub decoded_cache: HashMap<u32, DecodedSprite>,
     canvas_cache: HashMap<u32, HtmlCanvasElement>,
-    group_cache: HashMap<(u32, bool), HtmlCanvasElement>,
+    group_cache: HashMap<(u32, usize, bool), HtmlCanvasElement>,
 }
 
 impl SpriteAtlas {
@@ -452,11 +452,24 @@ impl SpriteAtlas {
         scale: f64,
         blue_team: bool,
     ) -> Result<bool, JsValue> {
-        let cache_key = (group_id, blue_team);
+        self.draw_group_frame(ctx, group_id, 0, center_x, bottom_y, scale, blue_team)
+    }
+
+    pub fn draw_group_frame(
+        &mut self,
+        ctx: &CanvasRenderingContext2d,
+        group_id: u32,
+        frame_index: usize,
+        center_x: f64,
+        bottom_y: f64,
+        scale: f64,
+        blue_team: bool,
+    ) -> Result<bool, JsValue> {
+        let cache_key = (group_id, frame_index, blue_team);
         if !self.group_cache.contains_key(&cache_key) {
             let layers = match self.prt.as_ref()
                 .and_then(|prt| prt.animations.get(group_id as usize))
-                .and_then(|group| group.frames.first()) {
+                .and_then(|group| group.frames.get(frame_index)) {
                 Some(layers) if !layers.is_empty() => layers.clone(),
                 _ => return Ok(false),
             };
@@ -510,6 +523,9 @@ impl SpriteAtlas {
                 }
             }
             self.group_cache.insert(cache_key, canvas);
+            if self.group_cache.len() > 256 {
+                self.group_cache.retain(|key, _| *key == cache_key);
+            }
         }
         let canvas = &self.group_cache[&cache_key];
         let w = canvas.width() as f64 * scale;

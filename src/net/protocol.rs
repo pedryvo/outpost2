@@ -13,6 +13,7 @@ pub enum NetOrder {
     MoveTo(i32, i32),
     /// Attack a specific target unit by its global ID
     Attack(u32),
+    AttackBuilding(u32),
     /// Patrol between two coordinates (start_x, start_y) -> (end_x, end_y)
     Patrol(i32, i32, i32, i32),
     /// Anchor defense perimeter guard at (anchor_x, anchor_y)
@@ -71,6 +72,9 @@ impl NetOrder {
             NetOrder::Attack(target_id) => crate::sim::pathfinding::UnitOrder::Attack {
                 target_unit_id: *target_id,
             },
+            NetOrder::AttackBuilding(target_id) => crate::sim::pathfinding::UnitOrder::AttackBuilding {
+                target_building_id: *target_id,
+            },
             NetOrder::Patrol(x1, y1, x2, y2) => crate::sim::pathfinding::UnitOrder::Patrol {
                 start_x: *x1,
                 start_y: *y1,
@@ -110,6 +114,9 @@ impl TryFrom<&crate::sim::pathfinding::UnitOrder> for NetOrder {
             }
             crate::sim::pathfinding::UnitOrder::Attack { target_unit_id } => {
                 Ok(NetOrder::Attack(*target_unit_id))
+            }
+            crate::sim::pathfinding::UnitOrder::AttackBuilding { target_building_id } => {
+                Ok(NetOrder::AttackBuilding(*target_building_id))
             }
             crate::sim::pathfinding::UnitOrder::Patrol {
                 start_x,

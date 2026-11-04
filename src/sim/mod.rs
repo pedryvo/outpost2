@@ -100,6 +100,12 @@ pub struct Building {
     pub width: i32,
     pub height: i32,
     pub power_cost: i32,
+    #[serde(default = "default_building_hp")]
+    pub hp: u32,
+    #[serde(default = "default_building_hp")]
+    pub max_hp: u32,
+    #[serde(default = "completed_construction")]
+    pub construction_progress: f64,
     pub is_active: bool,
     pub is_selected: bool,
     pub production_queue: Vec<String>,
@@ -108,6 +114,18 @@ pub struct Building {
     pub attack_cooldown: f64,
     #[serde(default)]
     pub faction: Option<Faction>,
+}
+
+fn default_building_hp() -> u32 { 500 }
+fn completed_construction() -> f64 { 100.0 }
+
+fn initialize_building_health(buildings: &mut [Building]) {
+    for b in buildings {
+        if let Some(st) = StructureType::from_name(b.name.split(" #").next().unwrap_or(&b.name)) {
+            b.max_hp = st.default_max_hp();
+            b.hp = b.max_hp;
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -207,6 +225,29 @@ pub struct SimUpdateResult {
 }
 
 impl ColonyState {
+    pub fn next_building_id(&self) -> u32 {
+        self.buildings.iter().map(|b| b.id)
+            .chain(self.destroyed_building_ids.iter().copied())
+            .max().unwrap_or(0) + 1
+    }
+
+    fn destroy_building(&mut self, id: u32) -> Option<Building> {
+        let index = self.buildings.iter().position(|b| b.id == id)?;
+        let b = self.buildings.remove(index);
+        self.destroyed_building_ids.insert(id);
+        if b.is_active {
+            if b.power_cost > 0 { self.power_consumed = self.power_consumed.saturating_sub(b.power_cost as u32); }
+            else { self.power_produced = self.power_produced.saturating_sub((-b.power_cost) as u32); }
+        }
+        for dy in 0..b.height {
+            for dx in 0..b.width {
+                if let Some(tile) = self.game_map.get_tile_mut((b.tile_x + dx) as u32, (b.tile_y + dy) as u32) {
+                    tile.is_wall_or_building = false;
+                }
+            }
+        }
+        Some(b)
+    }
     pub fn new(faction: Faction) -> Self {
         let scenario_id = match faction {
             Faction::Eden => 0,
@@ -240,6 +281,9 @@ impl ColonyState {
                 width: 3,
                 height: 3,
                 power_cost: 40,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -255,6 +299,9 @@ impl ColonyState {
                 width: 3,
                 height: 3,
                 power_cost: -800,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -270,6 +317,9 @@ impl ColonyState {
                 width: 3,
                 height: 3,
                 power_cost: -800,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -285,6 +335,9 @@ impl ColonyState {
                 width: 2,
                 height: 2,
                 power_cost: 75,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -300,6 +353,9 @@ impl ColonyState {
                 width: 2,
                 height: 2,
                 power_cost: 50,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -315,6 +371,9 @@ impl ColonyState {
                 width: 3,
                 height: 3,
                 power_cost: 160,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -330,6 +389,9 @@ impl ColonyState {
                 width: 3,
                 height: 3,
                 power_cost: 120,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -536,6 +598,9 @@ impl ColonyState {
                 width: 3,
                 height: 3,
                 power_cost: 40,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -551,6 +616,9 @@ impl ColonyState {
                 width: 2,
                 height: 2,
                 power_cost: -450,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -566,6 +634,9 @@ impl ColonyState {
                 width: 2,
                 height: 2,
                 power_cost: 50,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -581,6 +652,9 @@ impl ColonyState {
                 width: 2,
                 height: 2,
                 power_cost: 75,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -596,6 +670,9 @@ impl ColonyState {
                 width: 3,
                 height: 3,
                 power_cost: 120,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -611,6 +688,9 @@ impl ColonyState {
                 width: 3,
                 height: 3,
                 power_cost: 100,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -628,6 +708,9 @@ impl ColonyState {
                 width: 3,
                 height: 3,
                 power_cost: 40,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -643,6 +726,9 @@ impl ColonyState {
                 width: 2,
                 height: 2,
                 power_cost: 50,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -658,6 +744,9 @@ impl ColonyState {
                 width: 2,
                 height: 2,
                 power_cost: 50,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -823,6 +912,9 @@ impl ColonyState {
                 width: 3,
                 height: 3,
                 power_cost: 40,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -840,6 +932,9 @@ impl ColonyState {
                 width: 2,
                 height: 2,
                 power_cost: -250,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -857,6 +952,9 @@ impl ColonyState {
                 width: 2,
                 height: 2,
                 power_cost: 50,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -875,6 +973,9 @@ impl ColonyState {
                     width: 3,
                     height: 3,
                     power_cost: 120,
+                    hp: 500,
+                    max_hp: 500,
+                    construction_progress: 100.0,
                     is_active: true,
                     is_selected: false,
                     production_queue: Vec::new(),
@@ -1065,8 +1166,9 @@ impl ColonyState {
 
         let map_w = game_map.width as usize;
         let map_h = game_map.height as usize;
+        initialize_building_health(&mut buildings);
         let mut fog = FogOfWar::new(map_w, map_h);
-        fog.update_visibility(&units, &buildings);
+        fog.update_visibility(&units, &buildings, faction);
 
         let initial_building_ids: HashSet<u32> = buildings.iter().map(|b| b.id).collect();
         let event_engine = EventEngine::for_scenario(scenario_id);
@@ -1162,6 +1264,9 @@ impl ColonyState {
                 width: 3,
                 height: 3,
                 power_cost: 40,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -1178,6 +1283,9 @@ impl ColonyState {
                 width: 2,
                 height: 2,
                 power_cost: -250,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -1194,6 +1302,9 @@ impl ColonyState {
                 width: 2,
                 height: 2,
                 power_cost: 50,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -1210,6 +1321,9 @@ impl ColonyState {
                 width: 3,
                 height: 3,
                 power_cost: 120,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -1306,7 +1420,17 @@ impl ColonyState {
             self.ai_players.push(ai);
         }
 
-        self.fog.update_visibility(&self.units, &self.buildings);
+        self.fog.update_visibility(&self.units, &self.buildings, self.faction);
+        for u in &mut self.units {
+            if u.faction != self.faction && self.fog.get(u.tile_x as usize, u.tile_y as usize) != fog::FogState::Visible {
+                u.is_selected = false;
+            }
+        }
+        for b in &mut self.buildings {
+            if b.faction != Some(self.faction) && self.fog.get(b.tile_x as usize, b.tile_y as usize) != fog::FogState::Visible {
+                b.is_selected = false;
+            }
+        }
     }
 
     /// Construct a complete playable skirmish session from a procedurally generated map
@@ -1337,6 +1461,9 @@ impl ColonyState {
             width: 3,
             height: 3,
             power_cost: 40,
+            hp: 500,
+            max_hp: 500,
+            construction_progress: 100.0,
             is_active: true,
             is_selected: false,
             production_queue: Vec::new(),
@@ -1354,6 +1481,9 @@ impl ColonyState {
             width: 2,
             height: 2,
             power_cost: -250,
+            hp: 500,
+            max_hp: 500,
+            construction_progress: 100.0,
             is_active: true,
             is_selected: false,
             production_queue: Vec::new(),
@@ -1371,6 +1501,9 @@ impl ColonyState {
             width: 2,
             height: 2,
             power_cost: 50,
+            hp: 500,
+            max_hp: 500,
+            construction_progress: 100.0,
             is_active: true,
             is_selected: false,
             production_queue: Vec::new(),
@@ -1388,6 +1521,9 @@ impl ColonyState {
             width: 3,
             height: 3,
             power_cost: 120,
+            hp: 500,
+            max_hp: 500,
+            construction_progress: 100.0,
             is_active: true,
             is_selected: false,
             production_queue: Vec::new(),
@@ -1547,6 +1683,9 @@ impl ColonyState {
                 width: 3,
                 height: 3,
                 power_cost: 40,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -1563,6 +1702,9 @@ impl ColonyState {
                 width: 2,
                 height: 2,
                 power_cost: -250,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -1579,6 +1721,9 @@ impl ColonyState {
                 width: 2,
                 height: 2,
                 power_cost: 50,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -1595,6 +1740,9 @@ impl ColonyState {
                 width: 3,
                 height: 3,
                 power_cost: 120,
+                hp: 500,
+                max_hp: 500,
+                construction_progress: 100.0,
                 is_active: true,
                 is_selected: false,
                 production_queue: Vec::new(),
@@ -1691,8 +1839,9 @@ impl ColonyState {
         }
 
         // Initialize Fog of War
+        initialize_building_health(&mut buildings);
         let mut fog = FogOfWar::new(map_w, map_h);
-        fog.update_visibility(&units, &buildings);
+        fog.update_visibility(&units, &buildings, player_faction);
 
         let initial_building_ids: HashSet<u32> = buildings.iter().map(|b| b.id).collect();
 
@@ -1770,9 +1919,25 @@ impl ColonyState {
         let raw_sun = (self.day_cycle * std::f64::consts::TAU).sin() * 0.45 + 0.55;
         self.sunlight = raw_sun.clamp(0.20, 1.0);
 
-        // Solar panels vary power with solar intensity
-        let solar_output = (250.0 * self.sunlight) as u32;
-        self.power_produced = 250 + solar_output;
+        let mut building_deployed = false;
+        for b in &mut self.buildings {
+            if b.construction_progress < 100.0 {
+                b.construction_progress = (b.construction_progress + dt_secs * 5.0).min(100.0);
+                if b.construction_progress >= 100.0 {
+                    b.is_active = true;
+                    building_deployed = true;
+                }
+            }
+        }
+        self.power_produced = 250 + self.buildings.iter()
+            .filter(|b| b.is_active && b.faction == Some(self.faction) && b.power_cost < 0)
+            .map(|b| {
+                let output = (-b.power_cost) as f64;
+                if b.name.contains("Solar") { (output * self.sunlight) as u32 } else { output as u32 }
+            }).sum::<u32>();
+        self.power_consumed = self.buildings.iter()
+            .filter(|b| b.is_active && b.faction == Some(self.faction) && b.power_cost > 0)
+            .map(|b| b.power_cost as u32).sum();
 
         // Update planetary disasters
         let warning = self.disasters.update(&mut self.game_map, dt_secs);
@@ -1809,6 +1974,7 @@ impl ColonyState {
 
         // Unit Combat Engagements
         let mut combat_events = Vec::new();
+        let mut building_combat_events = Vec::new();
         let unit_positions: Vec<(u32, Faction, f64, f64, u32)> = self.units.iter()
             .map(|u| (u.id, u.faction, u.tile_x as f64, u.tile_y as f64, u.hp))
             .collect();
@@ -1817,6 +1983,19 @@ impl ColonyState {
             u.attack_cooldown -= dt_secs;
             if let Some(weapon) = u.weapon {
                 if u.attack_cooldown <= 0.0 {
+                    if let UnitOrder::AttackBuilding { target_building_id } = u.current_order {
+                        if let Some(b) = self.buildings.iter().find(|b| b.id == target_building_id && b.faction.is_some_and(|f| f != u.faction) && b.hp > 0) {
+                            let target = (b.tile_x as f64 + b.width as f64 / 2.0, b.tile_y as f64 + b.height as f64 / 2.0);
+                            let dist = ((target.0 - u.tile_x as f64).powi(2) + (target.1 - u.tile_y as f64).powi(2)).sqrt();
+                            if dist <= weapon.range_tiles() {
+                                u.attack_cooldown = weapon.fire_interval();
+                                building_combat_events.push((b.id, (u.tile_x as f64, u.tile_y as f64), target, weapon, weapon.damage(), u.faction));
+                            }
+                        } else {
+                            u.current_order = UnitOrder::Idle;
+                        }
+                        continue;
+                    }
                     // Check target
                     let mut target_id = None;
                     if let UnitOrder::Attack { target_unit_id } = u.current_order {
@@ -1856,6 +2035,24 @@ impl ColonyState {
                                     u.faction,
                                 ));
                             }
+                        }
+                    } else if let Some(b) = self.buildings.iter()
+                        .filter(|b| b.faction.is_some_and(|f| f != u.faction) && b.hp > 0)
+                        .filter(|b| {
+                            let tx = b.tile_x as f64 + b.width as f64 / 2.0;
+                            let ty = b.tile_y as f64 + b.height as f64 / 2.0;
+                            ((tx - u.tile_x as f64).powi(2) + (ty - u.tile_y as f64).powi(2)).sqrt() <= weapon.range_tiles()
+                        })
+                        .min_by(|a, b| {
+                            let da = (a.tile_x - u.tile_x).pow(2) + (a.tile_y - u.tile_y).pow(2);
+                            let db = (b.tile_x - u.tile_x).pow(2) + (b.tile_y - u.tile_y).pow(2);
+                            da.cmp(&db)
+                        }) {
+                        let target = (b.tile_x as f64 + b.width as f64 / 2.0, b.tile_y as f64 + b.height as f64 / 2.0);
+                        let dist = ((target.0 - u.tile_x as f64).powi(2) + (target.1 - u.tile_y as f64).powi(2)).sqrt();
+                        if dist <= weapon.range_tiles() {
+                            u.attack_cooldown = weapon.fire_interval();
+                            building_combat_events.push((b.id, (u.tile_x as f64, u.tile_y as f64), target, weapon, weapon.damage(), u.faction));
                         }
                     }
                 }
@@ -1907,6 +2104,37 @@ impl ColonyState {
                     }
                     destroyed_units.push((target.tile_x as f64, target.tile_y as f64));
                 }
+            }
+        }
+
+        let mut destroyed_buildings = Vec::new();
+        for (target_id, from_pos, to_pos, weapon, dmg, from_faction) in building_combat_events {
+            match weapon {
+                WeaponType::Railgun => railgun_fired = true,
+                WeaponType::Microwave => microwave_fired = true,
+                WeaponType::AcidCloud => acid_fired = true,
+                _ => laser_fired = true,
+            }
+            self.active_beams.push(CombatBeam {
+                from_x: from_pos.0, from_y: from_pos.1,
+                to_x: to_pos.0, to_y: to_pos.1,
+                color: weapon.beam_color(), lifetime: 0.18, max_lifetime: 0.18,
+            });
+            if let Some(b) = self.buildings.iter_mut().find(|b| b.id == target_id && b.faction.is_some_and(|f| f != from_faction)) {
+                if b.faction == Some(self.faction) && from_faction != self.faction && self.sol - self.last_under_attack_sol > 15.0 {
+                    self.last_under_attack_sol = self.sol;
+                    under_attack = true;
+                }
+                b.hp = b.hp.saturating_sub(dmg);
+                if b.hp == 0 { destroyed_buildings.push(b.id); }
+            }
+        }
+        destroyed_buildings.sort_unstable();
+        destroyed_buildings.dedup();
+        for id in destroyed_buildings {
+            if let Some(b) = self.destroy_building(id) {
+                structure_destroyed = true;
+                self.active_explosions.push(ExplosionEffect { x: b.tile_x as f64, y: b.tile_y as f64, radius: 4.0, max_radius: 24.0, lifetime: 0.45, max_lifetime: 0.45 });
             }
         }
 
@@ -2519,6 +2747,14 @@ impl ColonyState {
                     }
                 }
             }
+            for b in &mut self.buildings {
+                if b.faction == Some(*rep_faction) && b.hp < b.max_hp {
+                    let dist = (b.tile_x + b.width / 2 - dx).abs() + (b.tile_y + b.height / 2 - dy).abs();
+                    if dist <= 5 {
+                        b.hp = (b.hp + ((dt_secs * 30.0) as u32).max(1)).min(b.max_hp);
+                    }
+                }
+            }
         }
 
         // 2. Mobile Repair Vehicles heal targeted or nearby damaged allies
@@ -2693,7 +2929,6 @@ impl ColonyState {
         }
 
         // 5. ConVec Structure Deployment Orders
-        let mut building_deployed = false;
         let mut convec_deploy_events = Vec::new();
         for u in &mut self.units {
             if u.faction == self.faction {
@@ -2713,8 +2948,7 @@ impl ColonyState {
 
         for (uid, _kit_name, tx, ty) in convec_deploy_events {
             if let Ok(_msg) = self.deploy_convec_kit(uid, tx, ty) {
-                building_deployed = true;
-                unit_notice = Some("STRUCTURE DEPLOYED: ConVec erected installation into operational grid.");
+                unit_notice = Some("STRUCTURE FOUNDATION: ConVec began construction.");
             }
         }
 
@@ -2910,23 +3144,18 @@ impl ColonyState {
 
             // Damage and destroy buildings caught in blast radius
             let mut meteor_destroyed_buildings = Vec::new();
-            for b in &self.buildings {
+            for b in &mut self.buildings {
                 let bx = b.tile_x as f64 + (b.width as f64) * 0.5;
                 let by = b.tile_y as f64 + (b.height as f64) * 0.5;
                 let dist = ((bx - mx).powi(2) + (by - my).powi(2)).sqrt();
                 if dist <= radius {
-                    meteor_destroyed_buildings.push(b.id);
+                    let blast_dmg = (80.0 * (1.0 - dist / radius)) as u32;
+                    b.hp = b.hp.saturating_sub(blast_dmg.max(25));
+                    if b.hp == 0 { meteor_destroyed_buildings.push(b.id); }
                 }
             }
             for b_id in meteor_destroyed_buildings {
-                self.destroyed_building_ids.insert(b_id);
-                structure_destroyed = true;
-                if let Some(idx) = self.buildings.iter().position(|b| b.id == b_id) {
-                    let b = self.buildings.remove(idx);
-                    if b.power_cost > 0 {
-                        self.power_consumed = self.power_consumed.saturating_sub(b.power_cost as u32);
-                    }
-                }
+                structure_destroyed |= self.destroy_building(b_id).is_some();
             }
         }
 
@@ -2952,14 +3181,7 @@ impl ColonyState {
             }
         }
         for b_id in lava_destroyed_b_ids {
-            self.destroyed_building_ids.insert(b_id);
-            structure_destroyed = true;
-            if let Some(idx) = self.buildings.iter().position(|b| b.id == b_id) {
-                let b = self.buildings.remove(idx);
-                if b.power_cost > 0 {
-                    self.power_consumed = self.power_consumed.saturating_sub(b.power_cost as u32);
-                }
-            }
+            structure_destroyed |= self.destroy_building(b_id).is_some();
         }
 
         if self.starship_launched {
@@ -3029,7 +3251,17 @@ impl ColonyState {
         }
 
         // Refresh dynamic sensor fog of war
-        self.fog.update_visibility(&self.units, &self.buildings);
+        self.fog.update_visibility(&self.units, &self.buildings, self.faction);
+        for u in &mut self.units {
+            if u.faction != self.faction && self.fog.get(u.tile_x as usize, u.tile_y as usize) != fog::FogState::Visible {
+                u.is_selected = false;
+            }
+        }
+        for b in &mut self.buildings {
+            if b.faction != Some(self.faction) && self.fog.get(b.tile_x as usize, b.tile_y as usize) != fog::FogState::Visible {
+                b.is_selected = false;
+            }
+        }
 
         let vortex_active = !self.disasters.active_vortices.is_empty();
         let volcano_erupted = warning.map(|w| w.contains("Volcanic fissure") || w.contains("eruption")).unwrap_or(false);
@@ -3061,6 +3293,28 @@ impl ColonyState {
         }
     }
 
+    pub fn validate_structure_site(&self, tile_x: i32, tile_y: i32, w: i32, h: i32) -> Result<(), String> {
+        if tile_x < 0 || tile_y < 0 || tile_x + w > self.game_map.width as i32 || tile_y + h > self.game_map.height as i32 {
+            return Err("Placement is outside the map".into());
+        }
+        for b in &self.buildings {
+            if tile_x < b.tile_x + b.width && tile_x + w > b.tile_x
+                && tile_y < b.tile_y + b.height && tile_y + h > b.tile_y {
+                return Err(format!("Placement conflict: space occupied by {}", b.name));
+            }
+        }
+        for dy in 0..h {
+            for dx in 0..w {
+                let tile = self.game_map.get_tile((tile_x + dx) as u32, (tile_y + dy) as u32)
+                    .ok_or_else(|| "Placement is outside the map".to_string())?;
+                if tile.is_lava || tile.is_wall_or_building || tile.cell_type == 3 {
+                    return Err("Cannot deploy structure on blocked terrain".into());
+                }
+            }
+        }
+        Ok(())
+    }
+
     /// Deploy a colonial structure kit, deducting ore costs and weaving transport tubes
     pub fn deploy_structure(&mut self, structure_type: StructureType, tile_x: i32, tile_y: i32) -> Result<String, String> {
         if structure_type == StructureType::GuardPost && !self.tech_tree.can_build_guard_posts() {
@@ -3077,32 +3331,13 @@ impl ColonyState {
             return Err(format!("Insufficient Ore: requires {} Common, {} Rare", cost_common, cost_rare));
         }
 
-        // Check if footprint collides with existing structures or impassable lava
-        for b in &self.buildings {
-            let collides_x = tile_x < b.tile_x + b.width && tile_x + w > b.tile_x;
-            let collides_y = tile_y < b.tile_y + b.height && tile_y + h > b.tile_y;
-            if collides_x && collides_y {
-                return Err(format!("Placement conflict: space occupied by {}", b.name));
-            }
-        }
-
-        for dy in 0..h {
-            for dx in 0..w {
-                let tx = (tile_x + dx) as u32;
-                let ty = (tile_y + dy) as u32;
-                if let Some(tile) = self.game_map.get_tile(tx, ty) {
-                    if tile.is_lava {
-                        return Err("Cannot deploy structure onto active molten lava fissure!".into());
-                    }
-                }
-            }
-        }
+        self.validate_structure_site(tile_x, tile_y, w, h)?;
 
         // Deduct resources
         self.common_ore -= cost_common;
         self.rare_ore -= cost_rare;
 
-        let next_id = self.buildings.len() as u32 + 1;
+        let next_id = self.next_building_id();
         let power = structure_type.power_cost();
         let name = format!("{} #{}", structure_type.name(), next_id);
 
@@ -3114,7 +3349,10 @@ impl ColonyState {
             width: w,
             height: h,
             power_cost: power,
-            is_active: true,
+            hp: structure_type.default_max_hp(),
+            max_hp: structure_type.default_max_hp(),
+            construction_progress: 0.0,
+            is_active: false,
             is_selected: false,
             production_queue: Vec::new(),
             production_progress: 0.0,
@@ -3129,16 +3367,40 @@ impl ColonyState {
             connect_with_tubes(&mut self.tubes, start, end);
         }
 
-        if power > 0 {
-            self.power_consumed += power as u32;
-        } else {
-            self.power_produced += (-power) as u32;
+        for dy in 0..h {
+            for dx in 0..w {
+                if let Some(tile) = self.game_map.get_tile_mut((tile_x + dx) as u32, (tile_y + dy) as u32) {
+                    tile.is_wall_or_building = true;
+                }
+            }
         }
-
         self.buildings.push(new_b);
-        self.fog.update_visibility(&self.units, &self.buildings);
+        self.fog.update_visibility(&self.units, &self.buildings, self.faction);
 
         Ok(format!("Deployed {} successfully", name))
+    }
+
+    pub fn order_structure_construction(&mut self, structure_type: StructureType, tile_x: i32, tile_y: i32) -> Result<String, String> {
+        let (w, h) = structure_type.dimensions();
+        self.validate_structure_site(tile_x, tile_y, w, h)?;
+        if self.fog.get(tile_x as usize, tile_y as usize) != fog::FogState::Visible {
+            return Err("Construction site must be visible".into());
+        }
+        let kit_name = structure_type.name();
+        let convec_id = self.units.iter()
+            .filter(|u| u.faction == self.faction && u.name.contains("ConVec")
+                && (u.cargo_kit.is_none() || u.cargo_kit.as_deref() == Some(kit_name)))
+            .min_by_key(|u| (u.cargo_kit.is_none() as i32, (!u.is_selected) as i32, (u.tile_x - tile_x).abs() + (u.tile_y - tile_y).abs()))
+            .map(|u| u.id)
+            .ok_or_else(|| "A ConVec with a free cargo bay is required".to_string())?;
+        if self.units.iter().find(|u| u.id == convec_id).and_then(|u| u.cargo_kit.as_ref()).is_none() {
+            self.load_convec_kit(convec_id, kit_name.to_string())?;
+        }
+        if let Some(u) = self.units.iter_mut().find(|u| u.id == convec_id) {
+            u.path.clear();
+            u.current_order = UnitOrder::DeployStructure { kit_name: kit_name.to_string(), tile_x, tile_y };
+        }
+        Ok(format!("ConVec dispatched to build {}", kit_name))
     }
 
     /// Deploy a structure from a ConVec's loaded construction kit
@@ -3146,6 +3408,9 @@ impl ColonyState {
         let (kit_name, ux, uy) = {
             let u = self.units.iter().find(|u| u.id == unit_id)
                 .ok_or_else(|| "ConVec not found".to_string())?;
+            if u.faction != self.faction || !u.name.contains("ConVec") {
+                return Err("Only a friendly ConVec can deploy a structure".into());
+            }
             let kit = u.cargo_kit.as_ref()
                 .ok_or_else(|| "ConVec has no construction kit loaded".to_string())?;
             (kit.clone(), u.tile_x, u.tile_y)
@@ -3156,28 +3421,9 @@ impl ColonyState {
 
         let (w, h) = st.dimensions();
 
-        // Check if footprint collides with existing structures or impassable lava
-        for b in &self.buildings {
-            let collides_x = tile_x < b.tile_x + b.width && tile_x + w > b.tile_x;
-            let collides_y = tile_y < b.tile_y + b.height && tile_y + h > b.tile_y;
-            if collides_x && collides_y {
-                return Err(format!("Placement conflict: space occupied by {}", b.name));
-            }
-        }
+        self.validate_structure_site(tile_x, tile_y, w, h)?;
 
-        for dy in 0..h {
-            for dx in 0..w {
-                let tx = (tile_x + dx) as u32;
-                let ty = (tile_y + dy) as u32;
-                if let Some(tile) = self.game_map.get_tile(tx, ty) {
-                    if tile.is_lava {
-                        return Err("Cannot deploy structure onto active molten lava fissure!".into());
-                    }
-                }
-            }
-        }
-
-        let next_id = self.buildings.len() as u32 + 1;
+        let next_id = self.next_building_id();
         let power = st.power_cost();
         let name = format!("{} #{}", st.name(), next_id);
 
@@ -3189,7 +3435,10 @@ impl ColonyState {
             width: w,
             height: h,
             power_cost: power,
-            is_active: true,
+            hp: st.default_max_hp(),
+            max_hp: st.default_max_hp(),
+            construction_progress: 0.0,
+            is_active: false,
             is_selected: false,
             production_queue: Vec::new(),
             production_progress: 0.0,
@@ -3216,14 +3465,8 @@ impl ColonyState {
             connect_with_tubes(&mut self.tubes, start, end);
         }
 
-        if power > 0 {
-            self.power_consumed += power as u32;
-        } else {
-            self.power_produced += (-power) as u32;
-        }
-
         self.buildings.push(new_b);
-        self.fog.update_visibility(&self.units, &self.buildings);
+        self.fog.update_visibility(&self.units, &self.buildings, self.faction);
 
         // Spawn visual beam effect
         self.active_beams.push(CombatBeam {
@@ -3266,7 +3509,7 @@ impl ColonyState {
         let u = self.units.iter_mut().find(|u| u.id == unit_id)
             .ok_or_else(|| "Unit not found".to_string())?;
 
-        if !u.name.contains("ConVec") {
+        if !u.name.contains("ConVec") || u.faction != self.faction {
             return Err("Only ConVec transport vehicles can load construction kits".into());
         }
 
@@ -3316,7 +3559,7 @@ impl ColonyState {
             return Err(format!("Insufficient Ore: requires {} Common, {} Rare", cost_common, cost_rare));
         }
 
-        if let Some(b) = self.buildings.iter_mut().find(|b| b.id == building_id) {
+        if let Some(b) = self.buildings.iter_mut().find(|b| b.id == building_id && b.faction == Some(self.faction) && b.is_active) {
             self.common_ore -= cost_common;
             self.rare_ore -= cost_rare;
             b.production_queue.push(item.clone());
@@ -3330,9 +3573,11 @@ impl ColonyState {
     pub fn recycle_structure(&mut self, building_id: u32) -> Result<String, String> {
         let b_idx = self.buildings.iter().position(|b| b.id == building_id)
             .ok_or_else(|| "Structure not found".to_string())?;
+        if self.buildings[b_idx].faction != Some(self.faction) {
+            return Err("Cannot recycle another player's structure".into());
+        }
 
-        self.destroyed_building_ids.insert(building_id);
-        let building = self.buildings.remove(b_idx);
+        let building = self.destroy_building(building_id).expect("building index checked above");
         let base_name = building.name.split(" #").next().unwrap_or(&building.name);
         let st_opt = StructureType::from_name(base_name);
         let (refund_common, refund_rare) = match st_opt {
@@ -3343,15 +3588,9 @@ impl ColonyState {
             None => (100, 25),
         };
 
-        if building.power_cost > 0 {
-            self.power_consumed = self.power_consumed.saturating_sub(building.power_cost as u32);
-        } else {
-            self.power_produced = self.power_produced.saturating_sub((-building.power_cost) as u32);
-        }
-
         self.common_ore += refund_common;
         self.rare_ore += refund_rare;
-        self.fog.update_visibility(&self.units, &self.buildings);
+        self.fog.update_visibility(&self.units, &self.buildings, self.faction);
 
         Ok(format!("{} dismantled. Reclaimed {} Common, {} Rare ore.", building.name, refund_common, refund_rare))
     }
@@ -3439,7 +3678,7 @@ impl ColonyState {
             tech.is_researched = data.researched_tech_ids.contains(&tech.id);
         }
 
-        self.fog.update_visibility(&self.units, &self.buildings);
+        self.fog.update_visibility(&self.units, &self.buildings, self.faction);
     }
 
     /// Initiate final countdown and launch the assembled evacuation starship
@@ -3471,7 +3710,7 @@ impl ColonyState {
     /// Issue an 8-way movement order to all currently selected units
     pub fn order_selected_move(&mut self, target_x: i32, target_y: i32) {
         for u in &mut self.units {
-            if u.is_selected {
+            if u.is_selected && u.faction == self.faction {
                 if let Some(path) = PathFinder::find_path(&self.game_map, (u.tile_x, u.tile_y), (target_x, target_y)) {
                     u.path = path;
                     u.current_order = UnitOrder::MoveTo { target_x, target_y };
@@ -3530,6 +3769,108 @@ mod tests {
     use super::*;
 
     #[test]
+    fn enemy_selection_cannot_issue_orders_or_recycle_buildings() {
+        let mut colony = ColonyState::new(Faction::Eden);
+        let mut enemy = colony.units[0].clone();
+        enemy.id = 9999;
+        enemy.faction = Faction::Plymouth;
+        enemy.is_selected = true;
+        enemy.current_order = UnitOrder::Idle;
+        colony.units.push(enemy);
+        colony.order_selected_move(30, 30);
+        assert_eq!(colony.units.last().unwrap().current_order, UnitOrder::Idle);
+
+        let mut enemy_building = colony.buildings[0].clone();
+        enemy_building.id = 9999;
+        enemy_building.faction = Some(Faction::Plymouth);
+        colony.buildings.push(enemy_building);
+        assert!(colony.recycle_structure(9999).is_err());
+        assert!(colony.buildings.iter().any(|b| b.id == 9999));
+    }
+
+    #[test]
+    fn construction_rejects_outside_map_and_impassable_terrain() {
+        let mut colony = ColonyState::new(Faction::Eden);
+        colony.common_ore = 10_000;
+        colony.rare_ore = 10_000;
+        let original_count = colony.buildings.len();
+        assert!(colony.deploy_structure(StructureType::Residence, -1, 5).is_err());
+        assert!(colony.deploy_structure(StructureType::Residence, colony.game_map.width as i32 - 1, 5).is_err());
+        assert_eq!(colony.buildings.len(), original_count);
+        colony.game_map.get_tile_mut(5, 5).unwrap().is_wall_or_building = true;
+        assert!(colony.deploy_structure(StructureType::Residence, 5, 5).is_err());
+    }
+
+    #[test]
+    fn newly_deployed_building_becomes_active_after_construction() {
+        let mut colony = ColonyState::new(Faction::Eden);
+        colony.common_ore = 10_000;
+        colony.rare_ore = 10_000;
+        let site = (5, 5);
+        colony.deploy_structure(StructureType::Residence, site.0, site.1).unwrap();
+        let id = colony.buildings.last().unwrap().id;
+        assert!(!colony.buildings.last().unwrap().is_active);
+        for _ in 0..300 {
+            colony.update(0.1);
+            if colony.buildings.iter().find(|b| b.id == id).unwrap().is_active { break; }
+        }
+        assert!(colony.buildings.iter().find(|b| b.id == id).unwrap().is_active);
+    }
+
+    #[test]
+    fn weapons_damage_and_destroy_enemy_buildings() {
+        let mut colony = ColonyState::new(Faction::Eden);
+        let mut enemy = colony.buildings[0].clone();
+        enemy.id = 9999;
+        enemy.faction = Some(Faction::Plymouth);
+        enemy.tile_x = 8;
+        enemy.tile_y = 8;
+        enemy.hp = 5;
+        colony.buildings.push(enemy);
+        let attacker = colony.units.iter_mut().find(|u| u.weapon.is_some() && u.faction == Faction::Eden).unwrap();
+        attacker.tile_x = 8;
+        attacker.tile_y = 7;
+        attacker.attack_cooldown = 0.0;
+        attacker.current_order = UnitOrder::AttackBuilding { target_building_id: 9999 };
+        let result = colony.update(0.1);
+        assert!(result.structure_destroyed);
+        assert!(!colony.buildings.iter().any(|b| b.id == 9999));
+    }
+
+    #[test]
+    fn structure_order_uses_a_convec_before_placing_foundation() {
+        let mut colony = ColonyState::new(Faction::Eden);
+        colony.common_ore = 10_000;
+        colony.rare_ore = 10_000;
+        let before = colony.buildings.len();
+        let mut convec = colony.units[0].clone();
+        convec.id = 9999;
+        convec.name = "ConVec #9999".into();
+        convec.faction = colony.faction;
+        convec.cargo_kit = None;
+        colony.units.push(convec);
+        colony.fog.grid[5 * colony.fog.width + 5] = fog::FogState::Visible as u8;
+        colony.order_structure_construction(StructureType::Residence, 5, 5).unwrap();
+        assert_eq!(colony.buildings.len(), before);
+        let convec = colony.units.iter().find(|u| matches!(u.current_order, UnitOrder::DeployStructure { .. })).unwrap();
+        assert!(convec.cargo_kit.is_some());
+        assert!(matches!(convec.current_order, UnitOrder::DeployStructure { .. }));
+    }
+
+    #[test]
+    fn recycling_releases_site_without_reusing_destroyed_id() {
+        let mut colony = ColonyState::new(Faction::Eden);
+        colony.common_ore = 10_000;
+        colony.rare_ore = 10_000;
+        colony.deploy_structure(StructureType::Residence, 5, 5).unwrap();
+        let id = colony.buildings.last().unwrap().id;
+        colony.recycle_structure(id).unwrap();
+        assert!(colony.validate_structure_site(5, 5, 2, 2).is_ok());
+        colony.deploy_structure(StructureType::Residence, 5, 5).unwrap();
+        assert!(colony.buildings.last().unwrap().id > id);
+    }
+
+    #[test]
     fn test_simulation_event_flags_and_audio_triggers() {
         let mut colony = ColonyState::new(Faction::Eden);
         // Initially, no disaster or attacks
@@ -3582,6 +3923,7 @@ mod tests {
     fn test_meteor_structure_destruction_event() {
         let mut colony = ColonyState::new(Faction::Eden);
         let b = colony.buildings.first().unwrap().clone();
+        colony.buildings.first_mut().unwrap().hp = 1;
         colony.disasters.detonation_queue.push((b.tile_x as f64, b.tile_y as f64, 5.0));
 
         let res = colony.update(0.1);

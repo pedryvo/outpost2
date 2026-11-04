@@ -487,7 +487,7 @@ impl BaseBuildingPlanner {
         *rare_ore -= cost_r;
         self.last_build_tick = current_tick;
 
-        let next_id = session.buildings.iter().map(|b| b.id).max().unwrap_or(0) + 1;
+        let next_id = session.next_building_id();
         let (w, h) = st.dimensions();
         let power = st.power_cost();
 
@@ -499,7 +499,10 @@ impl BaseBuildingPlanner {
             width: w,
             height: h,
             power_cost: power,
-            is_active: true,
+            hp: st.default_max_hp(),
+            max_hp: st.default_max_hp(),
+            construction_progress: 0.0,
+            is_active: false,
             is_selected: false,
             production_queue: Vec::new(),
             production_progress: 0.0,
@@ -531,7 +534,7 @@ impl BaseBuildingPlanner {
         }
 
         session.buildings.push(new_b);
-        session.fog.update_visibility(&session.units, &session.buildings);
+        session.fog.update_visibility(&session.units, &session.buildings, session.faction);
 
         Ok(next_id)
     }
@@ -1516,6 +1519,9 @@ mod tests {
             width: 2,
             height: 2,
             power_cost: 60,
+            hp: 500,
+            max_hp: 500,
+            construction_progress: 100.0,
             is_active: true,
             is_selected: false,
             production_queue: Vec::new(),

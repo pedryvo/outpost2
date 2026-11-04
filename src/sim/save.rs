@@ -90,6 +90,8 @@ pub struct StructureSaveState {
     pub y: i32,
     pub hp: u32,
     pub max_hp: u32,
+    #[serde(default = "completed_construction")]
+    pub construction_progress: f64,
     pub enabled: bool,
     pub power_status: PowerStatus,
     #[serde(default)]
@@ -101,6 +103,8 @@ pub struct StructureSaveState {
     #[serde(default)]
     pub attack_cooldown: f64,
 }
+
+fn completed_construction() -> f64 { 100.0 }
 
 /// Full serialization snapshot of a mobile vehicle or construction unit.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -251,7 +255,7 @@ impl SaveGameState {
             .buildings
             .iter()
             .map(|b| {
-                let st = StructureType::from_name(&b.name).unwrap_or(StructureType::Residence);
+                let st = StructureType::from_name(b.name.split(" #").next().unwrap_or(&b.name)).unwrap_or(StructureType::Residence);
                 let power_status = if !b.is_active {
                     PowerStatus::Disabled
                 } else if is_grid_powered {
@@ -259,14 +263,14 @@ impl SaveGameState {
                 } else {
                     PowerStatus::Unpowered
                 };
-                let max_hp = st.default_max_hp();
                 StructureSaveState {
                     id: b.id,
                     structure_type: st,
                     x: b.tile_x,
                     y: b.tile_y,
-                    hp: max_hp,
-                    max_hp,
+                    hp: b.hp,
+                    max_hp: b.max_hp,
+                    construction_progress: b.construction_progress,
                     enabled: b.is_active,
                     power_status,
                     faction: b.faction,
@@ -389,6 +393,9 @@ impl SaveGameState {
                     width: dims.0,
                     height: dims.1,
                     power_cost: s.structure_type.power_cost(),
+                    hp: s.hp,
+                    max_hp: s.max_hp,
+                    construction_progress: s.construction_progress,
                     is_active: s.enabled && s.power_status != PowerStatus::Disabled,
                     is_selected: false,
                     production_queue: s.production_queue.clone(),
@@ -464,7 +471,7 @@ impl SaveGameState {
         colony.tubes = self.tubes.iter().copied().collect();
 
         // Refresh dynamic Fog of War visibility
-        colony.fog.update_visibility(&colony.units, &colony.buildings);
+        colony.fog.update_visibility(&colony.units, &colony.buildings, colony.faction);
     }
 
     /// Serialize state directly to compact JSON string.
@@ -837,6 +844,22 @@ mod tests {
     use crate::sim::structures::StructureType;
 
     #[test]
+    fn damaged_building_and_construction_progress_survive_save() {
+        let mut colony = ColonyState::new(Faction::Eden);
+        let id = colony.buildings[0].id;
+        colony.buildings[0].hp = 37;
+        colony.buildings[0].construction_progress = 42.0;
+        colony.buildings[0].is_active = false;
+        let save = SaveGameState::from_colony(&colony, 1, "test", 0);
+        let mut restored = ColonyState::new(Faction::Eden);
+        save.apply_to_colony(&mut restored);
+        let building = restored.buildings.iter().find(|b| b.id == id).unwrap();
+        assert_eq!(building.hp, 37);
+        assert_eq!(building.construction_progress, 42.0);
+        assert!(!building.is_active);
+    }
+
+    #[test]
     fn test_save_metadata_serde_roundtrip() {
         let meta = SaveMetadata::new(
             1,
@@ -1045,6 +1068,7 @@ mod tests {
             y: 12,
             hp: 800,
             max_hp: 800,
+            construction_progress: 100.0,
             enabled: true,
             power_status: PowerStatus::Powered,
             faction: Some(Faction::Eden),

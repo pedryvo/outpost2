@@ -331,7 +331,7 @@ pub fn start() -> Result<(), JsValue> {
                 // If in structure placement mode: deploy structure
                 if let Some(st) = g.pending_placement {
                     let (gx, gy) = g.hover_tile;
-                    match g.colony.deploy_structure(st, gx, gy) {
+                    match g.colony.order_structure_construction(st, gx, gy) {
                         Ok(msg) => {
                             g.audio.play_build_confirm();
                             g.pending_placement = None;
@@ -460,6 +460,9 @@ pub fn start() -> Result<(), JsValue> {
                 let mut clicked_enemy = None;
                 let mut clicked_friendly_damaged = None;
                 for u in &g.colony.units {
+                    if g.colony.fog.get(u.tile_x as usize, u.tile_y as usize) != sim::fog::FogState::Visible {
+                        continue;
+                    }
                     let (tile_sx, tile_sy) = g.viewport.tile_to_screen(u.tile_x as f64, u.tile_y as f64);
                     let (sx, sy) = (tile_sx + 16.0 * zoom, tile_sy + 16.0 * zoom);
                     let dist = ((click_x - sx).powi(2) + (click_y - sy).powi(2)).sqrt();
@@ -475,6 +478,13 @@ pub fn start() -> Result<(), JsValue> {
                 }
 
                 let player_faction = g.colony.faction;
+                let (target_tx, target_ty) = g.viewport.screen_to_tile(click_x, click_y);
+                let clicked_enemy_building = g.colony.buildings.iter()
+                    .find(|b| b.faction != Some(player_faction)
+                        && target_tx >= b.tile_x && target_tx < b.tile_x + b.width
+                        && target_ty >= b.tile_y && target_ty < b.tile_y + b.height
+                        && g.colony.fog.get(b.tile_x as usize, b.tile_y as usize) == sim::fog::FogState::Visible)
+                    .map(|b| b.id);
                 if let Some(ally_id) = clicked_friendly_damaged {
                     let mut repaired_any = false;
                     for u in &mut g.colony.units {
@@ -493,10 +503,19 @@ pub fn start() -> Result<(), JsValue> {
                 } else if let Some(enemy_id) = clicked_enemy {
                     for u in &mut g.colony.units {
                         if u.is_selected && u.faction == player_faction {
+                            u.path.clear();
                             u.current_order = sim::pathfinding::UnitOrder::Attack { target_unit_id: enemy_id };
                         }
                     }
                     g.audio.play_build_confirm();
+                } else if let Some(building_id) = clicked_enemy_building {
+                    for u in &mut g.colony.units {
+                        if u.is_selected && u.faction == player_faction && u.weapon.is_some() {
+                            u.path.clear();
+                            u.current_order = sim::pathfinding::UnitOrder::AttackBuilding { target_building_id: building_id };
+                        }
+                    }
+                    g.audio.play_unit_ack();
                 } else {
                     let (target_tx, target_ty) = g.viewport.screen_to_tile(click_x, click_y);
                     g.colony.order_selected_move(target_tx, target_ty);
@@ -578,7 +597,8 @@ pub fn start() -> Result<(), JsValue> {
                                 g.colony.units[i].tile_y as f64,
                             );
                             let (sx, sy) = (tile_sx + 16.0 * g.viewport.zoom, tile_sy + 16.0 * g.viewport.zoom);
-                            if sx >= min_x && sx <= max_x && sy >= min_y && sy <= max_y {
+                            if sx >= min_x && sx <= max_x && sy >= min_y && sy <= max_y
+                                && g.colony.fog.get(g.colony.units[i].tile_x as usize, g.colony.units[i].tile_y as usize) == sim::fog::FogState::Visible {
                                 g.colony.units[i].is_selected = true;
                                 if first_selected_name.is_none() {
                                     first_selected_name = Some(g.colony.units[i].name.clone());
@@ -587,13 +607,17 @@ pub fn start() -> Result<(), JsValue> {
                             } else if !e.shift_key() {
                                 g.colony.units[i].is_selected = false;
                             }
+                        } else if !e.shift_key() {
+                            g.colony.units[i].is_selected = false;
                         }
                     }
 
-                    if selected_any {
+                    if selected_any || !e.shift_key() {
                         for b in &mut g.colony.buildings {
                             b.is_selected = false;
                         }
+                    }
+                    if selected_any {
                         if let Some(name) = first_selected_name {
                             g.audio.play_vehicle_selection(&name);
                         } else {
@@ -603,24 +627,28 @@ pub fn start() -> Result<(), JsValue> {
                 } else {
                     // Single Unit or Building Click Selection
                     let zoom = g.viewport.zoom;
-                    let mut clicked_unit_name = None;
                     let unit_count = g.colony.units.len();
-                    for i in 0..unit_count {
-                        let tx = g.colony.units[i].tile_x as f64;
-                        let ty = g.colony.units[i].tile_y as f64;
-                        let (tile_sx, tile_sy) = g.viewport.tile_to_screen(tx, ty);
-                        let (sx, sy) = (tile_sx + 16.0 * zoom, tile_sy + 16.0 * zoom);
-                        let d = ((click_x - sx).powi(2) + (click_y - sy).powi(2)).sqrt();
-                        if d < 20.0 * zoom {
-                            g.colony.units[i].is_selected = true;
-                            if clicked_unit_name.is_none() {
-                                clicked_unit_name = Some(g.colony.units[i].name.clone());
+                    let clicked_unit_index = (0..unit_count)
+                        .filter_map(|i| {
+                            let u = &g.colony.units[i];
+                            if g.colony.fog.get(u.tile_x as usize, u.tile_y as usize) != sim::fog::FogState::Visible {
+                                return None;
                             }
+                            let (tile_sx, tile_sy) = g.viewport.tile_to_screen(u.tile_x as f64, u.tile_y as f64);
+                            let d = ((click_x - tile_sx - 16.0 * zoom).powi(2) + (click_y - tile_sy - 16.0 * zoom).powi(2)).sqrt();
+                            (d < 20.0 * zoom).then_some((i, d))
+                        })
+                        .min_by(|a, b| a.1.total_cmp(&b.1))
+                        .map(|(i, _)| i);
+                    for i in 0..unit_count {
+                        if Some(i) == clicked_unit_index {
+                            g.colony.units[i].is_selected = true;
                         } else if !e.shift_key() {
                             g.colony.units[i].is_selected = false;
                         }
                     }
 
+                    let clicked_unit_name = clicked_unit_index.map(|i| g.colony.units[i].name.clone());
                     if let Some(name) = clicked_unit_name {
                         for b in &mut g.colony.buildings {
                             b.is_selected = false;
@@ -629,8 +657,12 @@ pub fn start() -> Result<(), JsValue> {
                     } else {
                         let (tx, ty) = g.viewport.screen_to_tile(click_x, click_y);
                         let mut clicked_building = false;
+                        let clicked_building_id = g.colony.buildings.iter()
+                            .find(|b| tx >= b.tile_x && tx < b.tile_x + b.width && ty >= b.tile_y && ty < b.tile_y + b.height
+                                && g.colony.fog.get(b.tile_x as usize, b.tile_y as usize) == sim::fog::FogState::Visible)
+                            .map(|b| b.id);
                         for b in &mut g.colony.buildings {
-                            if tx >= b.tile_x && tx < b.tile_x + b.width && ty >= b.tile_y && ty < b.tile_y + b.height {
+                            if Some(b.id) == clicked_building_id {
                                 b.is_selected = true;
                                 clicked_building = true;
                             } else if !e.shift_key() {
@@ -810,7 +842,7 @@ pub fn start() -> Result<(), JsValue> {
                         .colony
                         .units
                         .iter()
-                        .filter(|u| u.is_selected)
+                        .filter(|u| u.is_selected && u.faction == g.colony.faction)
                         .map(|u| u.id)
                         .collect();
                     if !selected_ids.is_empty() {
@@ -829,8 +861,9 @@ pub fn start() -> Result<(), JsValue> {
                 render::hud::HotkeyAction::RecallControlGroup(group) => {
                     let ids = g.hud.state.hotkeys.get_group(group).to_vec();
                     if !ids.is_empty() {
+                        let faction = g.colony.faction;
                         for u in &mut g.colony.units {
-                            u.is_selected = ids.contains(&u.id);
+                            u.is_selected = u.faction == faction && ids.contains(&u.id);
                         }
                         g.audio.play_ui_beep();
                     }
@@ -1738,8 +1771,9 @@ pub fn start() -> Result<(), JsValue> {
         let cb = Closure::wrap(Box::new(move |_: web_sys::Event| {
             let mut g = app_clone.borrow_mut();
             let mut changed = false;
+            let faction = g.colony.faction;
             for b in &mut g.colony.buildings {
-                if b.is_selected {
+                if b.is_selected && b.faction == Some(faction) && b.construction_progress >= 100.0 {
                     b.is_active = !b.is_active;
                     changed = true;
                 }
@@ -2375,7 +2409,13 @@ pub fn start() -> Result<(), JsValue> {
                 let selected = app_borrow.colony.units.iter().find(|unit| unit.is_selected)
                     .map(|unit| format!("{} — {}/{} HP", unit.name, unit.hp, unit.max_hp))
                     .or_else(|| app_borrow.colony.buildings.iter().find(|building| building.is_selected)
-                        .map(|building| building.name.clone()))
+                        .map(|building| {
+                            if building.construction_progress < 100.0 {
+                                format!("{} — Under Construction ({:.0}%)", building.name, building.construction_progress)
+                            } else {
+                                format!("{} — {}/{} HP", building.name, building.hp, building.max_hp)
+                            }
+                        }))
                     .unwrap_or_else(|| "Select a unit or building".into());
                 if selection.text_content().as_deref() != Some(&selected) {
                     selection.set_text_content(Some(&selected));
@@ -2615,13 +2655,24 @@ pub fn start() -> Result<(), JsValue> {
                     name_el.set_text_content(Some(&b.name));
                 }
                 if let Some(status_el) = document.get_element_by_id("inspect-status") {
-                    let status_text = if b.is_active { "ONLINE" } else { "OFFLINE" };
-                    let status_col = if b.is_active { "#4ade80" } else { "#ef4444" };
+                    let status_text = if b.construction_progress < 100.0 { "UNDER CONSTRUCTION" } else if b.is_active { "ONLINE" } else { "OFFLINE" };
+                    let status_col = if b.construction_progress < 100.0 { "#e2d39a" } else if b.is_active { "#4ade80" } else { "#ef4444" };
                     status_el.set_text_content(Some(status_text));
                     let _ = status_el.set_attribute("style", &format!("color: {}; font-size: 10px; font-weight: bold;", status_col));
                 }
                 if let Some(power_el) = document.get_element_by_id("inspect-power") {
                     power_el.set_text_content(Some(&format!("{} kW", b.power_cost)));
+                }
+                let own = b.faction == Some(app_borrow.colony.faction);
+                if let Some(actions) = document.get_element_by_id("factory-actions") {
+                    let show = own && b.is_active && (b.name.contains("Factory") || b.name.contains("Spaceport"));
+                    let _ = actions.set_attribute("style", if show { "display: flex; flex-direction: column; gap: 6px; margin-top: 6px;" } else { "display: none;" });
+                }
+                if let Some(button) = document.get_element_by_id("btn-toggle-power") {
+                    let _ = button.set_attribute("style", if own { "margin-top: 8px; justify-content: center; background: #334155; display: flex;" } else { "display: none;" });
+                }
+                if let Some(button) = document.get_element_by_id("btn-recycle-building") {
+                    let _ = button.set_attribute("style", if own { "margin-top: 6px; justify-content: center; background: #7f1d1d; border-color: #ef4444; display: flex;" } else { "display: none;" });
                 }
                 if let Some(queue_el) = document.get_element_by_id("inspect-queue") {
                     if let Some(item) = b.production_queue.first() {
@@ -2638,7 +2689,7 @@ pub fn start() -> Result<(), JsValue> {
                 }
 
                 if let Some(launch_btn) = document.get_element_by_id("btn-launch-starship") {
-                    if app_borrow.colony.starship_progress >= 100.0 && !app_borrow.colony.starship_launched {
+                    if own && app_borrow.colony.starship_progress >= 100.0 && !app_borrow.colony.starship_launched {
                         let _ = launch_btn.set_attribute("style", "margin-top: 8px; justify-content: center; background: #581c87; border-color: #c084fc; font-weight: bold; color: #fff; display: flex;");
                     } else {
                         let _ = launch_btn.set_attribute("style", "display: none;");
@@ -2689,6 +2740,7 @@ pub fn start() -> Result<(), JsValue> {
                         sim::pathfinding::UnitOrder::Idle => "Status: Idle (Awaiting orders)".to_string(),
                         sim::pathfinding::UnitOrder::MoveTo { target_x, target_y } => format!("Status: En Route to ({}, {})", target_x, target_y),
                         sim::pathfinding::UnitOrder::Attack { target_unit_id } => format!("Status: Engaging Target #{}", target_unit_id),
+                        sim::pathfinding::UnitOrder::AttackBuilding { target_building_id } => format!("Status: Attacking Structure #{}", target_building_id),
                         sim::pathfinding::UnitOrder::Repair { target_unit_id } => format!("Status: Repairing Ally #{}", target_unit_id),
                         sim::pathfinding::UnitOrder::MineOre { deposit_x, deposit_y } => format!("Status: Mining Ore at ({}, {})", deposit_x, deposit_y),
                         sim::pathfinding::UnitOrder::DeployStructure { kit_name, tile_x, tile_y } => format!("Status: Deploying {} at ({}, {})", kit_name, tile_x, tile_y),
@@ -2742,33 +2794,14 @@ pub fn start() -> Result<(), JsValue> {
             let (gx, gy) = app_borrow.hover_tile;
             let (w, h) = st.dimensions();
             let (c_cost, r_cost) = st.ore_cost();
+            let loaded_convec = app_borrow.colony.units.iter().any(|u|
+                u.faction == app_borrow.colony.faction && u.name.contains("ConVec") && u.cargo_kit.as_deref() == Some(st.name()));
+            let empty_convec = app_borrow.colony.units.iter().any(|u|
+                u.faction == app_borrow.colony.faction && u.name.contains("ConVec") && u.cargo_kit.is_none());
             let has_resources = app_borrow.colony.common_ore >= c_cost && app_borrow.colony.rare_ore >= r_cost;
-            let inside_map = gx >= 0 && gx + w <= app_borrow.colony.game_map.width as i32 && gy >= 0 && gy + h <= app_borrow.colony.game_map.height as i32;
-
-            let mut obstructed = false;
-            if inside_map {
-                for b in &app_borrow.colony.buildings {
-                    let ox = gx < b.tile_x + b.width && gx + w > b.tile_x;
-                    let oy = gy < b.tile_y + b.height && gy + h > b.tile_y;
-                    if ox && oy {
-                        obstructed = true;
-                        break;
-                    }
-                }
-                if !obstructed {
-                    for dy in 0..h {
-                        for dx in 0..w {
-                            if let Some(tile) = app_borrow.colony.game_map.get_tile((gx + dx) as u32, (gy + dy) as u32) {
-                                if tile.is_lava {
-                                    obstructed = true;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            let is_valid = has_resources && inside_map && !obstructed;
+            let is_valid = (loaded_convec || empty_convec && has_resources)
+                && app_borrow.colony.fog.get(gx as usize, gy as usize) == sim::fog::FogState::Visible
+                && app_borrow.colony.validate_structure_site(gx, gy, w, h).is_ok();
             Some((st, (gx, gy), is_valid))
         } else {
             None

@@ -55,6 +55,25 @@ fn building_sprite_frame(name: &str, faction: Faction) -> u32 {
     else if eden { 647 } else { 645 }
 }
 
+fn building_animation_frame(sol: f64, frame_count: usize) -> usize {
+    if frame_count == 0 { 0 } else { ((sol * 160.0).max(0.0) as usize) % frame_count }
+}
+
+#[cfg(test)]
+mod building_animation_tests {
+    use super::*;
+
+    #[test]
+    fn building_animation_advances_and_wraps_original_frames() {
+        let art = crate::archive::prt::PrtFile::parse(include_bytes!("../../assets/op2_art.prt")).unwrap();
+        let count = art.animations[1845].frames.len();
+        assert!(count > 1);
+        assert_eq!(building_animation_frame(0.0, count), 0);
+        assert_eq!(building_animation_frame(0.00625, count), 1);
+        assert_eq!(building_animation_frame(count as f64 / 160.0, count), 0);
+    }
+}
+
 impl Viewport {
     pub fn new() -> Self {
         let terrain = HtmlImageElement::new().ok();
@@ -335,18 +354,42 @@ impl Viewport {
             }
 
             let (sx, sy) = self.tile_to_screen(b.tile_x as f64, b.tile_y as f64);
+            if b.construction_progress < 100.0 {
+                let width = b.width as f64 * 32.0 * self.zoom;
+                let height = b.height as f64 * 32.0 * self.zoom;
+                ctx.set_fill_style_str("rgba(130, 145, 155, 0.45)");
+                ctx.fill_rect(sx, sy, width, height);
+                ctx.set_stroke_style_str("#b8c7ce");
+                ctx.set_line_width(2.0 * self.zoom);
+                ctx.stroke_rect(sx, sy, width, height);
+                ctx.set_fill_style_str("#0f172a");
+                ctx.fill_rect(sx, sy - 8.0 * self.zoom, width, 5.0 * self.zoom);
+                ctx.set_fill_style_str("#e2d39a");
+                ctx.fill_rect(sx, sy - 8.0 * self.zoom, width * b.construction_progress / 100.0, 5.0 * self.zoom);
+                continue;
+            }
             if let Ok(mut sprite_mgr) = self.sprite_mgr.try_borrow_mut() {
                 let frame = building_sprite_frame(&b.name, b.faction.unwrap_or(colony.faction));
+                let frame_count = sprite_mgr.atlas.prt.as_ref()
+                    .and_then(|prt| prt.animations.get(frame as usize))
+                    .map_or(0, |group| group.frames.len());
+                let animation_frame = building_animation_frame(colony.sol, frame_count);
                 let center_x = sx + b.width as f64 * self.tile_width * self.zoom * 0.5;
                 let bottom_y = sy + b.height as f64 * self.tile_height * self.zoom;
-                if let Ok(true) = sprite_mgr.atlas.draw_group(
-                    ctx, frame, center_x, bottom_y, self.zoom,
+                if let Ok(true) = sprite_mgr.atlas.draw_group_frame(
+                    ctx, frame, animation_frame, center_x, bottom_y, self.zoom,
                     b.faction.unwrap_or(colony.faction) == Faction::Eden,
                 ) {
                         if b.is_selected {
                             ctx.set_stroke_style_str("#b8e868");
                             ctx.set_line_width(1.0);
                             ctx.stroke_rect(sx, sy, b.width as f64 * 32.0 * self.zoom, b.height as f64 * 32.0 * self.zoom);
+                        }
+                        if b.hp < b.max_hp {
+                            ctx.set_fill_style_str("#7f1d1d");
+                            ctx.fill_rect(sx, sy - 6.0 * self.zoom, b.width as f64 * 32.0 * self.zoom, 4.0 * self.zoom);
+                            ctx.set_fill_style_str("#22c55e");
+                            ctx.fill_rect(sx, sy - 6.0 * self.zoom, b.width as f64 * 32.0 * self.zoom * b.hp as f64 / b.max_hp.max(1) as f64, 4.0 * self.zoom);
                         }
                         continue;
                 }

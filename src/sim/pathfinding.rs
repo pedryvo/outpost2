@@ -10,6 +10,7 @@ pub enum UnitOrder {
     Idle,
     MoveTo { target_x: i32, target_y: i32 },
     Attack { target_unit_id: u32 },
+    AttackBuilding { target_building_id: u32 },
     Repair { target_unit_id: u32 },
     MineOre { deposit_x: i32, deposit_y: i32 },
     DeployStructure { kit_name: String, tile_x: i32, tile_y: i32 },
