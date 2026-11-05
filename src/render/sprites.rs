@@ -65,17 +65,12 @@ impl Direction8 {
         Self::from_angle_rad(rad)
     }
 
-    /// Calculate Direction8 from an isometric tile delta (dtx, dty).
-    /// In Outpost 2's 2:1 isometric projection:
-    /// sx = (dtx - dty) * (tile_w / 2)
-    /// sy = (dtx + dty) * (tile_h / 2)
+    /// The original map uses a square top-down grid, so tile and screen axes agree.
     pub fn from_tile_delta(dtx: i32, dty: i32) -> Self {
         if dtx == 0 && dty == 0 {
             return Direction8::North;
         }
-        let sx = (dtx - dty) as f64 * 32.0;
-        let sy = (dtx + dty) as f64 * 16.0;
-        Self::from_screen_vector(sx, sy)
+        Self::from_screen_vector(dtx as f64, dty as f64)
     }
 
     /// Rotational angle frame offset (0..7) clockwise starting from North.
@@ -317,8 +312,9 @@ impl SpriteAtlas {
 
         if meta.is_shadow {
             // 1-bit monochrome shadow mask (each byte contains 8 binary pixels)
+            let packed_stride = (scan_w + 7) / 8;
             for y in 0..meta.height {
-                let row_offset = start_pos + (y as usize * scan_w);
+                let row_offset = start_pos + (y as usize * packed_stride);
                 for x in 0..meta.width {
                     let byte_idx = row_offset + (x as usize / 8);
                     if byte_idx < bmp_data.len() {
@@ -556,6 +552,9 @@ pub struct UnitAnimationState {
     pub drill_frame: usize,       // 0..=7 drill rotation cycle
     pub drill_timer: f64,
     pub last_tile: (i32, i32),
+    pub visual_from_tile: (i32, i32),
+    pub visual_elapsed: f64,
+    pub visual_duration: f64,
 }
 
 impl UnitAnimationState {
@@ -572,7 +571,21 @@ impl UnitAnimationState {
             drill_frame: 0,
             drill_timer: 0.0,
             last_tile: tile,
+            visual_from_tile: tile,
+            visual_elapsed: 0.0,
+            visual_duration: 0.0,
         }
+    }
+
+    pub fn visual_tile_position(&self) -> (f64, f64) {
+        if self.visual_duration <= 0.0 {
+            return (self.last_tile.0 as f64, self.last_tile.1 as f64);
+        }
+        let t = (self.visual_elapsed / self.visual_duration).clamp(0.0, 1.0);
+        (
+            self.visual_from_tile.0 as f64 + (self.last_tile.0 - self.visual_from_tile.0) as f64 * t,
+            self.visual_from_tile.1 as f64 + (self.last_tile.1 - self.visual_from_tile.1) as f64 * t,
+        )
     }
 }
 
@@ -667,14 +680,14 @@ impl UnitSpriteManager {
     /// Get base sprite frame ID for a given vehicle type and faction.
     pub fn get_base_frame(vehicle_type: VehicleType, faction: Faction) -> u32 {
         match vehicle_type {
-            VehicleType::Lynx => if faction == Faction::Eden { 1202 } else { 1227 },
-            VehicleType::Panther => if faction == Faction::Eden { 239 } else { 335 },
-            VehicleType::Tiger => if faction == Faction::Eden { 231 } else { 279 },
-            VehicleType::CargoTruck => if faction == Faction::Eden { 8 } else { 24 },
-            VehicleType::RoboMiner => if faction == Faction::Eden { 1170 } else { 1186 },
-            VehicleType::Earthworker => if faction == Faction::Eden { 1811 } else { 1819 },
-            VehicleType::ConVec => if faction == Faction::Eden { 287 } else { 319 },
-            VehicleType::RoboSurveyor => if faction == Faction::Eden { 247 } else { 255 },
+            VehicleType::Lynx => if faction == Faction::Eden { 1227 } else { 1202 },
+            VehicleType::Panther => if faction == Faction::Eden { 335 } else { 239 },
+            VehicleType::Tiger => if faction == Faction::Eden { 279 } else { 231 },
+            VehicleType::CargoTruck => if faction == Faction::Eden { 24 } else { 8 },
+            VehicleType::RoboMiner => if faction == Faction::Eden { 1186 } else { 1170 },
+            VehicleType::Earthworker => if faction == Faction::Eden { 1819 } else { 1811 },
+            VehicleType::ConVec => if faction == Faction::Eden { 319 } else { 287 },
+            VehicleType::RoboSurveyor => if faction == Faction::Eden { 255 } else { 247 },
             VehicleType::RepairVehicle => 1130,
         }
     }
@@ -688,7 +701,8 @@ impl UnitSpriteManager {
         direction: Direction8,
     ) -> u32 {
         let base = Self::get_base_frame(vehicle_type, faction);
-        let direction = direction.frame_offset() as u32;
+        // Original PRT directional runs begin facing west, then rotate clockwise.
+        let direction = ((direction.frame_offset() + 2) % 8) as u32;
         let has_sixteen = matches!(vehicle_type, VehicleType::Lynx | VehicleType::CargoTruck
             | VehicleType::ConVec | VehicleType::RoboMiner | VehicleType::RepairVehicle);
         if has_sixteen { base + direction * 2 }
@@ -739,6 +753,9 @@ impl UnitSpriteManager {
             let dty = current_tile.1 - state.last_tile.1;
 
             if dtx != 0 || dty != 0 {
+                state.visual_from_tile = state.last_tile;
+                state.visual_elapsed = 0.0;
+                state.visual_duration = if dtx != 0 && dty != 0 { 0.28 * std::f64::consts::SQRT_2 } else { 0.28 };
                 state.chassis_dir = Direction8::from_tile_delta(dtx, dty);
                 state.is_moving = true;
                 state.last_tile = current_tile;
@@ -749,8 +766,9 @@ impl UnitSpriteManager {
                 state.chassis_dir = Direction8::from_tile_delta(p_dtx, p_dty);
                 state.is_moving = true;
             } else {
-                state.is_moving = false;
+                state.is_moving = state.visual_elapsed < state.visual_duration;
             }
+            state.visual_elapsed = (state.visual_elapsed + dt).min(state.visual_duration);
 
             // Tread animation ticking
             if state.is_moving {
@@ -818,7 +836,8 @@ impl UnitSpriteManager {
             } else {
                 0
             };
-            if let Ok(true) = self.atlas.draw_group_frame(ctx, sprite_group, frame, sx, sy + 16.0 * zoom, zoom, unit.faction == Faction::Eden) {
+            if let Ok(true) = self.atlas.draw_group_frame(ctx, sprite_group, frame, sx, sy + 16.0 * zoom, zoom,
+                v_type == VehicleType::RepairVehicle && unit.faction == Faction::Eden) {
                 return;
             }
         }
@@ -1223,11 +1242,40 @@ mod tests {
         let art = crate::archive::prt::PrtFile::parse(include_bytes!("../../assets/op2_art.prt")).unwrap();
         let north = UnitSpriteManager::calculate_sprite_group(VehicleType::Lynx, Faction::Eden, Direction8::North);
         let east = UnitSpriteManager::calculate_sprite_group(VehicleType::Lynx, Faction::Eden, Direction8::East);
-        assert_eq!(north, 1202);
-        assert_eq!(east, 1206);
+        assert_eq!(north, 1231);
+        assert_eq!(east, 1235);
         assert_eq!(art.animations[north as usize].frames.len(), 6);
         assert_eq!(art.animations[east as usize].frames.len(), 6);
         assert_eq!(art.animations[north as usize + 1].frames.len(), 1);
+    }
+
+    #[test]
+    fn unit_art_direction_matches_square_map_axes() {
+        assert_eq!(Direction8::from_tile_delta(1, 0), Direction8::East);
+        assert_eq!(Direction8::from_tile_delta(0, -1), Direction8::North);
+        assert_eq!(UnitSpriteManager::calculate_sprite_group(VehicleType::Lynx, Faction::Plymouth, Direction8::West), 1202);
+        assert_eq!(UnitSpriteManager::calculate_sprite_group(VehicleType::Lynx, Faction::Plymouth, Direction8::North), 1206);
+    }
+
+    #[test]
+    fn original_shadow_mask_uses_packed_row_stride() {
+        let mut atlas = SpriteAtlas::load_from_prt_and_bmp(include_bytes!("../../assets/op2_art.prt"), include_bytes!("../../assets/OP2_ART.BMP")).unwrap();
+        let meta = atlas.get_sprite_meta(3920).unwrap();
+        assert!(meta.is_shadow);
+        assert_eq!(meta.scan_line_width, 60);
+        let shadow = atlas.extract_rgba(3920, None).unwrap();
+        let opaque = shadow.pixels.chunks_exact(4).filter(|pixel| pixel[3] != 0).count();
+        assert!(opaque > 100 && opaque < 60 * 19);
+    }
+
+    #[test]
+    fn unit_position_interpolates_between_tile_centers() {
+        let mut state = UnitAnimationState::new(1, VehicleType::Lynx, (2, 3));
+        state.last_tile = (3, 3);
+        state.visual_from_tile = (2, 3);
+        state.visual_duration = 0.28;
+        state.visual_elapsed = 0.14;
+        assert_eq!(state.visual_tile_position(), (2.5, 3.0));
     }
 
     #[test]

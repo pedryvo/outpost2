@@ -1,4 +1,4 @@
-//! Unit Pathfinding, Orders, and Grid Navigation (A* on Isometric Grid)
+//! Unit pathfinding, orders, and eight-way grid navigation.
 
 use std::collections::{BinaryHeap, HashMap, HashSet};
 use std::cmp::Ordering;
@@ -44,6 +44,45 @@ impl PartialOrd for Node {
 pub struct PathFinder;
 
 impl PathFinder {
+    /// Reach a passable tile beside a solid structure, choosing the shortest route.
+    pub fn find_path_to_building(
+        map: &GameMap,
+        start: (i32, i32),
+        building: (i32, i32, i32, i32),
+    ) -> Option<Vec<(i32, i32)>> {
+        let (x, y, w, h) = building;
+        let mut best: Option<Vec<(i32, i32)>> = None;
+        for ty in y - 1..=y + h {
+            for tx in x - 1..=x + w {
+                if tx >= x && tx < x + w && ty >= y && ty < y + h {
+                    continue;
+                }
+                if let Some(path) = Self::find_path(map, start, (tx, ty)) {
+                    if best.as_ref().is_none_or(|old| path.len() < old.len()) {
+                        best = Some(path);
+                    }
+                }
+            }
+        }
+        best
+    }
+
+    pub fn can_step(map: &GameMap, from: (i32, i32), to: (i32, i32)) -> bool {
+        let dx = to.0 - from.0;
+        let dy = to.1 - from.1;
+        if dx.abs() > 1 || dy.abs() > 1 || (dx == 0 && dy == 0) {
+            return false;
+        }
+        let passable = |x: i32, y: i32| {
+            x >= 0 && y >= 0 && (x as u32) < map.width && (y as u32) < map.height
+                && map.get_tile(x as u32, y as u32)
+                    .is_some_and(|tile| !tile.is_lava && !tile.is_wall_or_building)
+        };
+        passable(to.0, to.1)
+            && (dx == 0 || dy == 0
+                || (passable(from.0 + dx, from.1) && passable(from.0, from.1 + dy)))
+    }
+
     /// Compute an 8-directional path from (start_x, start_y) to (goal_x, goal_y)
     pub fn find_path(
         map: &GameMap,
@@ -51,7 +90,7 @@ impl PathFinder {
         goal: (i32, i32),
     ) -> Option<Vec<(i32, i32)>> {
         if start == goal {
-            return Some(vec![goal]);
+            return Some(Vec::new());
         }
 
         let mut open_set = BinaryHeap::new();
@@ -101,16 +140,8 @@ impl PathFinder {
             for (dx, dy) in &directions {
                 let neighbor = (current.0 + dx, current.1 + dy);
 
-                // Boundary check
-                if neighbor.0 < 0 || neighbor.0 >= map.width as i32 || neighbor.1 < 0 || neighbor.1 >= map.height as i32 {
+                if !Self::can_step(map, current, neighbor) {
                     continue;
-                }
-
-                // Terrain passability check: cannot cross active lava or solid buildings
-                if let Some(t) = map.get_tile(neighbor.0 as u32, neighbor.1 as u32) {
-                    if t.is_lava || t.is_wall_or_building {
-                        continue;
-                    }
                 }
 
                 // Step cost: diagonal = 14, cardinal = 10
@@ -137,5 +168,24 @@ impl PathFinder {
         let dx = (a.0 - b.0).abs() as u32;
         let dy = (a.1 - b.1).abs() as u32;
         10 * (dx + dy).saturating_sub(6 * dx.min(dy))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn path_never_cuts_a_building_corner() {
+        let mut map = GameMap::new_blank(5, 5);
+        map.get_tile_mut(2, 1).unwrap().is_wall_or_building = true;
+        map.get_tile_mut(1, 2).unwrap().is_wall_or_building = true;
+        assert!(!PathFinder::can_step(&map, (1, 1), (2, 2)));
+        let path = PathFinder::find_path(&map, (1, 1), (3, 3)).unwrap();
+        let mut previous = (1, 1);
+        for step in path {
+            assert!(PathFinder::can_step(&map, previous, step));
+            previous = step;
+        }
     }
 }

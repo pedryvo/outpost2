@@ -294,7 +294,7 @@ impl Viewport {
         let half_w = self.tile_width * 0.5 * self.zoom;
         let half_h = self.tile_height * 0.5 * self.zoom;
 
-        // Render visible isometric terrain tiles
+        // Render the original square map tiles.
         let (start_col, end_col, start_row, end_row) = self.visible_tile_bounds(
             width, height, colony.game_map.width as i32, colony.game_map.height as i32,
         );
@@ -350,18 +350,7 @@ impl Viewport {
                 let fog = colony.fog.get(c as usize, r as usize);
                 if fog == FogState::Unexplored {
                     ctx.set_fill_style_str("#030712");
-                    ctx.set_stroke_style_str("#020408");
-                    ctx.set_line_width(0.5);
-
-                    ctx.begin_path();
-                    ctx.move_to(sx, sy - half_h);
-                    ctx.line_to(sx + half_w, sy);
-                    ctx.line_to(sx, sy + half_h);
-                    ctx.line_to(sx - half_w, sy);
-                    ctx.close_path();
-
-                    ctx.fill();
-                    ctx.stroke();
+                    ctx.fill_rect(sx, sy, self.tile_width * self.zoom, self.tile_height * self.zoom);
                     continue;
                 }
 
@@ -407,36 +396,7 @@ impl Viewport {
                 };
 
                 ctx.set_fill_style_str(&terrain_color);
-                ctx.set_stroke_style_str(if fog == FogState::Explored { "#0f172a" } else { "#1c1917" });
-                ctx.set_line_width(0.75);
-
-                ctx.begin_path();
-                ctx.move_to(sx, sy - half_h);
-                ctx.line_to(sx + half_w, sy);
-                ctx.line_to(sx, sy + half_h);
-                ctx.line_to(sx - half_w, sy);
-                ctx.close_path();
-
-                ctx.fill();
-                ctx.stroke();
-
-                if let Some(t) = tile {
-                    if (t.is_wall_or_building || t.cell_type == 3) && fog != FogState::Unexplored {
-                        // 2.5D cliff drop facet and shadow
-                        let drop_h = 6.0 * self.zoom;
-                        ctx.set_fill_style_str(if fog == FogState::Explored { "#07090e" } else { "#111726" });
-                        ctx.begin_path();
-                        ctx.move_to(sx - half_w, sy);
-                        ctx.line_to(sx, sy + half_h);
-                        ctx.line_to(sx + half_w, sy);
-                        ctx.line_to(sx + half_w, sy + drop_h);
-                        ctx.line_to(sx, sy + half_h + drop_h);
-                        ctx.line_to(sx - half_w, sy + drop_h);
-                        ctx.close_path();
-                        ctx.fill();
-                    }
-
-                }
+                ctx.fill_rect(sx, sy, self.tile_width * self.zoom, self.tile_height * self.zoom);
             }
         }
         }
@@ -806,7 +766,10 @@ impl Viewport {
                 continue;
             }
 
-            let (sx, sy) = self.tile_to_screen(u.tile_x as f64, u.tile_y as f64);
+            let (visual_x, visual_y) = self.sprite_mgr.borrow().unit_states.get(&u.id)
+                .map(|state| state.visual_tile_position())
+                .unwrap_or((u.tile_x as f64, u.tile_y as f64));
+            let (sx, sy) = self.tile_to_screen(visual_x, visual_y);
 
             // Render Unit using authentic sprite blitting or directional vector rendering
             if let Ok(mut sprite_mgr) = self.sprite_mgr.try_borrow_mut() {

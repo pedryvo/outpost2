@@ -1126,12 +1126,25 @@ impl ColonyState {
             }
         }
 
-        let game_map = GameMap::parse(map_data)
+        let mut game_map = GameMap::parse(map_data)
             .unwrap_or_else(|_| GameMap {
                 width: 64,
                 height: 64,
                 tiles: Vec::new(),
             });
+        for building in &buildings {
+            for dy in 0..building.height {
+                for dx in 0..building.width {
+                    let x = building.tile_x + dx;
+                    let y = building.tile_y + dy;
+                    if x >= 0 && y >= 0 {
+                        if let Some(tile) = game_map.get_tile_mut(x as u32, y as u32) {
+                            tile.is_wall_or_building = true;
+                        }
+                    }
+                }
+            }
+        }
 
         let mut tubes = HashSet::new();
         if scenario_id == 5 {
@@ -1947,10 +1960,21 @@ impl ColonyState {
             if !u.path.is_empty() {
                 u.move_cooldown -= dt_secs;
                 if u.move_cooldown <= 0.0 {
-                    let next_step = u.path.remove(0);
+                    let next_step = u.path[0];
+                    let from = (u.tile_x, u.tile_y);
+                    if !PathFinder::can_step(&self.game_map, from, next_step) {
+                        let goal = *u.path.last().unwrap();
+                        u.path = PathFinder::find_path(&self.game_map, from, goal).unwrap_or_default();
+                        if u.path.is_empty() && matches!(u.current_order, UnitOrder::MoveTo { .. }) {
+                            u.current_order = UnitOrder::Idle;
+                        }
+                        continue;
+                    }
+                    u.path.remove(0);
                     u.tile_x = next_step.0;
                     u.tile_y = next_step.1;
-                    u.move_cooldown = 0.28; // ~3.5 tiles per second
+                    let diagonal = from.0 != next_step.0 && from.1 != next_step.1;
+                    u.move_cooldown = if diagonal { 0.28 * std::f64::consts::SQRT_2 } else { 0.28 };
                 }
             } else if let UnitOrder::MoveTo { target_x, target_y } = u.current_order {
                 if u.tile_x == target_x && u.tile_y == target_y {
@@ -2220,9 +2244,9 @@ impl ColonyState {
         let deposit_coords: Vec<(u32, i32, i32, OreType, bool)> = self.ore_deposits.iter()
             .map(|d| (d.id, d.tile_x, d.tile_y, d.ore_type, d.has_miner && d.remaining_amount > 0))
             .collect();
-        let smelter_coords: Vec<(u32, Option<Faction>, i32, i32)> = self.buildings.iter()
+        let smelter_coords: Vec<(u32, Option<Faction>, i32, i32, i32, i32)> = self.buildings.iter()
             .filter(|b| b.name.contains("Smelter"))
-            .map(|b| (b.id, b.faction, b.tile_x, b.tile_y))
+            .map(|b| (b.id, b.faction, b.tile_x, b.tile_y, b.width, b.height))
             .collect();
 
         for u in &mut self.units {
@@ -2253,8 +2277,8 @@ impl ColonyState {
                                     .filter(|s| s.1 == Some(u.faction) || s.1.is_none())
                                     .min_by_key(|s| (u.tile_x - s.2).abs() + (u.tile_y - s.3).abs())
                                     .or_else(|| smelter_coords.first());
-                                if let Some(&(smelter_id, _, sx, sy)) = friendly_smelter {
-                                    if let Some(path) = PathFinder::find_path(&self.game_map, (u.tile_x, u.tile_y), (sx, sy)) {
+                                if let Some(&(smelter_id, _, sx, sy, sw, sh)) = friendly_smelter {
+                                    if let Some(path) = PathFinder::find_path_to_building(&self.game_map, (u.tile_x, u.tile_y), (sx, sy, sw, sh)) {
                                         u.path = path;
                                         u.hauler_state = Some(HaulerState::DrivingToSmelter { smelter_id, ore_type: ore_t, amount: 50 });
                                     }
@@ -2263,9 +2287,10 @@ impl ColonyState {
                         }
                     }
                     Some(HaulerState::DrivingToSmelter { smelter_id, ore_type, amount }) => {
-                        if let Some(&(_, _, sx, sy)) = smelter_coords.iter().find(|s| s.0 == smelter_id) {
-                            let dist = (u.tile_x - sx).abs() + (u.tile_y - sy).abs();
-                            if dist <= 2 {
+                        if let Some(&(_, _, sx, sy, sw, sh)) = smelter_coords.iter().find(|s| s.0 == smelter_id) {
+                            let dx = (sx - u.tile_x).max(0).max(u.tile_x - (sx + sw - 1));
+                            let dy = (sy - u.tile_y).max(0).max(u.tile_y - (sy + sh - 1));
+                            if dx <= 1 && dy <= 1 {
                                 u.hauler_state = Some(HaulerState::Unloading { smelter_id, ore_type, amount, progress_pct: 0 });
                             }
                         }
@@ -2316,6 +2341,30 @@ impl ColonyState {
 
         let mut unit_notice = None;
         for (b_id, spawn_x, spawn_y, item) in completed_items {
+            let spawn = (0..=6).find_map(|radius| {
+                for dy in -radius..=radius {
+                    for dx in -radius..=radius {
+                        let x = spawn_x + dx;
+                        let y = spawn_y + dy;
+                        if x < 0 || y < 0 || (x as u32) >= self.game_map.width || (y as u32) >= self.game_map.height {
+                            continue;
+                        }
+                        if self.game_map.get_tile(x as u32, y as u32)
+                            .is_some_and(|tile| !tile.is_wall_or_building && !tile.is_lava)
+                            && !self.units.iter().any(|unit| unit.tile_x == x && unit.tile_y == y) {
+                            return Some((x, y));
+                        }
+                    }
+                }
+                None
+            });
+            let Some((spawn_x, spawn_y)) = spawn else {
+                if let Some(building) = self.buildings.iter_mut().find(|building| building.id == b_id) {
+                    building.production_queue.insert(0, item);
+                    building.production_progress = 100.0;
+                }
+                continue;
+            };
             let b_faction = self.buildings.iter().find(|b| b.id == b_id).and_then(|b| b.faction).unwrap_or(self.faction);
             let next_id = self.units.len() as u32 + 1;
             match item.as_str() {
@@ -3307,7 +3356,7 @@ impl ColonyState {
             for dx in 0..w {
                 let tile = self.game_map.get_tile((tile_x + dx) as u32, (tile_y + dy) as u32)
                     .ok_or_else(|| "Placement is outside the map".to_string())?;
-                if tile.is_lava || tile.is_wall_or_building || tile.cell_type == 3 {
+                if tile.is_lava || tile.is_wall_or_building {
                     return Err("Cannot deploy structure on blocked terrain".into());
                 }
             }
@@ -3671,6 +3720,19 @@ impl ColonyState {
         self.food_units = data.food_units;
         self.units = data.units;
         self.buildings = data.buildings;
+        for building in &self.buildings {
+            for dy in 0..building.height {
+                for dx in 0..building.width {
+                    let x = building.tile_x + dx;
+                    let y = building.tile_y + dy;
+                    if x >= 0 && y >= 0 {
+                        if let Some(tile) = self.game_map.get_tile_mut(x as u32, y as u32) {
+                            tile.is_wall_or_building = true;
+                        }
+                    }
+                }
+            }
+        }
         self.tubes = data.tubes.into_iter().collect();
         self.day_cycle = data.day_cycle;
 
@@ -3930,5 +3992,38 @@ mod tests {
         assert!(res.meteor_hit);
         assert!(res.structure_destroyed);
         assert!(colony.destroyed_building_ids.contains(&b.id));
+    }
+
+    #[test]
+    fn campaign_buildings_block_loaded_map_tiles() {
+        let colony = ColonyState::new(Faction::Eden);
+        for building in &colony.buildings {
+            for dy in 0..building.height {
+                for dx in 0..building.width {
+                    assert!(colony.game_map.get_tile((building.tile_x + dx) as u32, (building.tile_y + dy) as u32)
+                        .unwrap().is_wall_or_building, "{} at ({}, {})", building.name, building.tile_x + dx, building.tile_y + dy);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn unit_repaths_when_a_building_blocks_its_cached_route() {
+        let mut colony = ColonyState::new(Faction::Eden);
+        let unit_id = colony.units[0].id;
+        let start = (5, 5);
+        let blocked = (6, 5);
+        let goal = (8, 5);
+        let unit = colony.units.iter_mut().find(|u| u.id == unit_id).unwrap();
+        unit.tile_x = start.0;
+        unit.tile_y = start.1;
+        unit.path = vec![blocked, (7, 5), goal];
+        unit.current_order = UnitOrder::MoveTo { target_x: goal.0, target_y: goal.1 };
+        unit.move_cooldown = 0.0;
+        colony.game_map.get_tile_mut(blocked.0 as u32, blocked.1 as u32).unwrap().is_wall_or_building = true;
+        colony.update(0.01);
+        let unit = colony.units.iter().find(|u| u.id == unit_id).unwrap();
+        assert_eq!((unit.tile_x, unit.tile_y), start);
+        assert_ne!(unit.path.first().copied(), Some(blocked));
     }
 }
